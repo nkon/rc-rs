@@ -116,6 +116,11 @@ pub fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
             node.child.push(rhs);
             return (node, i);
         }
+        Token::Num(n) => {
+            node.ty = NodeType::Num;
+            node.value = n;
+            return (node, i+1)
+        }
         _ => {
             return (node, i);
         }
@@ -125,7 +130,7 @@ pub fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
 pub fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     println!("expr, i={}", i);
     let (lhs, i) = unary(tok, i);
-    if tok.len() >= i {
+    if tok.len() <= i {
         return (lhs, i);
     }
     let mut node = Node::new();
@@ -172,4 +177,5 @@ fn main() {
         "-9223372036854775808 -> {:?}",
         parse("-9223372036854775808".to_string())
     );
+    println!("1+2 -> {:?}", parse("1+2".to_string()));
 }
