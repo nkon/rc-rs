@@ -1,16 +1,50 @@
+use std::iter::Peekable;
+
 #[derive(Debug, Clone)]
 pub enum Token {
-    Num(i64),
+    Num(u64),
     Op(u16),
 }
 
-fn num(s: String) -> Token {
-    Token::Num(s.parse().unwrap())
+fn num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> u64 {
+    let mut n = c.to_string().parse::<u64>().unwrap();
+    while let Some(&c) = iter.peek() {
+        if c == '0'
+            || c == '1'
+            || c == '2'
+            || c == '3'
+            || c == '4'
+            || c == '5'
+            || c == '6'
+            || c == '7'
+            || c == '8'
+            || c == '9'
+        {
+            n = n * 10 + c.to_string().parse::<u64>().unwrap();
+            iter.next();
+        } else {
+            return n;
+        };
+    }
+    n
 }
 
-fn tokens(s: String) -> Vec<Token> {
+fn lexer(s: String) -> Vec<Token> {
     let mut ret = Vec::new();
-    ret.push(num(s));
+
+    let mut iter = s.chars().peekable();
+    while let Some(&c) = iter.peek() {
+        match c {
+            '0'..='9' => {
+                iter.next();
+                let n = num(c, &mut iter);
+                ret.push(Token::Num(n));
+            }
+            _ => {
+                let _ = iter.next();
+            }
+        }
+    }
 
     ret
 }
@@ -32,10 +66,10 @@ impl Node {
 
 pub fn parse(s: String) -> Node {
     let mut node = Node::new();
-    
-    let mut tk = tokens(s);
 
-    for token in tk.pop() {
+    let mut tokens = lexer(s);
+
+    for token in tokens.pop() {
         match token {
             Token::Num(n) => node.entry = Token::Num(n),
             _ => {}
@@ -46,7 +80,14 @@ pub fn parse(s: String) -> Node {
 }
 
 fn main() {
-    println!("Hello, world!");
+    println!("lexer");
+    println!("1 -> {:?}", lexer("1".to_string()));
+    println!("1 1 -> {:?}", lexer("1 1".to_string()));
+    println!("1+1 -> {:?}", lexer("1+1".to_string()));
+    println!("1-1 -> {:?}", lexer("1-1".to_string()));
+    println!("-1 -> {:?}", lexer("-1".to_string()));
+    println!("");
+    println!("parser");
     println!("1 -> {:?}", parse("1".to_string()));
     println!("0 -> {:?}", parse("0".to_string()));
     println!("-1 -> {:?}", parse("-1".to_string()));
