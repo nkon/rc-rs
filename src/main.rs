@@ -89,7 +89,7 @@ impl Node {
     }
 }
 
-pub fn num(tok: Vec<Token>, i:usize) {
+pub fn num(tok: Vec<Token>, i:usize) -> Node{
     let mut node = Node::new();
     match tok[i] {
         Token::Num(n) => {
@@ -98,23 +98,12 @@ pub fn num(tok: Vec<Token>, i:usize) {
         }
         _ => {}
     }
-    
+    node
 }
 
 pub fn parse(s: String) -> Node {
-    let mut node = Node::new();
-
     let tokens = lexer(s);
-
-    for i in 0..tokens.len() {
-        match tokens[i] {
-            Token::Num(n) => {
-                node.value = n;
-                node.ty = NodeType::Num;
-            }
-            _ => {}
-        }
-    }
+    let node = num(tokens, 0);
 
     node
 }
