@@ -3,7 +3,7 @@ use std::iter::Peekable;
 #[derive(Debug, Clone)]
 pub enum Token {
     Num(u64),
-    Op(u16),
+    Op(char),
 }
 
 fn num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> u64 {
@@ -39,6 +39,10 @@ fn lexer(s: String) -> Vec<Token> {
                 iter.next();
                 let n = num(c, &mut iter);
                 ret.push(Token::Num(n));
+            }
+            '+' | '-' => {
+                iter.next();
+                ret.push(Token::Op(c));
             }
             _ => {
                 let _ = iter.next();
