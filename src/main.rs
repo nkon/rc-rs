@@ -1,7 +1,7 @@
-use std::iter::Peekable;
 use std::fmt;
+use std::iter::Peekable;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Token {
     Num(u64),
     Op(char),
@@ -76,6 +76,7 @@ impl fmt::Debug for NodeType {
 pub struct Node {
     pub ty: NodeType,
     pub value: u64,
+    pub op: Token,
     pub child: Vec<Node>, // child[0]: LHS, child[1]: RHS
 }
 
@@ -85,11 +86,13 @@ impl Node {
             ty: NodeType::None,
             value: 0,
             child: Vec::new(),
+            op: Token::Op(' '),
         }
     }
 }
 
-pub fn num(tok: Vec<Token>, i:usize) -> Node{
+pub fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+    println!("num, i={}", i);
     let mut node = Node::new();
     match tok[i] {
         Token::Num(n) => {
@@ -98,12 +101,53 @@ pub fn num(tok: Vec<Token>, i:usize) -> Node{
         }
         _ => {}
     }
-    node
+    println!("num: value={}, i={}", node.value, i + 1);
+    (node, i + 1)
+}
+
+pub fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+    println!("unary, i={}", i);
+    let mut node = Node::new();
+    match tok[i] {
+        Token::Op('-') | Token::Op('+') => {
+            node.ty = NodeType::Unary;
+            node.op = tok[i];
+            let (rhs, i) = num(tok, i + 1);
+            node.child.push(rhs);
+            return (node, i);
+        }
+        _ => {
+            return (node, i);
+        }
+    }
+}
+
+pub fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+    println!("expr, i={}", i);
+    let (lhs, i) = unary(tok, i);
+    if tok.len() >= i {
+        return (lhs, i);
+    }
+    let mut node = Node::new();
+    match tok[i] {
+        Token::Op('+') | Token::Op('-') => {
+            node.ty = NodeType::BinOp;
+            node.op = tok[i];
+            let (rhs, i) = unary(tok, i + 1);
+            node.child.push(lhs);
+            node.child.push(rhs);
+            return (node, i + 1);
+        }
+        _ => {
+            return (lhs, i);
+        }
+    }
 }
 
 pub fn parse(s: String) -> Node {
     let tokens = lexer(s);
-    let node = num(tokens, 0);
+    let i = 0;
+    let (node, _) = expr(&tokens, i);
 
     node
 }
