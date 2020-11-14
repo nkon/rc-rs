@@ -1,4 +1,5 @@
 use std::iter::Peekable;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Token {
@@ -6,7 +7,7 @@ pub enum Token {
     Op(char),
 }
 
-fn num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> u64 {
+fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> u64 {
     let mut n = c.to_string().parse::<u64>().unwrap();
     while let Some(&c) = iter.peek() {
         if c == '0'
@@ -37,7 +38,7 @@ fn lexer(s: String) -> Vec<Token> {
         match c {
             '0'..='9' => {
                 iter.next();
-                let n = num(c, &mut iter);
+                let n = tok_num(c, &mut iter);
                 ret.push(Token::Num(n));
             }
             '+' | '-' => {
@@ -53,29 +54,64 @@ fn lexer(s: String) -> Vec<Token> {
     ret
 }
 
-#[derive(Debug, Clone)]
+pub enum NodeType {
+    None,
+    Num,
+    Unary,
+    BinOp,
+}
+
+impl fmt::Debug for NodeType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            NodeType::None => write!(f, "None"),
+            NodeType::Num => write!(f, "Num"),
+            NodeType::Unary => write!(f, "Unary"),
+            NodeType::BinOp => write!(f, "BinOp"),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Node {
-    pub entry: Token,
+    pub ty: NodeType,
+    pub value: u64,
     pub child: Vec<Node>, // child[0]: LHS, child[1]: RHS
 }
 
 impl Node {
     pub fn new() -> Node {
         Node {
-            entry: Token::Num(0),
+            ty: NodeType::None,
+            value: 0,
             child: Vec::new(),
         }
     }
 }
 
+pub fn num(tok: Vec<Token>, i:usize) {
+    let mut node = Node::new();
+    match tok[i] {
+        Token::Num(n) => {
+            node.ty = NodeType::Num;
+            node.value = n;
+        }
+        _ => {}
+    }
+    
+}
+
 pub fn parse(s: String) -> Node {
     let mut node = Node::new();
 
-    let mut tokens = lexer(s);
+    let tokens = lexer(s);
 
-    for token in tokens.pop() {
-        match token {
-            Token::Num(n) => node.entry = Token::Num(n),
+    for i in 0..tokens.len() {
+        match tokens[i] {
+            Token::Num(n) => {
+                node.value = n;
+                node.ty = NodeType::Num;
+            }
             _ => {}
         }
     }
@@ -86,7 +122,7 @@ pub fn parse(s: String) -> Node {
 fn main() {
     println!("lexer");
     println!("1 -> {:?}", lexer("1".to_string()));
-    println!("1 1 -> {:?}", lexer("1 1".to_string()));
+    println!("10 1 -> {:?}", lexer("10 1".to_string()));
     println!("1+1 -> {:?}", lexer("1+1".to_string()));
     println!("1-1 -> {:?}", lexer("1-1".to_string()));
     println!("-1 -> {:?}", lexer("-1".to_string()));
