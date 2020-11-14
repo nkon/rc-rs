@@ -1,16 +1,24 @@
 #[derive(Debug, Clone)]
 pub enum Token {
     Num(i64),
+    Op(u16),
 }
 
 fn num(s: String) -> Token {
     Token::Num(s.parse().unwrap())
 }
 
+fn tokens(s: String) -> Vec<Token> {
+    let mut ret = Vec::new();
+    ret.push(num(s));
+
+    ret
+}
+
 #[derive(Debug, Clone)]
 pub struct Node {
     pub entry: Token,
-    pub child: Vec<Node>,    // child[0]: LHS, child[1]: RHS
+    pub child: Vec<Node>, // child[0]: LHS, child[1]: RHS
 }
 
 impl Node {
@@ -23,10 +31,18 @@ impl Node {
 }
 
 pub fn parse(s: String) -> Node {
-    let mut n = Node::new();
-    n.entry = num(s);
+    let mut node = Node::new();
+    
+    let mut tk = tokens(s);
 
-    n
+    for token in tk.pop() {
+        match token {
+            Token::Num(n) => node.entry = Token::Num(n),
+            _ => {}
+        }
+    }
+
+    node
 }
 
 fn main() {
