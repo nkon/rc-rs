@@ -58,7 +58,7 @@ fn lexer(s: String) -> Vec<Token> {
 <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
 <mul>     ::= <primary> ( '*' <primary> | '/' <primary>)*
 <primary> ::= <unary> | '(' <expr> ')'
-<unary>   ::= <num> | '-' <num>
+<unary>   ::= <num> | '-' <num> | '+' <num>
 */
 
 pub enum NodeType {
@@ -99,24 +99,25 @@ impl Node {
 }
 
 fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("num, i={}", i);
+    println!("num {:?} {}", tok, i);
     let mut node = Node::new();
     match tok[i] {
         Token::Num(n) => {
             node.ty = NodeType::Num;
             node.value = n;
+            return (node, i + 1);
         }
-        _ => {}
+        _ => {
+            return (node, i);
+        }
     }
-    println!("num: value={}, i={}", node.value, i + 1);
-    (node, i + 1)
 }
 
 fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("unary, i={}", i);
-    let mut node = Node::new();
+    println!("unary {:?} {}", tok, i);
     match tok[i] {
         Token::Op('-') | Token::Op('+') => {
+            let mut node = Node::new();
             node.ty = NodeType::Unary;
             node.op = tok[i];
             let (rhs, i) = num(tok, i + 1);
@@ -129,18 +130,31 @@ fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     }
 }
 
+fn primary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+    println!("primary {:?} {}", tok, i);
+    match tok[i] {
+        Token::Op('(') => {
+            let (expr, i) = expr(tok, i+1);
+            return (expr, i + 1);
+        }
+        _ => {
+            return unary(tok, i);
+        }
+    }
+}
+
 fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("mul, i={}", i);
-    let (lhs, i) = unary(tok, i);
+    println!("mul {:?} {}", tok, i);
+    let (lhs, i) = primary(tok, i);
     if tok.len() <= i {
         return (lhs, i);
     }
-    let mut node = Node::new();
     match tok[i] {
         Token::Op('*') | Token::Op('/') | Token::Op('%') => {
+            let mut node = Node::new();
             node.ty = NodeType::BinOp;
             node.op = tok[i];
-            let (rhs, i) = unary(tok, i + 1);
+            let (rhs, i) = primary(tok, i + 1);
             node.child.push(lhs);
             node.child.push(rhs);
             return (node, i);
@@ -152,14 +166,14 @@ fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
 }
 
 fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("expr, i={}", i);
+    println!("expr {:?} {}", tok, i);
     let (lhs, i) = mul(tok, i);
     if tok.len() <= i {
         return (lhs, i);
     }
-    let mut node = Node::new();
     match tok[i] {
         Token::Op('+') | Token::Op('-') => {
+            let mut node = Node::new();
             node.ty = NodeType::BinOp;
             node.op = tok[i];
             let (rhs, i) = mul(tok, i + 1);
@@ -208,4 +222,6 @@ fn main() {
     println!("1*2 -> {:?}", parse("1*2".to_string()));
     println!("1*2+3 -> {:?}", parse("1*2+3".to_string()));
     println!("1+2*3 -> {:?}", parse("1+2*3".to_string()));
+    println!("1*(2+3) -> {:?}", parse("1*(2+3)".to_string()));
+    println!("(1+2)*3 -> {:?}", parse("(1+2)*3".to_string()));
 }
