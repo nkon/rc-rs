@@ -40,3 +40,8 @@ pub struct Node {
 * Parserは、全トークン列を`Vec`に割り当てて、インデックスで（イテレータを使わずに）アクセスしている。読み込んだ結果とトークン数を返すために、返り値はタプルとなっている。
 * この段階ではエラー処理はしていない。将来的には`Result<T,E>`を使ったエラー処理が必要となるだろう。
 
+# f3872e3c339f150e7670f7a42ab9b809d1e4dce4
+
+* `pub fn parse(tok: &Vec<Token>) -> Node `が返したASTを`pub fn eval(n: &Node) -> i64 `が計算できるようになった。
+* Debug printを見やすくした。
+
