@@ -103,18 +103,13 @@ impl fmt::Debug for Node {
         match self.ty {
             NodeType::None => write!(f, "None"),
             NodeType::Num => {
-                write!(f, "Num ").unwrap();
-                write!(f, "{}", self.value)
+                write!(f, "Num({})", self.value)
             }
             NodeType::Unary => {
-                write!(f, "Unary ").unwrap();
-                write!(f, "{:?} ", self.op).unwrap();
-                write!(f, "{:?}", self.child[0])
+                write!(f, "Unary({:?} {:?})", self.op, self.child[0])
             }
             NodeType::BinOp => {
-                write!(f, "BinOp ").unwrap();
-                write!(f, "{:?} ", self.op).unwrap();
-                write!(f, "{:?}", self.child)
+                write!(f, "BinOp({:?}{:?})", self.op, self.child)
             }
         }
     }
