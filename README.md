@@ -9,7 +9,20 @@ rc>
 ```
 
 
+I used `iMemo` on Windows for schientific caluclation.
+`rc` is a tool to replace `iMemo`.
+
+https://www.vector.co.jp/soft/win95/personal/se213459.html
+
 ## feature
+
+* Arithmetic operations including multiple parentheses
+* support integer, bignum and float
+* k/m/u... suffix
+* binary, decimal, hexdecimal format.
+* some functions
+
+## imprement
 
 * Fully hand written parser
     + Training

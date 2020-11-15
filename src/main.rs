@@ -116,13 +116,8 @@ pub fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
             node.child.push(rhs);
             return (node, i);
         }
-        Token::Num(n) => {
-            node.ty = NodeType::Num;
-            node.value = n;
-            return (node, i+1)
-        }
         _ => {
-            return (node, i);
+            return num(tok, i);
         }
     }
 }
