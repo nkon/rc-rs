@@ -1,7 +1,7 @@
 use std::fmt;
 use std::iter::Peekable;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Token {
     Num(u64),
     Op(char),
@@ -30,7 +30,7 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> u64 {
     n
 }
 
-fn lexer(s: String) -> Vec<Token> {
+pub fn lexer(s: String) -> Vec<Token> {
     let mut ret = Vec::new();
 
     let mut iter = s.chars().peekable();
@@ -61,6 +61,7 @@ fn lexer(s: String) -> Vec<Token> {
 <unary>   ::= <num> | '-' <num> | '+' <num>
 */
 
+#[derive(Clone, PartialEq)]
 pub enum NodeType {
     None,
     Num,   // value <- value
@@ -79,7 +80,6 @@ impl fmt::Debug for NodeType {
     }
 }
 
-// #[derive(Debug)]
 pub struct Node {
     pub ty: NodeType,
     pub value: u64,
@@ -210,7 +210,22 @@ pub fn parse(tok: &Vec<Token>) -> Node {
     node
 }
 
-pub fn eval(n: Node) -> i64 {
+pub fn eval(n: &Node) -> i64 {
+    if n.ty == NodeType::Num {
+        return n.value as i64;
+    } else if n.ty == NodeType::Unary {
+        if n.op == Token::Op('-') {
+            return -1 * eval(&n.child[0]) as i64;
+        }
+    } else if n.ty == NodeType::BinOp {
+        if n.op == Token::Op('+') {
+            return eval(&n.child[0]) + eval(&n.child[1]);
+        } else if n.op == Token::Op('-') {
+            return eval(&n.child[0]) - eval(&n.child[1]);
+        } else if n.op == Token::Op('*') {
+            return eval(&n.child[0]) * eval(&n.child[1]);
+        }
+    }
     return 0;
 }
 
@@ -245,29 +260,29 @@ fn main() {
     println!("(1+2)*3 -> {:?}", parse(&lexer("(1+2)*3".to_string())));
     println!("");
     println!("eval");
-    println!("1 -> {:?}", eval(parse(&lexer("1".to_string()))));
-    println!("0 -> {:?}", eval(parse(&lexer("0".to_string()))));
-    println!("-1 -> {:?}", eval(parse(&lexer("-1".to_string()))));
+    println!("1 -> {:?}", eval(&parse(&lexer("1".to_string()))));
+    println!("0 -> {:?}", eval(&parse(&lexer("0".to_string()))));
+    println!("-1 -> {:?}", eval(&parse(&lexer("-1".to_string()))));
     println!(
         "9223372036854775807 -> {:?}",
-        eval(parse(&lexer("9223372036854775807".to_string())))
+        eval(&parse(&lexer("9223372036854775807".to_string())))
     );
     println!(
-        "-9223372036854775808 -> {:?}",
-        eval(parse(&lexer("-9223372036854775808".to_string())))
+        "-9223372036854775807 -> {:?}",
+        eval(&parse(&lexer("-9223372036854775807".to_string())))
     );
-    println!("1+2 -> {:?}", eval(parse(&lexer("1+2".to_string()))));
-    println!("1-2 -> {:?}", eval(parse(&lexer("1-2".to_string()))));
-    println!("1+-2 -> {:?}", eval(parse(&lexer("1+-2".to_string()))));
-    println!("1*2 -> {:?}", eval(parse(&lexer("1*2".to_string()))));
-    println!("1*2+3 -> {:?}", eval(parse(&lexer("1*2+3".to_string()))));
-    println!("1+2*3 -> {:?}", eval(parse(&lexer("1+2*3".to_string()))));
+    println!("1+2 -> {:?}", eval(&parse(&lexer("1+2".to_string()))));
+    println!("1-2 -> {:?}", eval(&parse(&lexer("1-2".to_string()))));
+    println!("1+-2 -> {:?}", eval(&parse(&lexer("1+-2".to_string()))));
+    println!("1*2 -> {:?}", eval(&parse(&lexer("1*2".to_string()))));
+    println!("1*2+3 -> {:?}", eval(&parse(&lexer("1*2+3".to_string()))));
+    println!("1+2*3 -> {:?}", eval(&parse(&lexer("1+2*3".to_string()))));
     println!(
         "1*(2+3) -> {:?}",
-        eval(parse(&lexer("1*(2+3)".to_string())))
+        eval(&parse(&lexer("1*(2+3)".to_string())))
     );
     println!(
         "(1+2)*3 -> {:?}",
-        eval(parse(&lexer("(1+2)*3".to_string())))
+        eval(&parse(&lexer("(1+2)*3".to_string())))
     );
 }
