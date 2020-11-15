@@ -79,7 +79,7 @@ impl fmt::Debug for NodeType {
     }
 }
 
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct Node {
     pub ty: NodeType,
     pub value: u64,
@@ -98,8 +98,30 @@ impl Node {
     }
 }
 
+impl fmt::Debug for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.ty {
+            NodeType::None => write!(f, "None"),
+            NodeType::Num => {
+                write!(f, "Num ").unwrap();
+                write!(f, "{}", self.value)
+            }
+            NodeType::Unary => {
+                write!(f, "Unary ").unwrap();
+                write!(f, "{:?} ", self.op).unwrap();
+                write!(f, "{:?}", self.child[0])
+            }
+            NodeType::BinOp => {
+                write!(f, "BinOp ").unwrap();
+                write!(f, "{:?} ", self.op).unwrap();
+                write!(f, "{:?}", self.child)
+            }
+        }
+    }
+}
+
 fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("num {:?} {}", tok, i);
+    // println!("num {:?} {}", tok, i);
     let mut node = Node::new();
     match tok[i] {
         Token::Num(n) => {
@@ -114,7 +136,7 @@ fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
 }
 
 fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("unary {:?} {}", tok, i);
+    // println!("unary {:?} {}", tok, i);
     match tok[i] {
         Token::Op('-') | Token::Op('+') => {
             let mut node = Node::new();
@@ -131,10 +153,10 @@ fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
 }
 
 fn primary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("primary {:?} {}", tok, i);
+    // println!("primary {:?} {}", tok, i);
     match tok[i] {
         Token::Op('(') => {
-            let (expr, i) = expr(tok, i+1);
+            let (expr, i) = expr(tok, i + 1);
             return (expr, i + 1);
         }
         _ => {
@@ -144,7 +166,7 @@ fn primary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
 }
 
 fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("mul {:?} {}", tok, i);
+    // println!("mul {:?} {}", tok, i);
     let (lhs, i) = primary(tok, i);
     if tok.len() <= i {
         return (lhs, i);
@@ -166,7 +188,7 @@ fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
 }
 
 fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("expr {:?} {}", tok, i);
+    // println!("expr {:?} {}", tok, i);
     let (lhs, i) = mul(tok, i);
     if tok.len() <= i {
         return (lhs, i);
@@ -187,12 +209,14 @@ fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     }
 }
 
-pub fn parse(s: String) -> Node {
-    let tokens = lexer(s);
-    let i = 0;
-    let (node, _) = expr(&tokens, i);
+pub fn parse(tok: &Vec<Token>) -> Node {
+    let (node, _) = expr(&tok, 0);
 
     node
+}
+
+pub fn eval(n: Node) -> i64 {
+    return 0;
 }
 
 fn main() {
@@ -205,23 +229,50 @@ fn main() {
     println!("+-*/%()^100 -> {:?}", lexer("+-*/%()^-100".to_string()));
     println!("");
     println!("parser");
-    println!("1 -> {:?}", parse("1".to_string()));
-    println!("0 -> {:?}", parse("0".to_string()));
-    println!("-1 -> {:?}", parse("-1".to_string()));
+    println!("1 -> {:?}", parse(&lexer("1".to_string())));
+    println!("0 -> {:?}", parse(&lexer("0".to_string())));
+    println!("-1 -> {:?}", parse(&lexer("-1".to_string())));
     println!(
         "9223372036854775807 -> {:?}",
-        parse("9223372036854775807".to_string())
+        parse(&lexer("9223372036854775807".to_string()))
     );
     println!(
         "-9223372036854775808 -> {:?}",
-        parse("-9223372036854775808".to_string())
+        parse(&lexer("-9223372036854775808".to_string()))
     );
-    println!("1+2 -> {:?}", parse("1+2".to_string()));
-    println!("1-2 -> {:?}", parse("1-2".to_string()));
-    println!("1+-2 -> {:?}", parse("1+-2".to_string()));
-    println!("1*2 -> {:?}", parse("1*2".to_string()));
-    println!("1*2+3 -> {:?}", parse("1*2+3".to_string()));
-    println!("1+2*3 -> {:?}", parse("1+2*3".to_string()));
-    println!("1*(2+3) -> {:?}", parse("1*(2+3)".to_string()));
-    println!("(1+2)*3 -> {:?}", parse("(1+2)*3".to_string()));
+    println!("1+2 -> {:?}", parse(&lexer("1+2".to_string())));
+    println!("1-2 -> {:?}", parse(&lexer("1-2".to_string())));
+    println!("1+-2 -> {:?}", parse(&lexer("1+-2".to_string())));
+    println!("1*2 -> {:?}", parse(&lexer("1*2".to_string())));
+    println!("1*2+3 -> {:?}", parse(&lexer("1*2+3".to_string())));
+    println!("1+2*3 -> {:?}", parse(&lexer("1+2*3".to_string())));
+    println!("1*(2+3) -> {:?}", parse(&lexer("1*(2+3)".to_string())));
+    println!("(1+2)*3 -> {:?}", parse(&lexer("(1+2)*3".to_string())));
+    println!("");
+    println!("eval");
+    println!("1 -> {:?}", eval(parse(&lexer("1".to_string()))));
+    println!("0 -> {:?}", eval(parse(&lexer("0".to_string()))));
+    println!("-1 -> {:?}", eval(parse(&lexer("-1".to_string()))));
+    println!(
+        "9223372036854775807 -> {:?}",
+        eval(parse(&lexer("9223372036854775807".to_string())))
+    );
+    println!(
+        "-9223372036854775808 -> {:?}",
+        eval(parse(&lexer("-9223372036854775808".to_string())))
+    );
+    println!("1+2 -> {:?}", eval(parse(&lexer("1+2".to_string()))));
+    println!("1-2 -> {:?}", eval(parse(&lexer("1-2".to_string()))));
+    println!("1+-2 -> {:?}", eval(parse(&lexer("1+-2".to_string()))));
+    println!("1*2 -> {:?}", eval(parse(&lexer("1*2".to_string()))));
+    println!("1*2+3 -> {:?}", eval(parse(&lexer("1*2+3".to_string()))));
+    println!("1+2*3 -> {:?}", eval(parse(&lexer("1+2*3".to_string()))));
+    println!(
+        "1*(2+3) -> {:?}",
+        eval(parse(&lexer("1*(2+3)".to_string())))
+    );
+    println!(
+        "(1+2)*3 -> {:?}",
+        eval(parse(&lexer("(1+2)*3".to_string())))
+    );
 }
