@@ -1,4 +1,5 @@
 rc - simple terminal calulator
+==============================
 
 ```
 $ rc
@@ -20,7 +21,8 @@ https://www.vector.co.jp/soft/win95/personal/se213459.html
     + Arithmetic operations including multiple parentheses
     + support integer, bignum and float
     + k/M/G/T/m/u/n/p ... suffix
-    + binary, decimal, hexdecimal format.
+    + binary(0b....), decimal, hexdecimal(0x....) format.
+        - '_' ... separator
     + built-in functions
     + user defined variable/function
 * REPL
