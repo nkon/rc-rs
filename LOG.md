@@ -31,3 +31,12 @@ pub struct Node {
 
 `pub fn parse(s: String) -> Node`
 
+# 9698ed3cd38eca4973203654ff1f099f336f39f7
+
+* 文字列を、`fn lexer(s: String) -> Vec<Token>`でトークンに分解し、`pub fn parse(s: String) -> Node`で再帰降順によりパースできた。
+* `tok_num`で、`ma)tch`の`_`がうまく動かなかった→`if`で書きなおした。
+* Debug printのため、 `enum NodeType`に `fmt::Debug`を実装した。
+* Lexerは、参考ページを参照して、`peek()`で先読みするようにしたが、全入力をバッファーに割り当てて`Vec`のインデックスで操作したほうが良いかもしれない。
+* Parserは、全トークン列を`Vec`に割り当てて、インデックスで（イテレータを使わずに）アクセスしている。読み込んだ結果とトークン数を返すために、返り値はタプルとなっている。
+* この段階ではエラー処理はしていない。将来的には`Result<T,E>`を使ったエラー処理が必要となるだろう。
+

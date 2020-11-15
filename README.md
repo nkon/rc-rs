@@ -16,12 +16,20 @@ https://www.vector.co.jp/soft/win95/personal/se213459.html
 
 ## feature
 
-* Arithmetic operations including multiple parentheses
-* support integer, bignum and float
-* k/m/u... suffix
-* binary, decimal, hexdecimal format.
-* some functions
-
+* Calculator
+    + Arithmetic operations including multiple parentheses
+    + support integer, bignum and float
+    + k/M/G/T/m/u/n/p ... suffix
+    + binary, decimal, hexdecimal format.
+    + built-in functions
+    + user defined variable/function
+* REPL
+    + history
+    + hilight parlens
+    + Online help
+* Install
+    + Single binary
+    + Support Linux/Windows/Mac
 ## imprement
 
 * Fully hand written parser

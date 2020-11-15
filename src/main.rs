@@ -41,7 +41,7 @@ fn lexer(s: String) -> Vec<Token> {
                 let n = tok_num(c, &mut iter);
                 ret.push(Token::Num(n));
             }
-            '+' | '-' => {
+            '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' => {
                 iter.next();
                 ret.push(Token::Op(c));
             }
@@ -54,11 +54,18 @@ fn lexer(s: String) -> Vec<Token> {
     ret
 }
 
+/*
+<expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
+<mul>     ::= <primary> ( '*' <primary> | '/' <primary>)*
+<primary> ::= <unary> | '(' <expr> ')'
+<unary>   ::= <num> | '-' <num>
+*/
+
 pub enum NodeType {
     None,
-    Num,
-    Unary,
-    BinOp,
+    Num,   // value <- value
+    Unary, // op <- operator, child[0] <- operand
+    BinOp, // op <- operator, child[0] <- lhs, child[1] <- rhs
 }
 
 impl fmt::Debug for NodeType {
@@ -159,6 +166,7 @@ fn main() {
     println!("1+1 -> {:?}", lexer("1+1".to_string()));
     println!("1-1 -> {:?}", lexer("1-1".to_string()));
     println!("-1 -> {:?}", lexer("-1".to_string()));
+    println!("+-*/%()^100 -> {:?}", lexer("+-*/%()^-100".to_string()));
     println!("");
     println!("parser");
     println!("1 -> {:?}", parse("1".to_string()));
@@ -173,4 +181,6 @@ fn main() {
         parse("-9223372036854775808".to_string())
     );
     println!("1+2 -> {:?}", parse("1+2".to_string()));
+    println!("1-2 -> {:?}", parse("1-2".to_string()));
+    println!("1+-2 -> {:?}", parse("1+-2".to_string()));
 }
