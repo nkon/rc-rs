@@ -98,7 +98,7 @@ impl Node {
     }
 }
 
-pub fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     println!("num, i={}", i);
     let mut node = Node::new();
     match tok[i] {
@@ -112,7 +112,7 @@ pub fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     (node, i + 1)
 }
 
-pub fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     println!("unary, i={}", i);
     let mut node = Node::new();
     match tok[i] {
@@ -129,9 +129,31 @@ pub fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     }
 }
 
-pub fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    println!("expr, i={}", i);
+fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+    println!("mul, i={}", i);
     let (lhs, i) = unary(tok, i);
+    if tok.len() <= i {
+        return (lhs, i);
+    }
+    let mut node = Node::new();
+    match tok[i] {
+        Token::Op('*') | Token::Op('/') | Token::Op('%') => {
+            node.ty = NodeType::BinOp;
+            node.op = tok[i];
+            let (rhs, i) = unary(tok, i + 1);
+            node.child.push(lhs);
+            node.child.push(rhs);
+            return (node, i);
+        }
+        _ => {
+            return (lhs, i);
+        }
+    }
+}
+
+fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+    println!("expr, i={}", i);
+    let (lhs, i) = mul(tok, i);
     if tok.len() <= i {
         return (lhs, i);
     }
@@ -140,10 +162,10 @@ pub fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
         Token::Op('+') | Token::Op('-') => {
             node.ty = NodeType::BinOp;
             node.op = tok[i];
-            let (rhs, i) = unary(tok, i + 1);
+            let (rhs, i) = mul(tok, i + 1);
             node.child.push(lhs);
             node.child.push(rhs);
-            return (node, i + 1);
+            return (node, i);
         }
         _ => {
             return (lhs, i);
@@ -183,4 +205,7 @@ fn main() {
     println!("1+2 -> {:?}", parse("1+2".to_string()));
     println!("1-2 -> {:?}", parse("1-2".to_string()));
     println!("1+-2 -> {:?}", parse("1+-2".to_string()));
+    println!("1*2 -> {:?}", parse("1*2".to_string()));
+    println!("1*2+3 -> {:?}", parse("1*2+3".to_string()));
+    println!("1+2*3 -> {:?}", parse("1+2*3".to_string()));
 }
