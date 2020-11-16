@@ -514,15 +514,40 @@ mod tests {
 
     #[test]
     fn test_eval() {
-        assert_eq!(eval(&parse(&lexer("1+2".to_string()))), 3);
-        assert_eq!(eval(&parse(&lexer("1+2*3".to_string()))), 7);
-        assert_eq!(eval(&parse(&lexer("1*2+3".to_string()))), 5);
-        assert_eq!(eval(&parse(&lexer("1+2+3".to_string()))), 6);
-        assert_eq!(eval(&parse(&lexer("(1+2)*3".to_string()))), 9);
-        assert_eq!(eval(&parse(&lexer("-2".to_string()))), -2);
         assert_eq!(
-            eval(&parse(&lexer("-9223372036854775807".to_string()))),
-            -9223372036854775807
+            format!("{:?}", eval(&parse(&lexer("1+2".to_string())))),
+            "Num(3)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&lexer("1+2*3".to_string())))),
+            "Num(7)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&lexer("1*2+3".to_string())))),
+            "Num(5)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&lexer("1+2+3".to_string())))),
+            "Num(6)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&lexer("(1+2)*3".to_string())))),
+            "Num(9)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&lexer("-2".to_string())))),
+            "Num(-2)"
+        );
+        assert_eq!(
+            format!(
+                "{:?}",
+                eval(&parse(&lexer("-9223372036854775807".to_string())))
+            ),
+            "Num(-9223372036854775807)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&lexer("1.1+2.2".to_string())))),
+            "FNum(3.3000000000000003)"
         );
     }
 }
