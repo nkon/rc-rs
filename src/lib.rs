@@ -1,6 +1,9 @@
 use std::fmt;
 use std::iter::Peekable;
 
+mod readline;
+pub use readline::readline;
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Token {
     Num(u64),

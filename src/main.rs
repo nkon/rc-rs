@@ -72,8 +72,6 @@ fn print_usage(program: &str, opts: Options) {
 
 
 fn main() {
-
-
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
 
@@ -95,4 +93,5 @@ fn main() {
         run_test();
         std::process::exit(0);
     }
+    readline();
 }
