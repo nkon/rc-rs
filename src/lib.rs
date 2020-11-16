@@ -43,11 +43,57 @@ fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Str
     }
 }
 
+fn tok_num_int<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> Token{
+    let mut radix = 10;
+    let mut mantissa = String::from("0");
+
+    if let Some(&c) = iter.peek() {
+        match c {
+            'x' | 'X' => {
+                radix = 16;
+                iter.next();
+            }
+            'b' | 'B' => {
+                radix = 2;
+                iter.next();
+            }
+            '0'..='7' => {
+                radix = 8;
+            }
+            _ => {
+                return Token::Num(0);
+            }
+        }
+        
+    }
+    while let Some(&c) = iter.peek() {
+        match c {
+            '0'..='9' | 'a'..='f' | 'A'..='F' => {
+                mantissa.push(c);
+                iter.next();
+            }
+            '_' => {
+                iter.next();
+            }
+            _ => {
+                break;
+            }
+        }
+    }
+    return Token::Num(i128::from_str_radix(&mantissa, radix).unwrap());
+
+}
+
+
 fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
     let mut mantissa = String::from(c);
     let mut exponent = String::new();
     let mut has_dot = false;
     let mut has_exponent = false;
+    
+    if mantissa == "0" {
+        return tok_num_int(c, iter);
+    }
     while let Some(&c) = iter.peek() {
         match c {
             '0'..='9' => {
@@ -428,6 +474,9 @@ mod tests {
         assert_eq!(lexer("1.1E2".to_string()), [Token::FNum(110.0)]);
         assert_eq!(lexer("1.1E-2".to_string()), [Token::FNum(0.011)]);
         assert_eq!(lexer("100_000".to_string()), [Token::Num(100000)]);
+        assert_eq!(lexer("0xa".to_string()), [Token::Num(10)]);
+        assert_eq!(lexer("011".to_string()), [Token::Num(9)]);
+        assert_eq!(lexer("0b11".to_string()), [Token::Num(3)]);
         assert_eq!(
             lexer("9223372036854775807".to_string()),
             [Token::Num(9223372036854775807)]
