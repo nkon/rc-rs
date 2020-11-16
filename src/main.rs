@@ -5,7 +5,7 @@ use rc::*;
 
 fn run_test() {
     println!("lexer");
-    println!("1 -> {:?}", rc::lexer("1".to_string()));
+    println!("1 -> {:?}", lexer("1".to_string()));
     println!("10 1 -> {:?}", lexer("10 1".to_string()));
     println!("1+1 -> {:?}", lexer("1+1".to_string()));
     println!("1-1 -> {:?}", lexer("1-1".to_string()));
@@ -95,6 +95,4 @@ fn main() {
         run_test();
         std::process::exit(0);
     }
-
-
 }

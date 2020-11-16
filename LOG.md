@@ -44,3 +44,8 @@ pub struct Node {
 * `pub fn parse(tok: &Vec<Token>) -> Node `が返したASTを`pub fn eval(n: &Node) -> i64 `が計算できるようになった。
 * Debug printを見やすくした。
 
+# e3a9bc66f172aa7583c6cf819fdceb8c439ad47f
+
+* メインのコードを `lib.rs`に移動した。ユニットテストを書きやすくするため。
+* `getopts`を使ったオプション解釈機能を実装。`cargo run -- --test`で`run_test()`が実行される。
+

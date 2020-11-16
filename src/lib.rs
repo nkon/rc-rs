@@ -1,4 +1,3 @@
-
 use std::fmt;
 use std::iter::Peekable;
 
@@ -221,4 +220,60 @@ pub fn eval(n: &Node) -> i64 {
         }
     }
     return 0;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_lexer() {
+        assert_eq!(lexer("1".to_string()), [Token::Num(1)]);
+        assert_eq!(lexer("0".to_string()), [Token::Num(0)]);
+        assert_eq!(lexer("10".to_string()), [Token::Num(10)]);
+        assert_eq!(
+            lexer("9223372036854775807".to_string()),
+            [Token::Num(9223372036854775807)]
+        );
+        assert_eq!(
+            lexer("18446744073709551615".to_string()),
+            [Token::Num(18446744073709551615)]
+        );
+        assert_eq!(
+            lexer("1+2+3".to_string()),
+            [
+                Token::Num(1),
+                Token::Op('+'),
+                Token::Num(2),
+                Token::Op('+'),
+                Token::Num(3)
+            ]
+        );
+        assert_eq!(
+            lexer(" 1 + 2 + 3 ".to_string()),
+            [
+                Token::Num(1),
+                Token::Op('+'),
+                Token::Num(2),
+                Token::Op('+'),
+                Token::Num(3)
+            ]
+        );
+        assert_eq!(
+            lexer("1 2 34+-*/%()-^".to_string()),
+            [
+                Token::Num(1),
+                Token::Num(2),
+                Token::Num(34),
+                Token::Op('+'),
+                Token::Op('-'),
+                Token::Op('*'),
+                Token::Op('/'),
+                Token::Op('%'),
+                Token::Op('('),
+                Token::Op(')'),
+                Token::Op('-'),
+                Token::Op('^')
+            ]
+        );
+    }
 }
