@@ -6,16 +6,17 @@ pub use readline::readline;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Token {
-    Num(u64),
+    Num(i128),
+    FNum(f64),
     Op(char),
 }
 
-fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> u64 {
-    let mut n = c.to_string().parse::<u64>().unwrap();
+fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> i128 {
+    let mut n = c.to_string().parse::<i128>().unwrap();
     while let Some(&c) = iter.peek() {
         match c {
             '0'..='9' => {
-                n = n * 10 + c.to_string().parse::<u64>().unwrap();
+                n = n * 10 + c.to_string().parse::<i128>().unwrap();
                 iter.next();
             }
             _ => {
@@ -23,7 +24,69 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> u64 {
             }
         }
     }
-    n
+    return n;
+}
+
+fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> String {
+    let mut ret = String::from(c);
+    if ret == "-"
+        || ret == "0"
+        || ret == "1"
+        || ret == "2"
+        || ret == "3"
+        || ret == "4"
+        || ret == "5"
+        || ret == "6"
+        || ret == "7"
+        || ret == "8"
+        || ret == "9"
+    {
+        iter.next();
+        while let Some(&c) = iter.peek() {
+            match c {
+                '0'..='9' => {
+                    ret.push(c);
+                    iter.next();
+                }
+                _ => {
+                    return ret;
+                }
+            }
+        }
+        return ret;
+    } else {
+        return String::from(' ');
+    }
+}
+
+fn tok_fnum<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> f64 {
+    // let mut mantissa = c.to_string();
+    let mut mantissa = String::new();
+    let mut exponent = String::new();
+    while let Some(&c) = iter.peek() {
+        match c {
+            '0'..='9' | '.' => {
+                mantissa.push(c);
+                iter.next();
+            }
+            'e' | 'E' => {
+                iter.next();
+                let &c = iter.peek().unwrap();
+                exponent = tok_get_num(c, iter);
+                break;
+            }
+            _ => {
+                return mantissa.parse::<f64>().unwrap();
+            }
+        }
+    }
+    if exponent == "" {
+        return mantissa.parse::<f64>().unwrap();
+    } else {
+        mantissa.push_str("e");
+        mantissa.push_str(&exponent);
+        return mantissa.parse::<f64>().unwrap();
+    }
 }
 
 pub fn lexer(s: String) -> Vec<Token> {
@@ -36,6 +99,11 @@ pub fn lexer(s: String) -> Vec<Token> {
                 iter.next();
                 let n = tok_num(c, &mut iter);
                 ret.push(Token::Num(n));
+            }
+            'f' => {
+                iter.next();
+                let n = tok_fnum(c, &mut iter);
+                ret.push(Token::FNum(n));
             }
             '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' => {
                 iter.next();
@@ -78,7 +146,7 @@ impl fmt::Debug for NodeType {
 
 pub struct Node {
     pub ty: NodeType,
-    pub value: u64,
+    pub value: i128,
     pub op: Token,
     pub child: Vec<Node>, // child[0]: LHS, child[1]: RHS
 }
@@ -220,6 +288,8 @@ pub fn eval(n: &Node) -> i64 {
             return eval(&n.child[0]) - eval(&n.child[1]);
         } else if n.op == Token::Op('*') {
             return eval(&n.child[0]) * eval(&n.child[1]);
+        } else if n.op == Token::Op('/') {
+            return eval(&n.child[0]) / eval(&n.child[1]);
         }
     }
     return 0;
@@ -228,6 +298,7 @@ pub fn eval(n: &Node) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_lexer() {
         assert_eq!(lexer("1".to_string()), [Token::Num(1)]);
@@ -277,6 +348,64 @@ mod tests {
                 Token::Op('-'),
                 Token::Op('^')
             ]
+        );
+    }
+
+    #[test]
+    fn test_parser() {
+        assert_eq!(
+            format!("{:?}", parse(&lexer("1+2".to_string()))),
+            "BinOp(Op('+') [Num(1), Num(2)])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("1-2".to_string()))),
+            "BinOp(Op('-') [Num(1), Num(2)])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("1+-2".to_string()))),
+            "BinOp(Op('+') [Num(1), Unary(Op('-') Num(2))])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("1*2".to_string()))),
+            "BinOp(Op('*') [Num(1), Num(2)])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("1*2+3".to_string()))),
+            "BinOp(Op('+') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("1*(2+3)".to_string()))),
+            "BinOp(Op('*') [Num(1), BinOp(Op('+') [Num(2), Num(3)])])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("1+2+3".to_string()))),
+            "BinOp(Op('+') [BinOp(Op('+') [Num(1), Num(2)]), Num(3)])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("(1+2)+3".to_string()))),
+            "BinOp(Op('+') [BinOp(Op('+') [Num(1), Num(2)]), Num(3)])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("1*2*3".to_string()))),
+            "BinOp(Op('*') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("(1*2)*3".to_string()))),
+            "BinOp(Op('*') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
+        );
+    }
+
+    #[test]
+    fn test_eval() {
+        assert_eq!(eval(&parse(&lexer("1+2".to_string()))), 3);
+        assert_eq!(eval(&parse(&lexer("1+2*3".to_string()))), 7);
+        assert_eq!(eval(&parse(&lexer("1*2+3".to_string()))), 5);
+        assert_eq!(eval(&parse(&lexer("1+2+3".to_string()))), 6);
+        assert_eq!(eval(&parse(&lexer("(1+2)*3".to_string()))), 9);
+        assert_eq!(eval(&parse(&lexer("-2".to_string()))), -2);
+        assert_eq!(
+            eval(&parse(&lexer("-9223372036854775807".to_string()))),
+            -9223372036854775807
         );
     }
 }

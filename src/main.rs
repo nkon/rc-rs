@@ -11,6 +11,9 @@ fn run_test() {
     println!("1-1 -> {:?}", lexer("1-1".to_string()));
     println!("-1 -> {:?}", lexer("-1".to_string()));
     println!("+-*/%()^100 -> {:?}", lexer("+-*/%()^-100".to_string()));
+    println!("f1.234 -> {:?}", lexer("f1.234".to_string()));
+    println!("f1.234e-56 -> {:?}", lexer("f1.234e-56".to_string()));
+    println!("-f1.234e-56-78 -> {:?}", lexer("-f1.234e-56-78".to_string()));
     println!("");
     println!("parser");
     println!("1 -> {:?}", parse(&lexer("1".to_string())));
