@@ -39,7 +39,7 @@ fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Str
         }
         return ret;
     } else {
-        return String::from(' ');
+        return String::from('0');
     }
 }
 
