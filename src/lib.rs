@@ -129,6 +129,7 @@ pub fn lexer(s: String) -> Vec<Token> {
 pub enum NodeType {
     None,
     Num,   // value <- value
+    FNum,  // fvalue <- value
     Unary, // op <- operator, child[0] <- operand
     BinOp, // op <- operator, child[0] <- lhs, child[1] <- rhs
 }
@@ -138,6 +139,7 @@ impl fmt::Debug for NodeType {
         match *self {
             NodeType::None => write!(f, "None"),
             NodeType::Num => write!(f, "Num"),
+            NodeType::FNum => write!(f, "FNum"),
             NodeType::Unary => write!(f, "Unary"),
             NodeType::BinOp => write!(f, "BinOp"),
         }
@@ -147,6 +149,7 @@ impl fmt::Debug for NodeType {
 pub struct Node {
     pub ty: NodeType,
     pub value: i128,
+    pub fvalue: f64,
     pub op: Token,
     pub child: Vec<Node>, // child[0]: LHS, child[1]: RHS
 }
@@ -156,6 +159,7 @@ impl Node {
         Node {
             ty: NodeType::None,
             value: 0,
+            fvalue: 0.0,
             child: Vec::new(),
             op: Token::Op(' '),
         }
@@ -167,6 +171,7 @@ impl fmt::Debug for Node {
         match self.ty {
             NodeType::None => write!(f, "None"),
             NodeType::Num => write!(f, "Num({})", self.value),
+            NodeType::FNum => write!(f, "FNum({})", self.fvalue),
             NodeType::Unary => write!(f, "Unary({:?} {:?})", self.op, self.child[0]),
             NodeType::BinOp => write!(f, "BinOp({:?} {:?})", self.op, self.child),
         }
@@ -180,6 +185,11 @@ fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
         Token::Num(n) => {
             node.ty = NodeType::Num;
             node.value = n;
+            return (node, i + 1);
+        }
+        Token::FNum(n) => {
+            node.ty = NodeType::FNum;
+            node.fvalue = n;
             return (node, i + 1);
         }
         _ => {
