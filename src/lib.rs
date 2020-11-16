@@ -293,7 +293,7 @@ pub fn eval(n: &Node) -> Node {
             }
             if n.child[0].ty == NodeType::FNum {
                 ret_node.ty = NodeType::FNum;
-                ret_node.value = -n.child[0].value;
+                ret_node.fvalue = -n.child[0].fvalue;
                 return ret_node;
             }
         }
