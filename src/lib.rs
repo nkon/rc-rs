@@ -54,6 +54,9 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
                 mantissa.push(c);
                 iter.next();
             }
+            '_' => {
+                iter.next();
+            }
             '.' => {
                 mantissa.push(c);
                 iter.next();
@@ -417,10 +420,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_lexer() {
+    fn test_num_format() {
         assert_eq!(lexer("1".to_string()), [Token::Num(1)]);
         assert_eq!(lexer("0".to_string()), [Token::Num(0)]);
         assert_eq!(lexer("10".to_string()), [Token::Num(10)]);
+        assert_eq!(lexer("1.1".to_string()), [Token::FNum(1.1)]);
+        assert_eq!(lexer("1.1E2".to_string()), [Token::FNum(110.0)]);
+        assert_eq!(lexer("1.1E-2".to_string()), [Token::FNum(0.011)]);
+        assert_eq!(lexer("100_000".to_string()), [Token::Num(100000)]);
         assert_eq!(
             lexer("9223372036854775807".to_string()),
             [Token::Num(9223372036854775807)]
@@ -429,6 +436,10 @@ mod tests {
             lexer("18446744073709551615".to_string()),
             [Token::Num(18446744073709551615)]
         );
+    }
+
+    #[test]
+    fn test_lexer() {
         assert_eq!(
             lexer("1+2+3".to_string()),
             [
