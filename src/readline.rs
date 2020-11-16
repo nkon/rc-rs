@@ -10,7 +10,7 @@ pub fn readline() -> String{
         io::stdout().flush().unwrap();
         io::stdin().read_line(&mut line).expect("Failed to read line");
         println!("{}", line);
-        println!("{}", eval(&parse(&lexer(line.clone()))));
+        println!("{:?}", eval(&parse(&lexer(line.clone()))));
         line.clear();
     }
 }
