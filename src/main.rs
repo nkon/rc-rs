@@ -67,6 +67,7 @@ fn run_test() {
     );
     println!("1+2+3 -> {:?}", eval(&parse(&lexer("1+2+3".to_string()))));
     println!("1*2*3 -> {:?}", eval(&parse(&lexer("1*2*3".to_string()))));
+    println!("(1+2)*(3+4) -> {:?}", eval(&parse(&lexer("(1+2)*(3+4)".to_string()))));
     println!("1.1*2*3 -> {:?}", eval(&parse(&lexer("1.1*2*3".to_string()))));
 }
 
