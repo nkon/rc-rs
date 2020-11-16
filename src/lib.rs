@@ -11,22 +11,6 @@ pub enum Token {
     Op(char),
 }
 
-fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> i128 {
-    let mut n = c.to_string().parse::<i128>().unwrap();
-    while let Some(&c) = iter.peek() {
-        match c {
-            '0'..='9' => {
-                n = n * 10 + c.to_string().parse::<i128>().unwrap();
-                iter.next();
-            }
-            _ => {
-                return n;
-            }
-        }
-    }
-    return n;
-}
-
 fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> String {
     let mut ret = String::from(c);
     if ret == "-"
@@ -59,34 +43,41 @@ fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Str
     }
 }
 
-fn tok_fnum<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> f64 {
-    // let mut mantissa = c.to_string();
-    let mut mantissa = String::new();
+fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
+    let mut mantissa = String::from(c);
     let mut exponent = String::new();
+    let mut has_dot = false;
+    let mut has_exponent = false;
     while let Some(&c) = iter.peek() {
         match c {
-            '0'..='9' | '.' => {
+            '0'..='9' => {
                 mantissa.push(c);
                 iter.next();
             }
+            '.' => {
+                mantissa.push(c);
+                iter.next();
+                has_dot = true;
+            }
             'e' | 'E' => {
                 iter.next();
+                has_exponent = true;
                 let &c = iter.peek().unwrap();
                 exponent = tok_get_num(c, iter);
                 break;
             }
-            _ => {
-                return mantissa.parse::<f64>().unwrap();
-            }
+            _ => { break;}
         }
     }
-    if exponent == "" {
-        return mantissa.parse::<f64>().unwrap();
-    } else {
+    if !has_dot {
+        return Token::Num(mantissa.parse::<i128>().unwrap());
+    }
+    if has_exponent {
         mantissa.push_str("e");
         mantissa.push_str(&exponent);
-        return mantissa.parse::<f64>().unwrap();
+        return Token::FNum(mantissa.parse::<f64>().unwrap());
     }
+    return Token::FNum(mantissa.parse::<f64>().unwrap());
 }
 
 pub fn lexer(s: String) -> Vec<Token> {
@@ -97,13 +88,8 @@ pub fn lexer(s: String) -> Vec<Token> {
         match c {
             '0'..='9' => {
                 iter.next();
-                let n = tok_num(c, &mut iter);
-                ret.push(Token::Num(n));
-            }
-            'f' => {
-                iter.next();
-                let n = tok_fnum(c, &mut iter);
-                ret.push(Token::FNum(n));
+                let tk = tok_num(c, &mut iter);
+                ret.push(tk);
             }
             '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' => {
                 iter.next();
