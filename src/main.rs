@@ -8,6 +8,8 @@ fn run_test() {
     println!("0xa -> {:?}", lexer("0xa".to_string()));
     println!("011 -> {:?}", lexer("011".to_string()));
     println!("0b11 -> {:?}", lexer("0b11".to_string()));
+    println!("1.1 -> {:?}", lexer("1.1".to_string()));
+    println!("0.1 -> {:?}", lexer("0.1".to_string()));
     println!("1 -> {:?}", lexer("1".to_string()));
     println!("0 -> {:?}", lexer("0".to_string()));
     println!("10 1 -> {:?}", lexer("10 1".to_string()));

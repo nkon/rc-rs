@@ -43,7 +43,7 @@ fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Str
     }
 }
 
-fn tok_num_int<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> Token{
+fn tok_num_int<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> Token {
     let mut radix = 10;
     let mut mantissa = String::from("0");
 
@@ -64,7 +64,6 @@ fn tok_num_int<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> To
                 return Token::Num(0);
             }
         }
-        
     }
     while let Some(&c) = iter.peek() {
         match c {
@@ -81,18 +80,25 @@ fn tok_num_int<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> To
         }
     }
     return Token::Num(i128::from_str_radix(&mantissa, radix).unwrap());
-
 }
-
 
 fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
     let mut mantissa = String::from(c);
     let mut exponent = String::new();
     let mut has_dot = false;
     let mut has_exponent = false;
-    
     if mantissa == "0" {
-        return tok_num_int(c, iter);
+        match iter.peek() {
+            Some(&c) => match c {
+                '0'..='9' | 'a'..='f' | 'A'..='F' | 'x' | 'X' => {
+                    return tok_num_int(c, iter);
+                }
+                _ => {}
+            },
+            None => {
+                return Token::Num(0);
+            }
+        }
     }
     while let Some(&c) = iter.peek() {
         match c {
@@ -471,6 +477,7 @@ mod tests {
         assert_eq!(lexer("0".to_string()), [Token::Num(0)]);
         assert_eq!(lexer("10".to_string()), [Token::Num(10)]);
         assert_eq!(lexer("1.1".to_string()), [Token::FNum(1.1)]);
+        assert_eq!(lexer("0.1".to_string()), [Token::FNum(0.1)]);
         assert_eq!(lexer("1.1E2".to_string()), [Token::FNum(110.0)]);
         assert_eq!(lexer("1.1E-2".to_string()), [Token::FNum(0.011)]);
         assert_eq!(lexer("100_000".to_string()), [Token::Num(100000)]);
