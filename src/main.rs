@@ -21,6 +21,9 @@ fn run_test() {
     println!("1.234e-56 -> {:?}", lexer("1.234e-56".to_string()));
     println!("-1.234e-56-78 -> {:?}", lexer("-1.234e-56-78".to_string()));
     println!("1/(2*3.14*270e-12*31.4e3) -> {:?}", lexer("1/(2*3.14*270e-12*31.4e3)".to_string()));
+    lexer("0b12".to_string());
+    lexer("018".to_string());
+
     println!("");
     println!("parser");
     println!("1 -> {:?}", parse(&lexer("1".to_string())));
