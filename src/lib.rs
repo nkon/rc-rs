@@ -4,7 +4,7 @@ use std::iter::Peekable;
 mod readline;
 pub use readline::readline;
 
-// TODO: Separete lexter into `lexer.rs`.
+// TODO: Separate lexer into `lexer.rs`.
 // TODO: add Doc-test.
 
 #[derive(Debug, Copy, Clone, PartialEq)]

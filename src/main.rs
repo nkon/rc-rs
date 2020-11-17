@@ -94,7 +94,7 @@ fn main() {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print this help");
     opts.optflag("d", "debug", "debug mode");
-    opts.optflag("", "test", "run bult-in test");
+    opts.optflag("", "test", "run built-in test");
     opts.optopt("s", "script", "run script", "FILE");
 
     let matches = match opts.parse(&args[1..]) {
