@@ -15,34 +15,26 @@ pub enum Token {
 }
 
 fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> String {
-    let mut ret = String::from(c);
-    if ret == "-"
-        || ret == "0"
-        || ret == "1"
-        || ret == "2"
-        || ret == "3"
-        || ret == "4"
-        || ret == "5"
-        || ret == "6"
-        || ret == "7"
-        || ret == "8"
-        || ret == "9"
-    {
-        iter.next();
-        while let Some(&c) = iter.peek() {
-            match c {
-                '0'..='9' => {
-                    ret.push(c);
-                    iter.next();
-                }
-                _ => {
-                    return ret;
+    match c {
+        '-' | '0'..='9' => {
+            let mut ret = String::from(c);
+            iter.next();
+            while let Some(&c) = iter.peek() {
+                match c {
+                    '0'..='9' => {
+                        ret.push(c);
+                        iter.next();
+                    }
+                    _ => {
+                        return ret;
+                    }
                 }
             }
+            return ret;
         }
-        return ret;
-    } else {
-        return String::from('0');
+        _ => {
+            return String::from('0');
+        }
     }
 }
 
