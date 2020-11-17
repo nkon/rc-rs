@@ -2,7 +2,10 @@ use std::fmt;
 use std::iter::Peekable;
 
 mod readline;
+mod run_test;
+
 pub use readline::readline;
+pub use run_test::run_test;
 
 // TODO: Separate lexer into `lexer.rs`.
 // TODO: add Doc-test.
@@ -530,41 +533,6 @@ pub fn eval(n: &Node) -> Node {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_num_format() {
-        assert_eq!(lexer("1".to_string()), [Token::Num(1)]);
-        assert_eq!(lexer("0".to_string()), [Token::Num(0)]);
-        assert_eq!(lexer("10".to_string()), [Token::Num(10)]);
-        assert_eq!(lexer("1.1".to_string()), [Token::FNum(1.1)]);
-        assert_eq!(lexer("0.1".to_string()), [Token::FNum(0.1)]);
-        assert_eq!(lexer("1.1E2".to_string()), [Token::FNum(110.0)]);
-        assert_eq!(lexer("1.1E-2".to_string()), [Token::FNum(0.011)]);
-        assert_eq!(lexer("100_000".to_string()), [Token::Num(100000)]);
-        assert_eq!(lexer("0xa".to_string()), [Token::Num(10)]);
-        assert_eq!(lexer("011".to_string()), [Token::Num(9)]);
-        assert_eq!(lexer("0b11".to_string()), [Token::Num(3)]);
-        assert_eq!(lexer("1e3".to_string()), [Token::FNum(1000.0)]);
-        assert_eq!(
-            lexer("9223372036854775807".to_string()),
-            [Token::Num(9223372036854775807)]
-        );
-        assert_eq!(
-            lexer("18446744073709551615".to_string()),
-            [Token::Num(18446744073709551615)]
-        );
-    }
-
-    // #[test]
-    // #[should_panic(expected = "Error: Integer format: invalid digit found in string 0b12")]
-    // fn test_fmt1() {
-    //     lexer("0b12".to_string());
-    // }
-    // #[test]
-    // #[should_panic(expected = "Error: Integer format: invalid digit found in string 018")]
-    // fn test_fmt2() {
-    //     lexer("018".to_string());
-    // }
 
     #[test]
     fn test_lexer() {
