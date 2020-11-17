@@ -91,8 +91,7 @@ fn tok_num_int<T: Iterator<Item = char>>(
     }
 }
 
-// TODO: return `Result<Token, String>` for error handling.
-fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
+fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Result<Token, String> {
     let mut mantissa = String::from(c);
     let mut exponent = String::new();
     let mut has_dot = false;
@@ -100,18 +99,13 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
     if mantissa == "0" {
         match iter.peek() {
             Some(&c) => match c {
-                '0'..='9' | 'a'..='f' | 'A'..='F' | 'x' | 'X' => match tok_num_int(c, iter) {
-                    Ok(tok) => {
-                        return tok;
-                    }
-                    Err(e) => {
-                        panic!(e);
-                    }
-                },
+                '0'..='9' | 'a'..='f' | 'A'..='F' | 'x' | 'X' => {
+                    return tok_num_int(c, iter);
+                }
                 _ => {}
             },
             None => {
-                return Token::Num(0);
+                return Ok(Token::Num(0));
             }
         }
     }
@@ -143,14 +137,27 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
         }
     }
     if !has_dot {
-        return Token::Num(mantissa.parse::<i128>().unwrap());
+        match mantissa.parse::<i128>() {
+            Ok(int) => {
+                return Ok(Token::Num(int));
+            }
+            Err(e) => {
+                return Err(format!("Error: Integer format: {} {}", e, mantissa));
+            }
+        }
     }
     if has_exponent {
         mantissa.push_str("e");
         mantissa.push_str(&exponent);
-        return Token::FNum(mantissa.parse::<f64>().unwrap());
     }
-    return Token::FNum(mantissa.parse::<f64>().unwrap());
+    match mantissa.parse::<f64>() {
+        Ok(float) => {
+            return Ok(Token::FNum(float));
+        }
+        Err(e) => {
+            return Err(format!("Error: Float format: {} {}", e, mantissa));
+        }
+    }
 }
 
 // TODO: change from peekable iterator to Vec and index.
@@ -163,7 +170,14 @@ pub fn lexer(s: String) -> Vec<Token> {
             '0'..='9' => {
                 iter.next();
                 let tk = tok_num(c, &mut iter);
-                ret.push(tk);
+                match tk {
+                    Ok(tk) => {
+                        ret.push(tk);
+                    }
+                    Err(e) => {
+                        panic!(e);
+                    }
+                }
             }
             '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' => {
                 iter.next();
