@@ -20,6 +20,7 @@ fn run_test() {
     println!("1.234 -> {:?}", lexer("1.234".to_string()));
     println!("1.234e-56 -> {:?}", lexer("1.234e-56".to_string()));
     println!("-1.234e-56-78 -> {:?}", lexer("-1.234e-56-78".to_string()));
+    println!("1/(2*3.14*270e-12*31.4e3) -> {:?}", lexer("1/(2*3.14*270e-12*31.4e3)".to_string()));
     println!("");
     println!("parser");
     println!("1 -> {:?}", parse(&lexer("1".to_string())));
@@ -44,6 +45,7 @@ fn run_test() {
     println!("1+2+3 -> {:?}", parse(&lexer("1+2+3".to_string())));
     println!("1*2*3 -> {:?}", parse(&lexer("1*2*3".to_string())));
     println!("1.2*3.4e5 -> {:?}", parse(&lexer("1.2*-3.4e5 ".to_string())));
+    println!("1/(2*3.14*270e-12*31.4e3) -> {:?}", parse(&lexer("1/(2*3.14*270e-12*31.4e3)".to_string())));
     println!("");
     println!("eval");
     println!("1 -> {:?}", eval(&parse(&lexer("1".to_string()))));
@@ -75,6 +77,8 @@ fn run_test() {
     println!("1*2*3 -> {:?}", eval(&parse(&lexer("1*2*3".to_string()))));
     println!("(1+2)*(3+4) -> {:?}", eval(&parse(&lexer("(1+2)*(3+4)".to_string()))));
     println!("1.1*2*3 -> {:?}", eval(&parse(&lexer("1.1*2*3".to_string()))));
+    println!("1/(2*3.14*270e-12*31.4e3) -> {:?}", eval(&parse(&lexer("1/(2*3.14*270e-12*31.4e3)".to_string()))));
+
 }
 
 fn print_usage(program: &str, opts: Options) {

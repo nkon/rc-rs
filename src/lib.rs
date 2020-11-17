@@ -4,6 +4,9 @@ use std::iter::Peekable;
 mod readline;
 pub use readline::readline;
 
+// TODO: Separete lexter into `lexer.rs`.
+// TODO: add Doc-test.
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Token {
     Num(i128),
@@ -87,11 +90,16 @@ fn tok_num_int<T: Iterator<Item = char>>(
         }
     }
     match i128::from_str_radix(&mantissa, radix) {
-        Ok(int) => {return Ok(Token::Num(int));}
-        Err(e) => {return Err(format!("Error: Integer format: {} {}", e, err_str));}
+        Ok(int) => {
+            return Ok(Token::Num(int));
+        }
+        Err(e) => {
+            return Err(format!("Error: Integer format: {} {}", e, err_str));
+        }
     }
 }
 
+// TODO: return `Result<Token, String>` for error handling.
 fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
     let mut mantissa = String::from(c);
     let mut exponent = String::new();
@@ -100,12 +108,14 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
     if mantissa == "0" {
         match iter.peek() {
             Some(&c) => match c {
-                '0'..='9' | 'a'..='f' | 'A'..='F' | 'x' | 'X' => {
-                    match tok_num_int(c, iter) {
-                        Ok(tok) => { return tok;}
-                        Err(e) => {panic!(e);}
+                '0'..='9' | 'a'..='f' | 'A'..='F' | 'x' | 'X' => match tok_num_int(c, iter) {
+                    Ok(tok) => {
+                        return tok;
                     }
-                }
+                    Err(e) => {
+                        panic!(e);
+                    }
+                },
                 _ => {}
             },
             None => {
@@ -129,6 +139,7 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
             }
             'e' | 'E' => {
                 iter.next();
+                has_dot = true; // no dot but move to floating mode.
                 has_exponent = true;
                 let &c = iter.peek().unwrap();
                 exponent = tok_get_num(c, iter);
@@ -150,6 +161,7 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
     return Token::FNum(mantissa.parse::<f64>().unwrap());
 }
 
+// TODO: change from peekable iterator to Vec and index.
 pub fn lexer(s: String) -> Vec<Token> {
     let mut ret = Vec::new();
 
@@ -173,6 +185,12 @@ pub fn lexer(s: String) -> Vec<Token> {
 
     ret
 }
+
+// BUG: eBNF should be below and code should be fixed
+// <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
+// <mul>     ::= <unary> ( '*' <unary> | '/' <unary>)*
+// <unary>   ::= <primary> | '-' <primary> | '+' <primary>
+// <primary> ::= <num> | '(' <expr> ')'
 
 /*
 <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
@@ -202,6 +220,7 @@ impl fmt::Debug for NodeType {
     }
 }
 
+// TODO: change from struct to Enum to maximize Rust power
 pub struct Node {
     pub ty: NodeType,
     pub value: i128,
@@ -497,6 +516,7 @@ mod tests {
         assert_eq!(lexer("0xa".to_string()), [Token::Num(10)]);
         assert_eq!(lexer("011".to_string()), [Token::Num(9)]);
         assert_eq!(lexer("0b11".to_string()), [Token::Num(3)]);
+        assert_eq!(lexer("1e3".to_string()), [Token::FNum(1000.0)]);
         assert_eq!(
             lexer("9223372036854775807".to_string()),
             [Token::Num(9223372036854775807)]
