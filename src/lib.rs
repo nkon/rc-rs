@@ -43,25 +43,31 @@ fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Str
     }
 }
 
-fn tok_num_int<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> Token {
+fn tok_num_int<T: Iterator<Item = char>>(
+    _c: char,
+    iter: &mut Peekable<T>,
+) -> Result<Token, String> {
     let mut radix = 10;
     let mut mantissa = String::from("0");
+    let mut err_str = String::from("0");
 
     if let Some(&c) = iter.peek() {
         match c {
             'x' | 'X' => {
                 radix = 16;
                 iter.next();
+                err_str.push(c);
             }
             'b' | 'B' => {
                 radix = 2;
                 iter.next();
+                err_str.push(c);
             }
             '0'..='7' => {
                 radix = 8;
             }
             _ => {
-                return Token::Num(0);
+                return Ok(Token::Num(0));
             }
         }
     }
@@ -69,6 +75,7 @@ fn tok_num_int<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> To
         match c {
             '0'..='9' | 'a'..='f' | 'A'..='F' => {
                 mantissa.push(c);
+                err_str.push(c);
                 iter.next();
             }
             '_' => {
@@ -79,7 +86,10 @@ fn tok_num_int<T: Iterator<Item = char>>(_c: char, iter: &mut Peekable<T>) -> To
             }
         }
     }
-    return Token::Num(i128::from_str_radix(&mantissa, radix).unwrap());
+    match i128::from_str_radix(&mantissa, radix) {
+        Ok(int) => {return Ok(Token::Num(int));}
+        Err(e) => {return Err(format!("Error: Integer format: {} {}", e, err_str));}
+    }
 }
 
 fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
@@ -91,7 +101,10 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Token {
         match iter.peek() {
             Some(&c) => match c {
                 '0'..='9' | 'a'..='f' | 'A'..='F' | 'x' | 'X' => {
-                    return tok_num_int(c, iter);
+                    match tok_num_int(c, iter) {
+                        Ok(tok) => { return tok;}
+                        Err(e) => {panic!(e);}
+                    }
                 }
                 _ => {}
             },
@@ -492,6 +505,17 @@ mod tests {
             lexer("18446744073709551615".to_string()),
             [Token::Num(18446744073709551615)]
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "Error: Integer format: invalid digit found in string 0b12")]
+    fn test_fmt1() {
+        lexer("0b12".to_string());
+    }
+    #[test]
+    #[should_panic(expected = "Error: Integer format: invalid digit found in string 018")]
+    fn test_fmt2() {
+        lexer("018".to_string());
     }
 
     #[test]
