@@ -559,6 +559,34 @@ pub fn eval(n: &Node) -> Node {
                 }
             }
         }
+        if n.op == Token::Op('+') {
+            let mut ret_node = Node::new();
+            if n.child[0].ty == NodeType::Num {
+                ret_node.ty = NodeType::Num;
+                ret_node.value = n.child[0].value;
+                return ret_node;
+            }
+            if n.child[0].ty == NodeType::FNum {
+                ret_node.ty = NodeType::FNum;
+                ret_node.fvalue = n.child[0].fvalue;
+                return ret_node;
+            }
+            if n.child[0].ty == NodeType::BinOp {
+                let n = eval_binop(&n.child[0]);
+                if n.ty == NodeType::FNum {
+                    let mut ret_node = Node::new();
+                    ret_node.ty = NodeType::FNum;
+                    ret_node.fvalue = n.fvalue;
+                    return ret_node;
+                }
+                if n.ty == NodeType::Num {
+                    let mut ret_node = Node::new();
+                    ret_node.ty = NodeType::Num;
+                    ret_node.value = n.value;
+                    return ret_node;
+                }
+            }
+        }
     } else if n.ty == NodeType::BinOp {
         return eval_binop(n);
     }
@@ -702,6 +730,10 @@ mod tests {
         assert_eq!(
             format!("{:?}", eval(&parse(&(lexer("-(2+3)".to_string())).unwrap()))),
             "Num(-5)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&(lexer("+(2+3)".to_string())).unwrap()))),
+            "Num(5)"
         );
     }
 }
