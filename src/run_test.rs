@@ -29,7 +29,7 @@ pub fn run_test() {
         Err(e) => {println!("{}",e);}
     }
     
-    println!("");
+    println!();
     println!("parser");
     println!("1 -> {:?}", parse(&(lexer("1".to_string())).unwrap()));
     println!("0 -> {:?}", parse(&(lexer("0".to_string())).unwrap()));
@@ -61,7 +61,7 @@ pub fn run_test() {
         "1/(2*3.14*270e-12*31.4e3) -> {:?}",
         parse(&(lexer("1/(2*3.14*270e-12*31.4e3)".to_string()).unwrap()))
     );
-    println!("");
+    println!();
     println!("eval");
     println!("1 -> {:?}", eval(&parse(&(lexer("1".to_string())).unwrap())));
     println!("0 -> {:?}", eval(&parse(&(lexer("0".to_string())).unwrap())));

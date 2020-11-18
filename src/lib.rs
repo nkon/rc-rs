@@ -34,10 +34,10 @@ fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Str
                     }
                 }
             }
-            return ret;
+            ret
         }
         _ => {
-            return String::from('0');
+            String::from('0')
         }
     }
 }
@@ -87,10 +87,10 @@ fn tok_num_int<T: Iterator<Item = char>>(
     }
     match i128::from_str_radix(&mantissa, radix) {
         Ok(int) => {
-            return Ok(Token::Num(int));
+            Ok(Token::Num(int))
         }
         Err(e) => {
-            return Err(format!("Error: Integer format: {} {}", e, err_str));
+            Err(format!("Error: Integer format: {} {}", e, err_str))
         }
     }
 }
@@ -151,15 +151,15 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Result<
         }
     }
     if has_exponent {
-        mantissa.push_str("e");
+        mantissa.push('e');
         mantissa.push_str(&exponent);
     }
     match mantissa.parse::<f64>() {
         Ok(float) => {
-            return Ok(Token::FNum(float));
+            Ok(Token::FNum(float))
         }
         Err(e) => {
-            return Err(format!("Error: Float format: {} {}", e, mantissa));
+            Err(format!("Error: Float format: {} {}", e, mantissa))
         }
     }
 }
@@ -213,7 +213,7 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
         }
     }
 
-    return Ok(ret);
+    Ok(ret)
 }
 
 // <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
@@ -262,6 +262,12 @@ impl Node {
     }
 }
 
+impl Default for Node {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl fmt::Debug for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.ty {
@@ -274,7 +280,7 @@ impl fmt::Debug for Node {
     }
 }
 
-fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+fn num(tok: &[Token], i: usize) -> (Node, usize) {
     // println!("num {:?} {}", tok, i);
     if tok.len() <= i {
         return (Node::new(), i);
@@ -284,20 +290,20 @@ fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
         Token::Num(n) => {
             node.ty = NodeType::Num;
             node.value = n;
-            return (node, i + 1);
+            (node, i + 1)
         }
         Token::FNum(n) => {
             node.ty = NodeType::FNum;
             node.fvalue = n;
-            return (node, i + 1);
+            (node, i + 1)
         }
         _ => {
-            return (node, i);
+            (node, i)
         }
     }
 }
 
-fn primary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+fn primary(tok: &[Token], i: usize) -> (Node, usize) {
     // println!("primary {:?} {}", tok, i);
     if tok.len() <= i {
         return (Node::new(), i);
@@ -308,15 +314,15 @@ fn primary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
             if tok[i] != Token::Op(')') {
                 println!("')' not found.");
             }
-            return (expr, i + 1);
+            (expr, i + 1)
         }
         _ => {
-            return num(tok, i);
+            num(tok, i)
         }
     }
 }
 
-fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+fn unary(tok: &[Token], i: usize) -> (Node, usize) {
     // println!("unary {:?} {}", tok, i);
     if tok.len() <= i {
         return (Node::new(), i);
@@ -328,15 +334,15 @@ fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
             node.op = tok[i].clone();
             let (rhs, i) = primary(tok, i + 1);
             node.child.push(rhs);
-            return (node, i);
+            (node, i)
         }
         _ => {
-            return primary(tok, i);
+            primary(tok, i)
         }
     }
 }
 
-fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+fn mul(tok: &[Token], i: usize) -> (Node, usize) {
     // println!("mul {:?} {}", tok, i);
     if tok.len() <= i {
         return (Node::new(), i);
@@ -364,7 +370,7 @@ fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     }
 }
 
-fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+fn expr(tok: &[Token], i: usize) -> (Node, usize) {
     // println!("expr {:?} {}", tok, i);
     if tok.len() <= i {
         return (Node::new(), i);
@@ -392,11 +398,11 @@ fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     }
 }
 
-pub fn parse(tok: &Vec<Token>) -> Node {
+pub fn parse(tok: &[Token]) -> Node {
     let (node, _i) = expr(&tok, 0);
 
     // println!("{:?} {}", node, i);
-    return node;
+    node
 }
 
 fn eval_binop(n: &Node) -> Node {
@@ -517,7 +523,7 @@ fn eval_binop(n: &Node) -> Node {
             return ret_node;
         }
     }
-    return Node::new();
+    Node::new()
 }
 
 pub fn eval(n: &Node) -> Node {
@@ -596,7 +602,7 @@ pub fn eval(n: &Node) -> Node {
     ret_node.ty = n.ty;
     ret_node.value = n.value;
     ret_node.fvalue = n.fvalue;
-    return ret_node;
+    ret_node
 }
 
 #[cfg(test)]
