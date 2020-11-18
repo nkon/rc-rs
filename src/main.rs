@@ -8,7 +8,6 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-
 fn main() {
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();

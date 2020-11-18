@@ -217,19 +217,10 @@ pub fn lexer(s: String) -> Vec<Token> {
     ret
 }
 
-// BUG: eBNF should be below and code should be fixed
 // <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
 // <mul>     ::= <unary> ( '*' <unary> | '/' <unary>)*
 // <unary>   ::= <primary> | '-' <primary> | '+' <primary>
 // <primary> ::= <num> | '(' <expr> ')'
-
-/*
-<expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
-<mul>     ::= <primary> ( '*' <primary> | '/' <primary>)*
-<primary> ::= <unary> | '(' <expr> ')'
-<unary>   ::= <num> | '-' <num> | '+' <num>
-*/
-
 #[derive(Clone, Copy, PartialEq)]
 pub enum NodeType {
     None,
@@ -286,6 +277,9 @@ impl fmt::Debug for Node {
 
 fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     // println!("num {:?} {}", tok, i);
+    if tok.len() <= i {
+        return (Node::new(), i);
+    }
     let mut node = Node::new();
     match tok[i] {
         Token::Num(n) => {
@@ -304,16 +298,18 @@ fn num(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     }
 }
 
-fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    // println!("unary {:?} {}", tok, i);
+fn primary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+    // println!("primary {:?} {}", tok, i);
+    if tok.len() <= i {
+        return (Node::new(), i);
+    }
     match tok[i] {
-        Token::Op('-') | Token::Op('+') => {
-            let mut node = Node::new();
-            node.ty = NodeType::Unary;
-            node.op = tok[i];
-            let (rhs, i) = num(tok, i + 1);
-            node.child.push(rhs);
-            return (node, i);
+        Token::Op('(') => {
+            let (expr, i) = expr(tok, i + 1);
+            if tok[i] != Token::Op(')') {
+                println!("')' not found.");
+            }
+            return (expr, i + 1);
         }
         _ => {
             return num(tok, i);
@@ -321,22 +317,32 @@ fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     }
 }
 
-fn primary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
-    // println!("primary {:?} {}", tok, i);
+fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
+    // println!("unary {:?} {}", tok, i);
+    if tok.len() <= i {
+        return (Node::new(), i);
+    }
     match tok[i] {
-        Token::Op('(') => {
-            let (expr, i) = expr(tok, i + 1);
-            return (expr, i + 1);
+        Token::Op('-') | Token::Op('+') => {
+            let mut node = Node::new();
+            node.ty = NodeType::Unary;
+            node.op = tok[i];
+            let (rhs, i) = primary(tok, i + 1);
+            node.child.push(rhs);
+            return (node, i);
         }
         _ => {
-            return unary(tok, i);
+            return primary(tok, i);
         }
     }
 }
 
 fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     // println!("mul {:?} {}", tok, i);
-    let (mut lhs, mut i) = primary(tok, i);
+    if tok.len() <= i {
+        return (Node::new(), i);
+    }
+    let (mut lhs, mut i) = unary(tok, i);
     loop {
         if tok.len() <= i {
             return (lhs, i);
@@ -346,7 +352,7 @@ fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
                 let mut node = Node::new();
                 node.ty = NodeType::BinOp;
                 node.op = tok[i];
-                let (rhs, j) = primary(tok, i + 1);
+                let (rhs, j) = unary(tok, i + 1);
                 node.child.push(lhs);
                 node.child.push(rhs);
                 i = j;
@@ -361,6 +367,9 @@ fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
 
 fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
     // println!("expr {:?} {}", tok, i);
+    if tok.len() <= i {
+        return (Node::new(), i);
+    }
     let (mut lhs, mut i) = mul(tok, i);
     loop {
         if tok.len() <= i {
@@ -385,12 +394,135 @@ fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
 }
 
 pub fn parse(tok: &Vec<Token>) -> Node {
-    let (node, _) = expr(&tok, 0);
+    let (node, _i) = expr(&tok, 0);
 
-    node
+    // println!("{:?} {}", node, i);
+    return node;
+}
+
+fn eval_binop(n: &Node) -> Node {
+    // println!("eval_binop {:?}", n);
+    assert!(n.child.len() == 2);
+    let lhs = eval(&n.child[0]);
+    let rhs = eval(&n.child[1]);
+    let mut ret_node = Node::new();
+    if n.op == Token::Op('+') {
+        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
+            ret_node.ty = NodeType::Num;
+            ret_node.value = lhs.value + rhs.value;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.fvalue + rhs.fvalue;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.value as f64 + rhs.fvalue;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.fvalue + rhs.value as f64;
+            return ret_node;
+        }
+    }
+    if n.op == Token::Op('-') {
+        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
+            ret_node.ty = NodeType::Num;
+            ret_node.value = lhs.value - rhs.value;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.fvalue - rhs.fvalue;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.value as f64 - rhs.fvalue;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.fvalue - rhs.value as f64;
+            return ret_node;
+        }
+    }
+    if n.op == Token::Op('*') {
+        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
+            ret_node.ty = NodeType::Num;
+            ret_node.value = lhs.value * rhs.value;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.fvalue * rhs.fvalue;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.value as f64 * rhs.fvalue;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.fvalue * rhs.value as f64;
+            return ret_node;
+        }
+    }
+    if n.op == Token::Op('/') {
+        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
+            ret_node.ty = NodeType::Num;
+            ret_node.value = lhs.value / rhs.value;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.fvalue / rhs.fvalue;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.value as f64 / rhs.fvalue;
+            return ret_node;
+        }
+        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
+            ret_node.ty = NodeType::FNum;
+            let lhs = eval(&n.child[0]);
+            let rhs = eval(&n.child[1]);
+            ret_node.fvalue = lhs.fvalue / rhs.value as f64;
+            return ret_node;
+        }
+    }
+    return Node::new();
 }
 
 pub fn eval(n: &Node) -> Node {
+    // println!("eval {:?}", n);
     if n.ty == NodeType::Num {
         let mut ret_node = Node::new();
         ret_node.ty = NodeType::Num;
@@ -414,114 +546,24 @@ pub fn eval(n: &Node) -> Node {
                 ret_node.fvalue = -n.child[0].fvalue;
                 return ret_node;
             }
+            if n.child[0].ty == NodeType::BinOp {
+                let n = eval_binop(&n.child[0]);
+                if n.ty == NodeType::FNum {
+                    let mut ret_node = Node::new();
+                    ret_node.ty = NodeType::FNum;
+                    ret_node.fvalue = -n.fvalue;
+                    return ret_node;
+                }
+                if n.ty == NodeType::Num {
+                    let mut ret_node = Node::new();
+                    ret_node.ty = NodeType::Num;
+                    ret_node.value = -n.value;
+                    return ret_node;
+                }
+            }
         }
     } else if n.ty == NodeType::BinOp {
-        let mut ret_node = Node::new();
-        if n.op == Token::Op('+') {
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
-                ret_node.ty = NodeType::Num;
-                ret_node.value = lhs.value + rhs.value;
-                return ret_node;
-            } else if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.fvalue + rhs.fvalue;
-                return ret_node;
-            } else if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.value as f64 + rhs.fvalue;
-                return ret_node;
-            } else if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.fvalue + rhs.value as f64;
-                return ret_node;
-            }
-        } else if n.op == Token::Op('-') {
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
-                ret_node.ty = NodeType::Num;
-                ret_node.value = lhs.value - rhs.value;
-                return ret_node;
-            } else if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.fvalue - rhs.fvalue;
-                return ret_node;
-            } else if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.value as f64 - rhs.fvalue;
-                return ret_node;
-            } else if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.fvalue - rhs.value as f64;
-                return ret_node;
-            }
-        } else if n.op == Token::Op('*') {
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
-                ret_node.ty = NodeType::Num;
-                ret_node.value = lhs.value * rhs.value;
-                return ret_node;
-            } else if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.fvalue * rhs.fvalue;
-                return ret_node;
-            } else if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.value as f64 * rhs.fvalue;
-                return ret_node;
-            } else if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.fvalue * rhs.value as f64;
-                return ret_node;
-            }
-        } else if n.op == Token::Op('/') {
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
-                ret_node.ty = NodeType::Num;
-                ret_node.value = lhs.value / rhs.value;
-                return ret_node;
-            } else if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.fvalue / rhs.fvalue;
-                return ret_node;
-            } else if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.value as f64 / rhs.fvalue;
-                return ret_node;
-            } else if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
-                ret_node.ty = NodeType::FNum;
-                let lhs = eval(&n.child[0]);
-                let rhs = eval(&n.child[1]);
-                ret_node.fvalue = lhs.fvalue / rhs.value as f64;
-                return ret_node;
-            }
-        }
+        return eval_binop(n);
     }
     let mut ret_node = Node::new();
     ret_node.ty = n.ty;
@@ -617,6 +659,10 @@ mod tests {
             format!("{:?}", parse(&lexer("(1*2)*3".to_string()))),
             "BinOp(Op('*') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
         );
+        assert_eq!(
+            format!("{:?}", parse(&lexer("-(2+3)".to_string()))),
+            "Unary(Op('-') BinOp(Op('+') [Num(2), Num(3)]))"
+        );
     }
 
     #[test]
@@ -655,6 +701,10 @@ mod tests {
         assert_eq!(
             format!("{:?}", eval(&parse(&lexer("1.1+2.2".to_string())))),
             "FNum(3.3000000000000003)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&lexer("-(2+3)".to_string())))),
+            "Num(-5)"
         );
     }
 }
