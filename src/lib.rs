@@ -10,11 +10,12 @@ pub use run_test::run_test;
 // TODO: Separate lexer into `lexer.rs`.
 // TODO: add Doc-test.
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Num(i128),
     FNum(f64),
     Op(char),
+    Ident(String),
 }
 
 fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> String {
@@ -182,7 +183,8 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Result<
 /// assert_eq!(lexer("9223372036854775807".to_string()).unwrap(), [Token::Num(9223372036854775807)]);
 /// assert_eq!(lexer("18446744073709551615".to_string()).unwrap(), [Token::Num(18446744073709551615)]);
 /// ```
-/// TODO: change from peekable iterator to Vec and index.
+// TODO: change from peekable iterator to Vec and index.
+// TODO: handle vars/functions.
 pub fn lexer(s: String) -> Result<Vec<Token>, String> {
     let mut ret = Vec::new();
 
@@ -323,7 +325,7 @@ fn unary(tok: &Vec<Token>, i: usize) -> (Node, usize) {
         Token::Op('-') | Token::Op('+') => {
             let mut node = Node::new();
             node.ty = NodeType::Unary;
-            node.op = tok[i];
+            node.op = tok[i].clone();
             let (rhs, i) = primary(tok, i + 1);
             node.child.push(rhs);
             return (node, i);
@@ -348,7 +350,7 @@ fn mul(tok: &Vec<Token>, i: usize) -> (Node, usize) {
             Token::Op('*') | Token::Op('/') | Token::Op('%') => {
                 let mut node = Node::new();
                 node.ty = NodeType::BinOp;
-                node.op = tok[i];
+                node.op = tok[i].clone();
                 let (rhs, j) = unary(tok, i + 1);
                 node.child.push(lhs);
                 node.child.push(rhs);
@@ -376,7 +378,7 @@ fn expr(tok: &Vec<Token>, i: usize) -> (Node, usize) {
             Token::Op('+') | Token::Op('-') => {
                 let mut node = Node::new();
                 node.ty = NodeType::BinOp;
-                node.op = tok[i];
+                node.op = tok[i].clone();
                 let (rhs, j) = mul(tok, i + 1);
                 node.child.push(lhs);
                 node.child.push(rhs);
