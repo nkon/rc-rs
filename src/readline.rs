@@ -13,8 +13,13 @@ pub fn readline() -> String {
             .expect("Failed to read line");
         // println!("{}", line);
         match lexer(line.clone()) {
-            Ok(v) => {println!("{:?}", eval(&parse(&v)));}
-            Err(e) => {println!("{}", e);}
+            Ok(v) => {
+                let node = parse(&v);
+                println!("{:?}", eval(&node));
+            }
+            Err(e) => {
+                println!("{}", e);
+            }
         }
         line.clear();
     }
