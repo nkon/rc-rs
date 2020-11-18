@@ -12,7 +12,10 @@ pub fn readline() -> String {
             .read_line(&mut line)
             .expect("Failed to read line");
         // println!("{}", line);
-        println!("{:?}", eval(&parse(&lexer(line.clone()))));
+        match lexer(line.clone()) {
+            Ok(v) => {println!("{:?}", eval(&parse(&v)));}
+            Err(e) => {println!("{}", e);}
+        }
         line.clear();
     }
 }

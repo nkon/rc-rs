@@ -167,24 +167,23 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Result<
 /// ```
 /// use rc::lexer;
 /// use rc::Token;
-/// assert_eq!(lexer("1".to_string()), [Token::Num(1)]);
-/// assert_eq!(lexer("0".to_string()), [Token::Num(0)]);
-/// assert_eq!(lexer("10".to_string()), [Token::Num(10)]);
-/// assert_eq!(lexer("1.1".to_string()), [Token::FNum(1.1)]);
-/// assert_eq!(lexer("0.1".to_string()), [Token::FNum(0.1)]);
-/// assert_eq!(lexer("1.1E2".to_string()), [Token::FNum(110.0)]);
-/// assert_eq!(lexer("1.1E-2".to_string()), [Token::FNum(0.011)]);
-/// assert_eq!(lexer("100_000".to_string()), [Token::Num(100000)]);
-/// assert_eq!(lexer("0xa".to_string()), [Token::Num(10)]);
-/// assert_eq!(lexer("011".to_string()), [Token::Num(9)]);
-/// assert_eq!(lexer("0b11".to_string()), [Token::Num(3)]);
-/// assert_eq!(lexer("1e3".to_string()), [Token::FNum(1000.0)]);
-/// assert_eq!(lexer("9223372036854775807".to_string()), [Token::Num(9223372036854775807)]);
-/// assert_eq!(lexer("18446744073709551615".to_string()), [Token::Num(18446744073709551615)]);
+/// assert_eq!(lexer("1".to_string()).unwrap(), [Token::Num(1)]);
+/// assert_eq!(lexer("0".to_string()).unwrap(), [Token::Num(0)]);
+/// assert_eq!(lexer("10".to_string()).unwrap(), [Token::Num(10)]);
+/// assert_eq!(lexer("1.1".to_string()).unwrap(), [Token::FNum(1.1)]);
+/// assert_eq!(lexer("0.1".to_string()).unwrap(), [Token::FNum(0.1)]);
+/// assert_eq!(lexer("1.1E2".to_string()).unwrap(), [Token::FNum(110.0)]);
+/// assert_eq!(lexer("1.1E-2".to_string()).unwrap(), [Token::FNum(0.011)]);
+/// assert_eq!(lexer("100_000".to_string()).unwrap(), [Token::Num(100000)]);
+/// assert_eq!(lexer("0xa".to_string()).unwrap(), [Token::Num(10)]);
+/// assert_eq!(lexer("011".to_string()).unwrap(), [Token::Num(9)]);
+/// assert_eq!(lexer("0b11".to_string()).unwrap(), [Token::Num(3)]);
+/// assert_eq!(lexer("1e3".to_string()).unwrap(), [Token::FNum(1000.0)]);
+/// assert_eq!(lexer("9223372036854775807".to_string()).unwrap(), [Token::Num(9223372036854775807)]);
+/// assert_eq!(lexer("18446744073709551615".to_string()).unwrap(), [Token::Num(18446744073709551615)]);
 /// ```
 /// TODO: change from peekable iterator to Vec and index.
-/// TODO: Don't panic and handle error from tok_num().
-pub fn lexer(s: String) -> Vec<Token> {
+pub fn lexer(s: String) -> Result<Vec<Token>, String> {
     let mut ret = Vec::new();
 
     let mut iter = s.chars().peekable();
@@ -198,9 +197,7 @@ pub fn lexer(s: String) -> Vec<Token> {
                         ret.push(tk);
                     }
                     Err(e) => {
-                        println!("{}", e);
-                        ret.push(Token::Num(0));
-                        return ret;
+                        return Err(e);
                     }
                 }
             }
@@ -214,7 +211,7 @@ pub fn lexer(s: String) -> Vec<Token> {
         }
     }
 
-    ret
+    return Ok(ret);
 }
 
 // <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
@@ -579,7 +576,7 @@ mod tests {
     #[test]
     fn test_lexer() {
         assert_eq!(
-            lexer("1+2+3".to_string()),
+            lexer("1+2+3".to_string()).unwrap(),
             [
                 Token::Num(1),
                 Token::Op('+'),
@@ -589,7 +586,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            lexer(" 1 + 2 + 3 ".to_string()),
+            lexer(" 1 + 2 + 3 ".to_string()).unwrap(),
             [
                 Token::Num(1),
                 Token::Op('+'),
@@ -599,7 +596,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            lexer("1 2 34+-*/%()-^".to_string()),
+            lexer("1 2 34+-*/%()-^".to_string()).unwrap(),
             [
                 Token::Num(1),
                 Token::Num(2),
@@ -620,47 +617,47 @@ mod tests {
     #[test]
     fn test_parser() {
         assert_eq!(
-            format!("{:?}", parse(&lexer("1+2".to_string()))),
+            format!("{:?}", parse(&(lexer("1+2".to_string()).unwrap()))),
             "BinOp(Op('+') [Num(1), Num(2)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("1-2".to_string()))),
+            format!("{:?}", parse(&(lexer("1-2".to_string()).unwrap()))),
             "BinOp(Op('-') [Num(1), Num(2)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("1+-2".to_string()))),
+            format!("{:?}", parse(&(lexer("1+-2".to_string()).unwrap()))),
             "BinOp(Op('+') [Num(1), Unary(Op('-') Num(2))])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("1*2".to_string()))),
+            format!("{:?}", parse(&(lexer("1*2".to_string()).unwrap()))),
             "BinOp(Op('*') [Num(1), Num(2)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("1*2+3".to_string()))),
+            format!("{:?}", parse(&(lexer("1*2+3".to_string()).unwrap()))),
             "BinOp(Op('+') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("1*(2+3)".to_string()))),
+            format!("{:?}", parse(&(lexer("1*(2+3)".to_string()).unwrap()))),
             "BinOp(Op('*') [Num(1), BinOp(Op('+') [Num(2), Num(3)])])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("1+2+3".to_string()))),
+            format!("{:?}", parse(&(lexer("1+2+3".to_string())).unwrap())),
             "BinOp(Op('+') [BinOp(Op('+') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("(1+2)+3".to_string()))),
+            format!("{:?}", parse(&(lexer("(1+2)+3".to_string())).unwrap())),
             "BinOp(Op('+') [BinOp(Op('+') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("1*2*3".to_string()))),
+            format!("{:?}", parse(&(lexer("1*2*3".to_string())).unwrap())),
             "BinOp(Op('*') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("(1*2)*3".to_string()))),
+            format!("{:?}", parse(&(lexer("(1*2)*3".to_string())).unwrap())),
             "BinOp(Op('*') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&lexer("-(2+3)".to_string()))),
+            format!("{:?}", parse(&(lexer("-(2+3)".to_string())).unwrap())),
             "Unary(Op('-') BinOp(Op('+') [Num(2), Num(3)]))"
         );
     }
@@ -668,42 +665,42 @@ mod tests {
     #[test]
     fn test_eval() {
         assert_eq!(
-            format!("{:?}", eval(&parse(&lexer("1+2".to_string())))),
+            format!("{:?}", eval(&parse(&(lexer("1+2".to_string())).unwrap()))),
             "Num(3)"
         );
         assert_eq!(
-            format!("{:?}", eval(&parse(&lexer("1+2*3".to_string())))),
+            format!("{:?}", eval(&parse(&(lexer("1+2*3".to_string())).unwrap()))),
             "Num(7)"
         );
         assert_eq!(
-            format!("{:?}", eval(&parse(&lexer("1*2+3".to_string())))),
+            format!("{:?}", eval(&parse(&(lexer("1*2+3".to_string())).unwrap()))),
             "Num(5)"
         );
         assert_eq!(
-            format!("{:?}", eval(&parse(&lexer("1+2+3".to_string())))),
+            format!("{:?}", eval(&parse(&(lexer("1+2+3".to_string())).unwrap()))),
             "Num(6)"
         );
         assert_eq!(
-            format!("{:?}", eval(&parse(&lexer("(1+2)*3".to_string())))),
+            format!("{:?}", eval(&parse(&(lexer("(1+2)*3".to_string())).unwrap()))),
             "Num(9)"
         );
         assert_eq!(
-            format!("{:?}", eval(&parse(&lexer("-2".to_string())))),
+            format!("{:?}", eval(&parse(&(lexer("-2".to_string())).unwrap()))),
             "Num(-2)"
         );
         assert_eq!(
             format!(
                 "{:?}",
-                eval(&parse(&lexer("-9223372036854775807".to_string())))
+                eval(&parse(&(lexer("-9223372036854775807".to_string())).unwrap()))
             ),
             "Num(-9223372036854775807)"
         );
         assert_eq!(
-            format!("{:?}", eval(&parse(&lexer("1.1+2.2".to_string())))),
+            format!("{:?}", eval(&parse(&(lexer("1.1+2.2".to_string())).unwrap()))),
             "FNum(3.3000000000000003)"
         );
         assert_eq!(
-            format!("{:?}", eval(&parse(&lexer("-(2+3)".to_string())))),
+            format!("{:?}", eval(&parse(&(lexer("-(2+3)".to_string())).unwrap()))),
             "Num(-5)"
         );
     }
