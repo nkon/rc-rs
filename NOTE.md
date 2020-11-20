@@ -5,6 +5,9 @@ Design Note of `rc`
 
 Tokenはenumとして実装し、それぞれの枝に値を持っている。
 
+Lexerの特徴として、`-100`を、単項演算子`-`と整数リテラル(`100`)に分解するようにしている。単項演算子として`-`を消費してしまうほうが実装が簡単だからだ。デメリットとしては、例えば`u8`で-128が表すことができなくなる。
+
+
 ```rust
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Token {
