@@ -18,10 +18,7 @@ fn main() {
     opts.optflag("", "test", "run built-in test");
     opts.optopt("s", "script", "run script", "FILE");
 
-    let matches = match opts.parse(&args[1..]) {
-        Ok(m) => m,
-        Err(f) => panic!(f.to_string()),
-    };
+    let matches = opts.parse(&args[1..]).unwrap();
     if matches.opt_present("h") {
         print_usage(&program, opts);
         std::process::exit(0);
