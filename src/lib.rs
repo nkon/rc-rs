@@ -1,5 +1,4 @@
 use std::fmt;
-use std::iter::Peekable;
 
 mod lexer;
 mod readline;

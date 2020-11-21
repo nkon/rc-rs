@@ -1,4 +1,3 @@
-use super::*;
 
 // TODO: add Doc-test.
 
@@ -10,37 +9,38 @@ pub enum Token {
     Ident(String),
 }
 
-// 数字からなる列を取り出す
-fn tok_get_num(chars: &Vec<char>, index: usize) -> (String, usize) {
+// `chars`から、数字とみなされる`String`を切り出す
+fn tok_get_num(chars: &[char], index: usize) -> (String, usize) {
     let mut i = index;
     if i < chars.len() {
         match chars[i] {
             '-' | '0'..='9' => {
                 let mut ret = String::from(chars[i]);
-                i = i + 1;
+                i += 1;
                 while i < chars.len() {
                     match chars[i] {
                         '0'..='9' => {
                             ret.push(chars[i]);
-                            i = i + 1;
+                            i += 1;
                         }
                         _ => {
                             return (ret, i);
                         }
                     }
                 }
-                return (ret, i);
+                (ret, i)
             }
             _ => (String::from('0'), i),
         }
     } else {
-        return (String::from('0'), i);
+        (String::from('0'), i)
     }
 }
 
-fn tok_num_int(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize) {
+// 数字の並びを食べて、Token::Num()を返す。
+fn tok_num_int(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
     let mut i = index;
-    let mut radix = 10;
+    let radix: u32;
     let mut mantissa = String::from("0");
     let mut err_str = String::from("0");
 
@@ -48,12 +48,12 @@ fn tok_num_int(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize
         match chars[i] {
             'x' | 'X' => {
                 radix = 16;
-                i = i + 1;
+                i += 1;
                 err_str.push(chars[i]);
             }
             'b' | 'B' => {
                 radix = 2;
-                i = i + 1;
+                i += 1;
                 err_str.push(chars[i]);
             }
             '0'..='7' => {
@@ -72,10 +72,10 @@ fn tok_num_int(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize
             '0'..='9' | 'a'..='f' | 'A'..='F' => {
                 mantissa.push(chars[i]);
                 err_str.push(chars[i]);
-                i = i + 1;
+                i += 1;
             }
             '_' => {
-                i = i + 1;
+                i += 1;
             }
             _ => {
                 break;
@@ -89,7 +89,9 @@ fn tok_num_int(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize
     }
 }
 
-fn tok_num(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize) {
+// 数字の並びを食べて、Token::Num()またはToken::FNum()を返す。
+// 整数(10進、16進、8進、2進)の場合は`tok_num_int()`に投げる。
+fn tok_num(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
     let mut i = index;
     let mut mantissa = String::new();
     let mut exponent = String::new();
@@ -97,7 +99,7 @@ fn tok_num(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize) {
     let mut has_exponent = false;
     if chars[i] == '0' {
         if (i + 1) < chars.len() {
-            i = i + 1;
+            i += 1;
             match chars[i] {
                 '0'..='9' | 'a'..='f' | 'A'..='F' | 'x' | 'X' => {
                     return tok_num_int(chars, i);
@@ -106,7 +108,7 @@ fn tok_num(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize) {
                     mantissa.push('0');
                     mantissa.push(chars[i]);
                     has_dot = true;
-                    i = i + 1;
+                    i += 1;
                 }
                 _ => {
                     return (Ok(Token::Num(0)), i);
@@ -120,19 +122,19 @@ fn tok_num(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize) {
         match chars[i] {
             '0'..='9' => {
                 mantissa.push(chars[i]);
-                i = i + 1;
+                i += 1;
             }
             '_' => {
                 // separator
-                i = i + 1;
+                i += 1;
             }
             '.' => {
                 mantissa.push(chars[i]);
-                i = i + 1;
+                i += 1;
                 has_dot = true;
             }
             'e' | 'E' => {
-                i = i + 1;
+                i += 1;
                 has_dot = true; // no dot but move to floating mode.
                 has_exponent = true;
                 if i < chars.len() {
@@ -211,10 +213,10 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
             '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' => {
                 // 1文字記号トークン=>演算子クラス
                 ret.push(Token::Op(chars[i]));
-                i = i + 1;
+                i += 1;
             }
             _ => {
-                i = i + 1;
+                i += 1;
             }
         }
     }
