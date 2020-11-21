@@ -1,5 +1,3 @@
-// TODO: add Doc-test.
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Num(i128),
@@ -15,6 +13,7 @@ fn tok_get_num(chars: &[char], index: usize) -> (String, usize) {
     if i < chars.len() {
         match chars[i] {
             '-' | '0'..='9' => {
+                // '-' is required for parsing exponent of floating point number format.
                 let mut ret = String::from(chars[i]);
                 i += 1;
                 while i < chars.len() {
@@ -30,10 +29,10 @@ fn tok_get_num(chars: &[char], index: usize) -> (String, usize) {
                 }
                 (ret, i)
             }
-            _ => (String::from('0'), i),
+            _ => (String::from(""), i),
         }
     } else {
-        (String::from('0'), i)
+        (String::from(""), i)
     }
 }
 
@@ -255,11 +254,11 @@ mod tests {
         );
         assert_eq!(
             tok_get_num(&("".chars().collect::<Vec<char>>()), 0),
-            ("0".to_string(), 0)
+            ("".to_string(), 0)
         );
         assert_eq!(
             tok_get_num(&("a".chars().collect::<Vec<char>>()), 0),
-            ("0".to_string(), 0)
+            ("".to_string(), 0)
         );
     }
     #[test]
