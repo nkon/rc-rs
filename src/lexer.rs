@@ -1,4 +1,3 @@
-
 // TODO: add Doc-test.
 
 #[derive(Debug, Clone, PartialEq)]
@@ -9,7 +8,8 @@ pub enum Token {
     Ident(String),
 }
 
-// `chars`から、数字とみなされる`String`を切り出す
+/// Cut out sequense of num_char as `String` from input `chars: &[char]`.
+/// Increment index and return as a member of tupple.
 fn tok_get_num(chars: &[char], index: usize) -> (String, usize) {
     let mut i = index;
     if i < chars.len() {
@@ -37,7 +37,9 @@ fn tok_get_num(chars: &[char], index: usize) -> (String, usize) {
     }
 }
 
-// 数字の並びを食べて、Token::Num()を返す。
+/// Eat integer numbers from input array.
+/// Return `Token::Num()` with `Result<,Err(String)>`.
+/// Increment index and return as a member of tupple.
 fn tok_num_int(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
     let mut i = index;
     let radix: u32;
@@ -89,8 +91,10 @@ fn tok_num_int(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
     }
 }
 
-// 数字の並びを食べて、Token::Num()またはToken::FNum()を返す。
-// 整数(10進、16進、8進、2進)の場合は`tok_num_int()`に投げる。
+/// Eat numbers from input array.
+/// Forwared to `tok_num_int()` when interger, i.e. decimal, hexdecimal, octal or binary.
+/// Return `Token::Num()` or `Token::FNum()` with `Result<,Err(String)>`.
+/// Increment index and return as a member of tupple.
 fn tok_num(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
     let mut i = index;
     let mut mantissa = String::new();
@@ -169,6 +173,9 @@ fn tok_num(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
     }
 }
 
+/// Input: `String`
+/// Output: `Result<Vec<Token>, String>`
+///
 /// # Examples
 /// ```
 /// use rc::lexer;
@@ -198,7 +205,7 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
     while i < chars.len() {
         match chars[i] {
             '0'..='9' => {
-                // 数字で始まるものは数字(数字が終わるまでに英字・記号を含むかもしれない)
+                // `Num` or `FNum` begin from '0'..='9'.
                 let (tk, b) = tok_num(&chars, i);
                 i = b;
                 match tk {
@@ -211,7 +218,7 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
                 }
             }
             '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' => {
-                // 1文字記号トークン=>演算子クラス
+                // operators
                 ret.push(Token::Op(chars[i]));
                 i += 1;
             }
