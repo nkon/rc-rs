@@ -10,116 +10,137 @@ pub enum Token {
     Ident(String),
 }
 
-fn tok_get_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> String {
-    match c {
-        '-' | '0'..='9' => {
-            let mut ret = String::from(c);
-            iter.next();
-            while let Some(&c) = iter.peek() {
-                match c {
-                    '0'..='9' => {
-                        ret.push(c);
-                        iter.next();
-                    }
-                    _ => {
-                        return ret;
+// 数字からなる列を取り出す
+fn tok_get_num(chars: &Vec<char>, index: usize) -> (String, usize) {
+    let mut i = index;
+    if i < chars.len() {
+        match chars[i] {
+            '-' | '0'..='9' => {
+                let mut ret = String::from(chars[i]);
+                i = i + 1;
+                while i < chars.len() {
+                    match chars[i] {
+                        '0'..='9' => {
+                            ret.push(chars[i]);
+                            i = i + 1;
+                        }
+                        _ => {
+                            return (ret, i);
+                        }
                     }
                 }
+                return (ret, i);
             }
-            ret
+            _ => (String::from('0'), i),
         }
-        _ => String::from('0'),
+    } else {
+        return (String::from('0'), i);
     }
 }
 
-fn tok_num_int<T: Iterator<Item = char>>(
-    _c: char,
-    iter: &mut Peekable<T>,
-) -> Result<Token, String> {
+fn tok_num_int(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize) {
+    let mut i = index;
     let mut radix = 10;
     let mut mantissa = String::from("0");
     let mut err_str = String::from("0");
 
-    if let Some(&c) = iter.peek() {
-        match c {
+    if i < chars.len() {
+        match chars[i] {
             'x' | 'X' => {
                 radix = 16;
-                iter.next();
-                err_str.push(c);
+                i = i + 1;
+                err_str.push(chars[i]);
             }
             'b' | 'B' => {
                 radix = 2;
-                iter.next();
-                err_str.push(c);
+                i = i + 1;
+                err_str.push(chars[i]);
             }
             '0'..='7' => {
                 radix = 8;
             }
             _ => {
-                return Ok(Token::Num(0));
+                return (Ok(Token::Num(0)), i);
             }
         }
+    } else {
+        return (Ok(Token::Num(0)), i);
     }
-    while let Some(&c) = iter.peek() {
-        match c {
+
+    while i < chars.len() {
+        match chars[i] {
             '0'..='9' | 'a'..='f' | 'A'..='F' => {
-                mantissa.push(c);
-                err_str.push(c);
-                iter.next();
+                mantissa.push(chars[i]);
+                err_str.push(chars[i]);
+                i = i + 1;
             }
             '_' => {
-                iter.next();
+                i = i + 1;
             }
             _ => {
                 break;
             }
         }
     }
+
     match i128::from_str_radix(&mantissa, radix) {
-        Ok(int) => Ok(Token::Num(int)),
-        Err(e) => Err(format!("Error: Integer format: {} {}", e, err_str)),
+        Ok(int) => (Ok(Token::Num(int)), i),
+        Err(e) => (Err(format!("Error: Integer format: {} {}", e, err_str)), i),
     }
 }
 
-fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Result<Token, String> {
-    let mut mantissa = String::from(c);
+fn tok_num(chars: &Vec<char>, index: usize) -> (Result<Token, String>, usize) {
+    let mut i = index;
+    let mut mantissa = String::new();
     let mut exponent = String::new();
     let mut has_dot = false;
     let mut has_exponent = false;
-    if mantissa == "0" {
-        match iter.peek() {
-            Some(&c) => match c {
+    if chars[i] == '0' {
+        if (i + 1) < chars.len() {
+            i = i + 1;
+            match chars[i] {
                 '0'..='9' | 'a'..='f' | 'A'..='F' | 'x' | 'X' => {
-                    return tok_num_int(c, iter);
+                    return tok_num_int(chars, i);
                 }
-                _ => {}
-            },
-            None => {
-                return Ok(Token::Num(0));
+                '.' => {
+                    mantissa.push('0');
+                    mantissa.push(chars[i]);
+                    has_dot = true;
+                    i = i + 1;
+                }
+                _ => {
+                    return (Ok(Token::Num(0)), i);
+                }
             }
+        } else {
+            return (Ok(Token::Num(0)), i + 1);
         }
     }
-    while let Some(&c) = iter.peek() {
-        match c {
+    while i < chars.len() {
+        match chars[i] {
             '0'..='9' => {
-                mantissa.push(c);
-                iter.next();
+                mantissa.push(chars[i]);
+                i = i + 1;
             }
             '_' => {
-                iter.next();
+                // separator
+                i = i + 1;
             }
             '.' => {
-                mantissa.push(c);
-                iter.next();
+                mantissa.push(chars[i]);
+                i = i + 1;
                 has_dot = true;
             }
             'e' | 'E' => {
-                iter.next();
+                i = i + 1;
                 has_dot = true; // no dot but move to floating mode.
                 has_exponent = true;
-                let &c = iter.peek().unwrap();
-                exponent = tok_get_num(c, iter);
-                break;
+                if i < chars.len() {
+                    let (a, b) = tok_get_num(chars, i);
+                    exponent = a;
+                    i = b;
+                    break;
+                }
             }
             _ => {
                 break;
@@ -129,10 +150,10 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Result<
     if !has_dot {
         match mantissa.parse::<i128>() {
             Ok(int) => {
-                return Ok(Token::Num(int));
+                return (Ok(Token::Num(int)), i);
             }
             Err(e) => {
-                return Err(format!("Error: Integer format: {} {}", e, mantissa));
+                return (Err(format!("Error: Integer format: {} {}", e, mantissa)), i);
             }
         }
     }
@@ -141,8 +162,8 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Result<
         mantissa.push_str(&exponent);
     }
     match mantissa.parse::<f64>() {
-        Ok(float) => Ok(Token::FNum(float)),
-        Err(e) => Err(format!("Error: Float format: {} {}", e, mantissa)),
+        Ok(float) => (Ok(Token::FNum(float)), i),
+        Err(e) => (Err(format!("Error: Float format: {} {}", e, mantissa)), i),
     }
 }
 
@@ -165,17 +186,19 @@ fn tok_num<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> Result<
 /// assert_eq!(lexer("9223372036854775807".to_string()).unwrap(), [Token::Num(9223372036854775807)]);
 /// assert_eq!(lexer("18446744073709551615".to_string()).unwrap(), [Token::Num(18446744073709551615)]);
 /// ```
-// TODO: change from peekable iterator to Vec and index.
 // TODO: handle vars/functions.
+// TODO: support SI postifx(k/M/G/T/m/u/n/p)
 pub fn lexer(s: String) -> Result<Vec<Token>, String> {
     let mut ret = Vec::new();
 
-    let mut iter = s.chars().peekable();
-    while let Some(&c) = iter.peek() {
-        match c {
+    let chars: Vec<char> = s.chars().collect();
+    let mut i: usize = 0;
+    while i < chars.len() {
+        match chars[i] {
             '0'..='9' => {
-                iter.next();
-                let tk = tok_num(c, &mut iter);
+                // 数字で始まるものは数字(数字が終わるまでに英字・記号を含むかもしれない)
+                let (tk, b) = tok_num(&chars, i);
+                i = b;
                 match tk {
                     Ok(tk) => {
                         ret.push(tk);
@@ -186,11 +209,12 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
                 }
             }
             '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' => {
-                iter.next();
-                ret.push(Token::Op(c));
+                // 1文字記号トークン=>演算子クラス
+                ret.push(Token::Op(chars[i]));
+                i = i + 1;
             }
             _ => {
-                let _ = iter.next();
+                i = i + 1;
             }
         }
     }
@@ -201,6 +225,164 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_tok_get_num() {
+        assert_eq!(
+            tok_get_num(&("0".chars().collect::<Vec<char>>()), 0),
+            ("0".to_string(), 1)
+        );
+        assert_eq!(
+            tok_get_num(&("1".chars().collect::<Vec<char>>()), 0),
+            ("1".to_string(), 1)
+        );
+        assert_eq!(
+            tok_get_num(&("34".chars().collect::<Vec<char>>()), 0),
+            ("34".to_string(), 2)
+        );
+        assert_eq!(
+            tok_get_num(&("56a".chars().collect::<Vec<char>>()), 0),
+            ("56".to_string(), 2)
+        );
+        assert_eq!(
+            tok_get_num(&("".chars().collect::<Vec<char>>()), 0),
+            ("0".to_string(), 0)
+        );
+        assert_eq!(
+            tok_get_num(&("a".chars().collect::<Vec<char>>()), 0),
+            ("0".to_string(), 0)
+        );
+    }
+    #[test]
+    fn test_tok_num_int() {
+        assert_eq!(
+            tok_num_int(&("0x1".chars().collect::<Vec<char>>()), 1),
+            (Ok(Token::Num(1)), 3)
+        );
+        assert_eq!(
+            tok_num_int(&("0xa".chars().collect::<Vec<char>>()), 1),
+            (Ok(Token::Num(10)), 3)
+        );
+        assert_eq!(
+            tok_num_int(&("0x10".chars().collect::<Vec<char>>()), 1),
+            (Ok(Token::Num(16)), 4)
+        );
+        assert_eq!(
+            tok_num_int(&("0b10".chars().collect::<Vec<char>>()), 1),
+            (Ok(Token::Num(2)), 4)
+        );
+        assert_eq!(
+            tok_num_int(&("0b1_0".chars().collect::<Vec<char>>()), 1),
+            (Ok(Token::Num(2)), 5)
+        );
+        assert_eq!(
+            tok_num_int(&("010".chars().collect::<Vec<char>>()), 1),
+            (Ok(Token::Num(8)), 3)
+        );
+    }
+    #[test]
+    fn test_tok_num() {
+        assert_eq!(
+            tok_num(&("0x1".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(1)), 3)
+        );
+        assert_eq!(
+            tok_num(&("0xa".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(10)), 3)
+        );
+        assert_eq!(
+            tok_num(&("0x10".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(16)), 4)
+        );
+        assert_eq!(
+            tok_num(&("0b10".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(2)), 4)
+        );
+        assert_eq!(
+            tok_num(&("0b1_0".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(2)), 5)
+        );
+        assert_eq!(
+            tok_num(&("010".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(8)), 3)
+        );
+        assert_eq!(
+            tok_num(&("10".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(10)), 2)
+        );
+        assert_eq!(
+            tok_num(&("10.1".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::FNum(10.1)), 4)
+        );
+        assert_eq!(
+            tok_num(&("10e1".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::FNum(100.0)), 4)
+        );
+        assert_eq!(
+            tok_num(&("10e1+".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::FNum(100.0)), 4)
+        );
+        assert_eq!(
+            tok_num(&("1".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(1)), 1)
+        );
+        assert_eq!(
+            tok_num(&("1".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(1)), 1)
+        );
+        assert_eq!(
+            tok_num(&("0".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(0)), 1)
+        );
+        assert_eq!(
+            tok_num(&("10".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(10)), 2)
+        );
+        assert_eq!(
+            tok_num(&("1.1".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::FNum(1.1)), 3)
+        );
+        assert_eq!(
+            tok_num(&("0.1".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::FNum(0.1)), 3)
+        );
+        assert_eq!(
+            tok_num(&("1.1E2".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::FNum(110.0)), 5)
+        );
+        assert_eq!(
+            tok_num(&("1.1E-2".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::FNum(0.011)), 6)
+        );
+        assert_eq!(
+            tok_num(&("100_000".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(100000)), 7)
+        );
+        assert_eq!(
+            tok_num(&("0xa".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(10)), 3)
+        );
+        assert_eq!(
+            tok_num(&("011".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(9)), 3)
+        );
+        assert_eq!(
+            tok_num(&("0b11".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(3)), 4)
+        );
+        assert_eq!(
+            tok_num(&("1e3".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::FNum(1000.0)), 3)
+        );
+        assert_eq!(
+            tok_num(&("9223372036854775807".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(9223372036854775807)), 19)
+        );
+        assert_eq!(
+            tok_num(&("18446744073709551615".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Num(18446744073709551615)), 20)
+        );
+    }
 
     #[test]
     fn test_lexer() {
