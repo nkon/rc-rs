@@ -184,6 +184,8 @@ fn expr(tok: &[Token], i: usize) -> (Node, usize) {
     }
 }
 
+// TODO: handle vars/functions.
+// TODO: support SI postifx(k/M/G/T/m/u/n/p)
 pub fn parse(tok: &[Token]) -> Node {
     let (node, _i) = expr(&tok, 0);
 

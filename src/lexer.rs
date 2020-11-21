@@ -172,6 +172,23 @@ fn tok_num(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
     }
 }
 
+fn tok_ident(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
+    let mut i = index;
+    let mut ret = String::new();
+    while i < chars.len() {
+        match chars[i] {
+            'a'..='z' | 'A'..='Z' | '_' | '0'..='9' => {
+                ret.push(chars[i]);
+                i += 1;
+            }
+            _ => {
+                return (Ok(Token::Ident(ret)), i);
+            }
+        }
+    }
+    (Ok(Token::Ident(ret)), i)
+}
+
 /// Input: `String`
 /// Output: `Result<Vec<Token>, String>`
 ///
@@ -194,8 +211,6 @@ fn tok_num(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
 /// assert_eq!(lexer("9223372036854775807".to_string()).unwrap(), [Token::Num(9223372036854775807)]);
 /// assert_eq!(lexer("18446744073709551615".to_string()).unwrap(), [Token::Num(18446744073709551615)]);
 /// ```
-// TODO: handle vars/functions.
-// TODO: support SI postifx(k/M/G/T/m/u/n/p)
 pub fn lexer(s: String) -> Result<Vec<Token>, String> {
     let mut ret = Vec::new();
 
@@ -220,6 +235,18 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
                 // operators
                 ret.push(Token::Op(chars[i]));
                 i += 1;
+            }
+            'a'..='z' | 'A'..='Z' => {
+                let (tk, b) = tok_ident(&chars, i);
+                i = b;
+                match tk {
+                    Ok(tk) => {
+                        ret.push(tk);
+                    }
+                    Err(e) => {
+                        return Err(e);
+                    }
+                }
             }
             _ => {
                 i += 1;
@@ -391,7 +418,17 @@ mod tests {
             (Ok(Token::Num(18446744073709551615)), 20)
         );
     }
-
+    #[test]
+    fn test_tok_ident() {
+        assert_eq!(
+            tok_ident(&("i".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Ident("i".to_string())), 1)
+        );
+        assert_eq!(
+            tok_ident(&("sin()".chars().collect::<Vec<char>>()), 0),
+            (Ok(Token::Ident("sin".to_string())), 3)
+        );
+    }
     #[test]
     fn test_lexer() {
         assert_eq!(
@@ -429,6 +466,25 @@ mod tests {
                 Token::Op(')'),
                 Token::Op('-'),
                 Token::Op('^')
+            ]
+        );
+        assert_eq!(
+            lexer("sin(2.0)".to_string()).unwrap(),
+            [
+                Token::Ident("sin".to_string()),
+                Token::Op('('),
+                Token::FNum(2.0),
+                Token::Op(')'),
+            ]
+        );
+        assert_eq!(
+            lexer("1k*3.0u".to_string()).unwrap(),
+            [
+                Token::Num(1),
+                Token::Ident("k".to_string()),
+                Token::Op('*'),
+                Token::FNum(3.0),
+                Token::Ident("u".to_string()),
             ]
         );
     }
