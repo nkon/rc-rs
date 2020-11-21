@@ -202,26 +202,17 @@ fn eval_binop(n: &Node) -> Node {
             ret_node.ty = NodeType::Num;
             ret_node.value = lhs.value + rhs.value;
             return ret_node;
-        }
-        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
+        } else {
             ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.fvalue + rhs.fvalue;
-            return ret_node;
-        }
-        if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
-            ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.value as f64 + rhs.fvalue;
-            return ret_node;
-        }
-        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
-            ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.fvalue + rhs.value as f64;
+            ret_node.fvalue = if lhs.ty == NodeType::Num {
+                lhs.value as f64
+            } else {
+                lhs.fvalue
+            } + if rhs.ty == NodeType::Num {
+                rhs.value as f64
+            } else {
+                rhs.fvalue
+            };
             return ret_node;
         }
     }
@@ -230,26 +221,17 @@ fn eval_binop(n: &Node) -> Node {
             ret_node.ty = NodeType::Num;
             ret_node.value = lhs.value - rhs.value;
             return ret_node;
-        }
-        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
+        } else {
             ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.fvalue - rhs.fvalue;
-            return ret_node;
-        }
-        if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
-            ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.value as f64 - rhs.fvalue;
-            return ret_node;
-        }
-        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
-            ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.fvalue - rhs.value as f64;
+            ret_node.fvalue = if lhs.ty == NodeType::Num {
+                lhs.value as f64
+            } else {
+                lhs.fvalue
+            } - if rhs.ty == NodeType::Num {
+                rhs.value as f64
+            } else {
+                rhs.fvalue
+            };
             return ret_node;
         }
     }
@@ -258,26 +240,17 @@ fn eval_binop(n: &Node) -> Node {
             ret_node.ty = NodeType::Num;
             ret_node.value = lhs.value * rhs.value;
             return ret_node;
-        }
-        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
+        } else {
             ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.fvalue * rhs.fvalue;
-            return ret_node;
-        }
-        if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
-            ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.value as f64 * rhs.fvalue;
-            return ret_node;
-        }
-        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
-            ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.fvalue * rhs.value as f64;
+            ret_node.fvalue = if lhs.ty == NodeType::Num {
+                lhs.value as f64
+            } else {
+                lhs.fvalue
+            } * if rhs.ty == NodeType::Num {
+                rhs.value as f64
+            } else {
+                rhs.fvalue
+            };
             return ret_node;
         }
     }
@@ -286,26 +259,17 @@ fn eval_binop(n: &Node) -> Node {
             ret_node.ty = NodeType::Num;
             ret_node.value = lhs.value / rhs.value;
             return ret_node;
-        }
-        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::FNum {
+        } else {
             ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.fvalue / rhs.fvalue;
-            return ret_node;
-        }
-        if lhs.ty == NodeType::Num && rhs.ty == NodeType::FNum {
-            ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.value as f64 / rhs.fvalue;
-            return ret_node;
-        }
-        if lhs.ty == NodeType::FNum && rhs.ty == NodeType::Num {
-            ret_node.ty = NodeType::FNum;
-            let lhs = eval(&n.child[0]);
-            let rhs = eval(&n.child[1]);
-            ret_node.fvalue = lhs.fvalue / rhs.value as f64;
+            ret_node.fvalue = if lhs.ty == NodeType::Num {
+                lhs.value as f64
+            } else {
+                lhs.fvalue
+            } / if rhs.ty == NodeType::Num {
+                rhs.value as f64
+            } else {
+                rhs.fvalue
+            };
             return ret_node;
         }
     }
@@ -502,5 +466,39 @@ mod tests {
             ),
             "Num(5)"
         );
+        assert_eq!(
+            format!(
+                "{:?}",
+                eval(&parse(&(lexer("+(2+3)".to_string())).unwrap()))
+            ),
+            "Num(5)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&(lexer("1+2".to_string())).unwrap()))),
+            "Num(3)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&(lexer("1.0+2".to_string())).unwrap()))),
+            "FNum(3)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&(lexer("1+2.0".to_string())).unwrap()))),
+            "FNum(3)"
+        );
+        assert_eq!(
+            format!(
+                "{:?}",
+                eval(&parse(&(lexer("1.0+2.0".to_string())).unwrap()))
+            ),
+            "FNum(3)"
+        );
+        assert_eq!(
+            format!(
+                "{:?}",
+                eval(&parse(&(lexer("(1+2.0)*3".to_string())).unwrap()))
+            ),
+            "FNum(9)"
+        );
+
     }
 }
