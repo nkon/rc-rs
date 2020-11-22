@@ -231,7 +231,7 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
                     }
                 }
             }
-            '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' => {
+            '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' | ',' => {
                 // operators
                 ret.push(Token::Op(chars[i]));
                 i += 1;
@@ -485,6 +485,17 @@ mod tests {
                 Token::Op('*'),
                 Token::FNum(3.0),
                 Token::Ident("u".to_string()),
+            ]
+        );
+        assert_eq!(
+            lexer("sin(0.5*pi)".to_string()).unwrap(),
+            [
+                Token::Ident("sin".to_string()),
+                Token::Op('('),
+                Token::FNum(0.5),
+                Token::Op('*'),
+                Token::Ident("pi".to_string()),
+                Token::Op(')'),
             ]
         );
     }

@@ -178,4 +178,8 @@ pub fn run_test() {
         "1/(2*pi*10k*4.7u) -> {:?}",
         eval(&parse(&(lexer("1/(2*pi*10k*4.7u)".to_string())).unwrap()))
     );
+    println!(
+        "sin(pi/2) -> {:?}",
+        eval(&parse(&(lexer("sin(pi/2)".to_string())).unwrap()))
+    );
 }

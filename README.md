@@ -44,5 +44,5 @@ https://www.vector.co.jp/soft/win95/personal/se213459.html
 * Graph
 * Single binary release
     + cross build for Linux, Windows, Mac
-* Use L10N using gettext-rs
+* L10N using gettext-rs
 * Read .rc_rc as the init file, in which user defines constants and functions.

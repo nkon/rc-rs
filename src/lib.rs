@@ -11,7 +11,7 @@ pub use run_test::run_test;
 // <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
 // <mul>     ::= <unary> ( '*' <unary> | '/' <unary>)*
 // <unary>   ::= <primary> | '-' <primary> | '+' <primary>
-// <primary> ::= <num> | '(' <expr> ')' | <var>
+// <primary> ::= <num> | '(' <expr> ')' | <var> | <func> '(' <expr>* ',' ')'
 // <num>     ::= <num> | <num> <postfix>
 
 #[derive(Clone, Copy, PartialEq)]
@@ -19,9 +19,10 @@ pub enum NodeType {
     None,
     Num,   // value <- value
     FNum,  // fvalue <- value
-    Var,   // op <- Token::Ident(ident)
     Unary, // op <- operator, child[0] <- operand
     BinOp, // op <- operator, child[0] <- lhs, child[1] <- rhs
+    Var,   // op <- Token::Ident(ident)
+    Func,  // op <- Token::Ident(ident), child[] <- parameter
 }
 
 impl fmt::Debug for NodeType {
@@ -30,9 +31,10 @@ impl fmt::Debug for NodeType {
             NodeType::None => write!(f, "None"),
             NodeType::Num => write!(f, "Num"),
             NodeType::FNum => write!(f, "FNum"),
-            NodeType::Var => write!(f, "Var"),
             NodeType::Unary => write!(f, "Unary"),
             NodeType::BinOp => write!(f, "BinOp"),
+            NodeType::Var => write!(f, "Var"),
+            NodeType::Func => write!(f, "Func"),
         }
     }
 }
@@ -70,9 +72,10 @@ impl fmt::Debug for Node {
             NodeType::None => write!(f, "None"),
             NodeType::Num => write!(f, "Num({})", self.value),
             NodeType::FNum => write!(f, "FNum({})", self.fvalue),
-            NodeType::Var => write!(f, "Var({:?})", self.op),
             NodeType::Unary => write!(f, "Unary({:?} {:?})", self.op, self.child[0]),
             NodeType::BinOp => write!(f, "BinOp({:?} {:?})", self.op, self.child),
+            NodeType::Var => write!(f, "Var({:?})", self.op),
+            NodeType::Func => write!(f, "Func({:?} {:?})", self.op, self.child),
         }
     }
 }
@@ -150,7 +153,8 @@ fn num(tok: &[Token], i: usize) -> (Node, usize) {
     }
 }
 
-fn primary(tok: &[Token], i: usize) -> (Node, usize) {
+fn primary(tok: &[Token], index: usize) -> (Node, usize) {
+    let mut i = index;
     // println!("primary {:?} {}", tok, i);
     if tok.len() <= i {
         return (Node::new(), i);
@@ -165,9 +169,34 @@ fn primary(tok: &[Token], i: usize) -> (Node, usize) {
         }
         Token::Ident(id) => {
             let mut ret_node = Node::new();
-            ret_node.ty = NodeType::Var;
-            ret_node.op = Token::Ident(id.clone());
-            (ret_node, i + 1)
+            if &(*id.as_str()) == "pi" {
+                // FIXME: is_var()
+                ret_node.ty = NodeType::Var;
+                ret_node.op = Token::Ident(id.clone());
+                (ret_node, i + 1)
+            } else if &(*id.as_str()) == "sin" {
+                // FIXME: is_func()
+                ret_node.ty = NodeType::Func;
+                ret_node.op = Token::Ident(id.clone());
+                if (i + 1) < tok.len() || tok[i + 1] == Token::Op('(') {
+                    i += 2;
+                    while i < tok.len() {
+                        if tok[i] == Token::Op(')') {
+                            return (ret_node, i + 1);
+                        } else if tok[i] == Token::Op(',') {
+                            i += 1;
+                            continue;
+                        } else {
+                            let (t, j) = expr(tok, i);
+                            i = j;
+                            ret_node.child.push(t);
+                        }
+                    }
+                }
+                (ret_node, i + 1)
+            } else {
+                (ret_node, i)
+            }
         }
         _ => num(tok, i),
     }
@@ -262,6 +291,27 @@ fn eval_const(n: &Node) -> Node {
             "pi" => {
                 ret_node.ty = NodeType::FNum;
                 ret_node.fvalue = std::f64::consts::PI;
+                ret_node
+            }
+            _ => Node::new(),
+        }
+    } else {
+        Node::new()
+    }
+}
+
+fn eval_func(n: &Node) -> Node {
+    let mut ret_node = Node::new();
+    if let Token::Ident(ident) = &n.op {
+        match ident.as_str() {
+            "sin" => {
+                ret_node.ty = NodeType::FNum;
+                let mut arg = eval(&n.child[0]);
+                if arg.ty == NodeType::Num {
+                    arg.ty = NodeType::FNum;
+                    arg.fvalue = arg.value as f64;
+                }
+                ret_node.fvalue = arg.fvalue.sin();
                 ret_node
             }
             _ => Node::new(),
@@ -434,6 +484,7 @@ pub fn eval(n: &Node) -> Node {
         }
         NodeType::BinOp => eval_binop(n),
         NodeType::Var => eval_const(n),
+        NodeType::Func => eval_func(n),
         _ => {
             let mut ret_node = Node::new();
             ret_node.ty = n.ty;
@@ -509,6 +560,14 @@ mod tests {
         assert_eq!(
             format!("{:?}", parse(&(lexer("2u*pi".to_string())).unwrap())),
             "BinOp(Op('*') [FNum(0.000002), Var(Ident(\"pi\"))])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&(lexer("2*sin(0.5*pi)".to_string())).unwrap())),
+            "BinOp(Op('*') [Num(2), Func(Ident(\"sin\") [BinOp(Op('*') [FNum(0.5), Var(Ident(\"pi\"))])])])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&(lexer("2*sin(1, 2)".to_string())).unwrap())),
+            "BinOp(Op('*') [Num(2), Func(Ident(\"sin\") [Num(1), Num(2)])])"
         );
     }
 
@@ -612,5 +671,25 @@ mod tests {
             format!("{:?}", eval(&parse(&(lexer("2k*3u".to_string())).unwrap()))),
             "FNum(0.006)"
         );
+        assert_eq!(
+            format!(
+                "{:?}",
+                eval(&parse(&(lexer("sin(0.0)".to_string())).unwrap()))
+            ),
+            "FNum(0)"
+        );
+        assert_eq!(
+            format!(
+                "{:?}",
+                eval(&parse(&(lexer("sin(0)".to_string())).unwrap()))
+            ),
+            "FNum(0)"
+        );
+        let n = eval(&parse(&(lexer("sin(pi)".to_string())).unwrap()));
+        assert!(n.ty == NodeType::FNum);
+        assert!((n.fvalue.abs()) < 1e-10);
+        let n = eval(&parse(&(lexer("sin(pi/2)".to_string())).unwrap()));
+        assert!(n.ty == NodeType::FNum);
+        assert!(((n.fvalue - 1.0).abs()) < 1e-10);
     }
 }
