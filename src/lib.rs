@@ -11,12 +11,14 @@ pub use run_test::run_test;
 // <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
 // <mul>     ::= <unary> ( '*' <unary> | '/' <unary>)*
 // <unary>   ::= <primary> | '-' <primary> | '+' <primary>
-// <primary> ::= <num> | '(' <expr> ')'
+// <primary> ::= <num> | '(' <expr> ')' | <var>
+
 #[derive(Clone, Copy, PartialEq)]
 pub enum NodeType {
     None,
     Num,   // value <- value
     FNum,  // fvalue <- value
+    Var,   // op <- Token::Ident(ident)
     Unary, // op <- operator, child[0] <- operand
     BinOp, // op <- operator, child[0] <- lhs, child[1] <- rhs
 }
@@ -27,6 +29,7 @@ impl fmt::Debug for NodeType {
             NodeType::None => write!(f, "None"),
             NodeType::Num => write!(f, "Num"),
             NodeType::FNum => write!(f, "FNum"),
+            NodeType::Var => write!(f, "Var"),
             NodeType::Unary => write!(f, "Unary"),
             NodeType::BinOp => write!(f, "BinOp"),
         }
@@ -66,6 +69,7 @@ impl fmt::Debug for Node {
             NodeType::None => write!(f, "None"),
             NodeType::Num => write!(f, "Num({})", self.value),
             NodeType::FNum => write!(f, "FNum({})", self.fvalue),
+            NodeType::Var => write!(f, "Var({:?})", self.op),
             NodeType::Unary => write!(f, "Unary({:?} {:?})", self.op, self.child[0]),
             NodeType::BinOp => write!(f, "BinOp({:?} {:?})", self.op, self.child),
         }
@@ -98,13 +102,19 @@ fn primary(tok: &[Token], i: usize) -> (Node, usize) {
     if tok.len() <= i {
         return (Node::new(), i);
     }
-    match tok[i] {
+    match &tok[i] {
         Token::Op('(') => {
             let (expr, i) = expr(tok, i + 1);
             if tok[i] != Token::Op(')') {
                 println!("')' not found.");
             }
             (expr, i + 1)
+        }
+        Token::Ident(id) => {
+            let mut ret_node = Node::new();
+            ret_node.ty = NodeType::Var;
+            ret_node.op = Token::Ident(id.clone());
+            (ret_node, i + 1)
         }
         _ => num(tok, i),
     }
@@ -191,6 +201,24 @@ pub fn parse(tok: &[Token]) -> Node {
 
     // println!("{:?} {}", node, i);
     node
+}
+
+fn eval_const(n: &Node) -> Node {
+    let mut ret_node = Node::new();
+    if let Token::Ident(ident) = &n.op {
+        match ident.as_str() {
+            "pi" => {
+                ret_node.ty = NodeType::FNum;
+                ret_node.fvalue = std::f64::consts::PI;
+                return ret_node;
+            }
+            _ => {
+                return Node::new();
+            }
+        }
+    } else {
+        return Node::new();
+    }
 }
 
 fn eval_binop(n: &Node) -> Node {
@@ -349,6 +377,8 @@ pub fn eval(n: &Node) -> Node {
         }
     } else if n.ty == NodeType::BinOp {
         return eval_binop(n);
+    } else if n.ty == NodeType::Var {
+        return eval_const(n);
     }
     let mut ret_node = Node::new();
     ret_node.ty = n.ty;
@@ -406,6 +436,14 @@ mod tests {
         assert_eq!(
             format!("{:?}", parse(&(lexer("-(2+3)".to_string())).unwrap())),
             "Unary(Op('-') BinOp(Op('+') [Num(2), Num(3)]))"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&(lexer("pi".to_string())).unwrap())),
+            "Var(Ident(\"pi\"))"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&(lexer("2.0*pi".to_string())).unwrap())),
+            "BinOp(Op('*') [FNum(2), Var(Ident(\"pi\"))])"
         );
     }
 
@@ -501,6 +539,9 @@ mod tests {
             ),
             "FNum(9)"
         );
-
+        assert_eq!(
+            format!("{:?}", eval(&parse(&(lexer("pi".to_string())).unwrap()))),
+            "FNum(3.141592653589793)"
+        );
     }
 }
