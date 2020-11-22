@@ -1,6 +1,12 @@
 use super::*;
 
-pub fn run_test() {
+fn eval_as_string(env: &mut Env, input: &str) -> String {
+    let n = parse(env, &(lexer(input.to_string())).unwrap());
+    let n = eval(env, &n);
+    format!("{:?}", n)
+}
+
+pub fn run_test(env: &mut Env) {
     println!("lexer");
     println!("0xa -> {:?}", lexer("0xa".to_string()).unwrap());
     println!("011 -> {:?}", lexer("011".to_string()).unwrap());
@@ -41,145 +47,108 @@ pub fn run_test() {
     }
     println!();
     println!("parser");
-    println!("1 -> {:?}", parse(&(lexer("1".to_string())).unwrap()));
-    println!("0 -> {:?}", parse(&(lexer("0".to_string())).unwrap()));
-    println!("-1 -> {:?}", parse(&(lexer("-1".to_string())).unwrap()));
+    println!("1 -> {:?}", parse(env, &(lexer("1".to_string())).unwrap()));
+    println!("0 -> {:?}", parse(env, &(lexer("0".to_string())).unwrap()));
+    println!(
+        "-1 -> {:?}",
+        parse(env, &(lexer("-1".to_string())).unwrap())
+    );
     println!(
         "9223372036854775807 -> {:?}",
-        parse(&(lexer("9223372036854775807".to_string()).unwrap()))
+        parse(env, &(lexer("9223372036854775807".to_string()).unwrap()))
     );
     println!(
         "-9223372036854775808 -> {:?}",
-        parse(&(lexer("-9223372036854775808".to_string()).unwrap()))
-    );
-    println!("1+2 -> {:?}", parse(&(lexer("1+2".to_string())).unwrap()));
-    println!("1-2 -> {:?}", parse(&(lexer("1-2".to_string())).unwrap()));
-    println!("1+-2 -> {:?}", parse(&(lexer("1+-2".to_string())).unwrap()));
-    println!("1*2 -> {:?}", parse(&(lexer("1*2".to_string())).unwrap()));
-    println!(
-        "1*2+3 -> {:?}",
-        parse(&(lexer("1*2+3".to_string())).unwrap())
-    );
-    println!(
-        "1+2*3 -> {:?}",
-        parse(&(lexer("1+2*3".to_string())).unwrap())
-    );
-    println!(
-        "1*(2+3) -> {:?}",
-        parse(&(lexer("1*(2+3)".to_string())).unwrap())
-    );
-    println!(
-        "(1+2)*3 -> {:?}",
-        parse(&(lexer("(1+2)*3".to_string())).unwrap())
-    );
-    println!(
-        "1+2+3 -> {:?}",
-        parse(&(lexer("1+2+3".to_string())).unwrap())
-    );
-    println!(
-        "1*2*3 -> {:?}",
-        parse(&(lexer("1*2*3".to_string())).unwrap())
-    );
-    println!(
-        "-(1+2) -> {:?}",
-        parse(&(lexer("-(1+2)".to_string())).unwrap())
-    );
-    println!(
-        "1.2*3.4e5 -> {:?}",
-        parse(&(lexer("1.2*-3.4e5 ".to_string()).unwrap()))
-    );
-    println!(
-        "1/(2*3.14*270e-12*31.4e3) -> {:?}",
-        parse(&(lexer("1/(2*3.14*270e-12*31.4e3)".to_string()).unwrap()))
-    );
-    println!();
-    println!("eval");
-    println!(
-        "1 -> {:?}",
-        eval(&parse(&(lexer("1".to_string())).unwrap()))
-    );
-    println!(
-        "0 -> {:?}",
-        eval(&parse(&(lexer("0".to_string())).unwrap()))
-    );
-    println!(
-        "-1 -> {:?}",
-        eval(&parse(&(lexer("-1".to_string())).unwrap()))
-    );
-    println!(
-        "9223372036854775807 -> {:?}",
-        eval(&parse(&(lexer("9223372036854775807".to_string()).unwrap())))
-    );
-    println!(
-        "-9223372036854775807 -> {:?}",
-        eval(&parse(
-            &(lexer("-9223372036854775807".to_string()).unwrap())
-        ))
+        parse(env, &(lexer("-9223372036854775808".to_string()).unwrap()))
     );
     println!(
         "1+2 -> {:?}",
-        eval(&parse(&(lexer("1+2".to_string())).unwrap()))
+        parse(env, &(lexer("1+2".to_string())).unwrap())
     );
     println!(
         "1-2 -> {:?}",
-        eval(&parse(&(lexer("1-2".to_string())).unwrap()))
+        parse(env, &(lexer("1-2".to_string())).unwrap())
     );
     println!(
         "1+-2 -> {:?}",
-        eval(&parse(&(lexer("1+-2".to_string())).unwrap()))
+        parse(env, &(lexer("1+-2".to_string())).unwrap())
     );
     println!(
         "1*2 -> {:?}",
-        eval(&parse(&(lexer("1*2".to_string())).unwrap()))
+        parse(env, &(lexer("1*2".to_string())).unwrap())
     );
     println!(
         "1*2+3 -> {:?}",
-        eval(&parse(&(lexer("1*2+3".to_string()).unwrap())))
+        parse(env, &(lexer("1*2+3".to_string())).unwrap())
     );
     println!(
         "1+2*3 -> {:?}",
-        eval(&parse(&(lexer("1+2*3".to_string())).unwrap()))
+        parse(env, &(lexer("1+2*3".to_string())).unwrap())
     );
     println!(
         "1*(2+3) -> {:?}",
-        eval(&parse(&(lexer("1*(2+3)".to_string())).unwrap()))
+        parse(env, &(lexer("1*(2+3)".to_string())).unwrap())
     );
     println!(
         "(1+2)*3 -> {:?}",
-        eval(&parse(&(lexer("(1+2)*3".to_string())).unwrap()))
+        parse(env, &(lexer("(1+2)*3".to_string())).unwrap())
     );
     println!(
         "1+2+3 -> {:?}",
-        eval(&parse(&(lexer("1+2+3".to_string())).unwrap()))
+        parse(env, &(lexer("1+2+3".to_string())).unwrap())
     );
     println!(
         "1*2*3 -> {:?}",
-        eval(&parse(&(lexer("1*2*3".to_string())).unwrap()))
-    );
-    println!(
-        "(1+2)*(3+4) -> {:?}",
-        eval(&parse(&(lexer("(1+2)*(3+4)".to_string())).unwrap()))
-    );
-    println!(
-        "1.1*2*3 -> {:?}",
-        eval(&parse(&(lexer("1.1*2*3".to_string())).unwrap()))
-    );
-    println!(
-        "1/(2*3.14*270e-12*31.4e3) -> {:?}",
-        eval(&parse(
-            &(lexer("1/(2*3.14*270e-12*31.4e3)".to_string())).unwrap()
-        ))
+        parse(env, &(lexer("1*2*3".to_string())).unwrap())
     );
     println!(
         "-(1+2) -> {:?}",
-        eval(&parse(&(lexer("-(1+2)".to_string())).unwrap()))
+        parse(env, &(lexer("-(1+2)".to_string())).unwrap())
     );
+    println!(
+        "1.2*3.4e5 -> {:?}",
+        parse(env, &(lexer("1.2*-3.4e5 ".to_string()).unwrap()))
+    );
+    println!(
+        "1/(2*3.14*270e-12*31.4e3) -> {:?}",
+        parse(
+            env,
+            &(lexer("1/(2*3.14*270e-12*31.4e3)".to_string()).unwrap())
+        )
+    );
+    println!();
+    println!("eval");
+    println!("1 -> {:?}", eval_as_string(env, "1"));
+    println!("0 -> {:?}", eval_as_string(env, "0"));
+    println!("-1 -> {:?}", eval_as_string(env, "-1"));
+    println!(
+        "9223372036854775807 -> {:?}",
+        eval_as_string(env, "9223372036854775807")
+    );
+    println!(
+        "-9223372036854775807 -> {:?}",
+        eval_as_string(env, "-9223372036854775807")
+    );
+    println!("1+2 -> {:?}", eval_as_string(env, "1+2"));
+    println!("1-2 -> {:?}", eval_as_string(env, "1-2"));
+    println!("1+-2 -> {:?}", eval_as_string(env, "1+-2"));
+    println!("1*2 -> {:?}", eval_as_string(env, "1*2"));
+    println!("1*2+3 -> {:?}", eval_as_string(env, "1*2+3"));
+    println!("1+2*3 -> {:?}", eval_as_string(env, "1+2*3"));
+    println!("1*(2+3) -> {:?}", eval_as_string(env, "1*(2+3)"));
+    println!("(1+2)*3 -> {:?}", eval_as_string(env, "(1+2)*3"));
+    println!("1+2+3 -> {:?}", eval_as_string(env, "1+2+3"));
+    println!("1*2*3 -> {:?}", eval_as_string(env, "1*2*3"));
+    println!("(1+2)*(3+4) -> {:?}", eval_as_string(env, "(1+2)*(3+4)"));
+    println!("1.1*2*3 -> {:?}", eval_as_string(env, "1.1*2*3"));
+    println!(
+        "1/(2*3.14*270e-12*31.4e3) -> {:?}",
+        eval_as_string(env, "1/(2*3.14*270e-12*31.4e3)")
+    );
+    println!("-(1+2) -> {:?}", eval_as_string(env, "-(1+2)"));
     println!(
         "1/(2*pi*10k*4.7u) -> {:?}",
-        eval(&parse(&(lexer("1/(2*pi*10k*4.7u)".to_string())).unwrap()))
+        eval_as_string(env, "1/(2*pi*10k*4.7u)")
     );
-    println!(
-        "sin(pi/2) -> {:?}",
-        eval(&parse(&(lexer("sin(pi/2)".to_string())).unwrap()))
-    );
+    println!("sin(pi/2) -> {:?}", eval_as_string(env, "sin(pi/2)"));
 }

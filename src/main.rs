@@ -27,8 +27,8 @@ fn main() {
     env.built_in();
 
     if matches.opt_present("test") {
-        run_test();
+        run_test(&mut env);
         std::process::exit(0);
     }
-    readline();
+    readline(&mut env);
 }

@@ -22,11 +22,15 @@ impl<'a> Env<'a> {
     }
 
     pub fn is_const(&mut self, key: &str) -> Option<f64> {
-        match self.constant.get(key){
-            Some(&f) => {return Some(f);}
-            None => {return None;}
+        match self.constant.get(key) {
+            Some(&f) => Some(f),
+            None => None,
         }
     }
 }
 
-
+impl Default for Env<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}

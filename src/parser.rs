@@ -1,5 +1,5 @@
-use std::fmt;
 use super::*;
+use std::fmt;
 
 // <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
 // <mul>     ::= <unary> ( '*' <unary> | '/' <unary>)*
@@ -73,6 +73,7 @@ impl fmt::Debug for Node {
     }
 }
 
+// `num()` does not depend on env, as of now.
 fn num(tok: &[Token], i: usize) -> (Node, usize) {
     // println!("num {:?} {}", tok, i);
     if tok.len() <= i {
@@ -146,7 +147,7 @@ fn num(tok: &[Token], i: usize) -> (Node, usize) {
     }
 }
 
-fn primary(tok: &[Token], index: usize) -> (Node, usize) {
+fn primary(env: &mut Env, tok: &[Token], index: usize) -> (Node, usize) {
     let mut i = index;
     // println!("primary {:?} {}", tok, i);
     if tok.len() <= i {
@@ -154,7 +155,7 @@ fn primary(tok: &[Token], index: usize) -> (Node, usize) {
     }
     match &tok[i] {
         Token::Op('(') => {
-            let (expr, i) = expr(tok, i + 1);
+            let (expr, i) = expr(env, tok, i + 1);
             if tok[i] != Token::Op(')') {
                 println!("')' not found.");
             }
@@ -162,12 +163,12 @@ fn primary(tok: &[Token], index: usize) -> (Node, usize) {
         }
         Token::Ident(id) => {
             let mut ret_node = Node::new();
-            if &(*id.as_str()) == "pi" {
-                // FIXME: is_var()
+            if let Some(_constant) = env.is_const(id.as_str()) {
                 ret_node.ty = NodeType::Var;
                 ret_node.op = Token::Ident(id.clone());
-                (ret_node, i + 1)
-            } else if &(*id.as_str()) == "sin" {
+                return (ret_node, i + 1);
+            }
+            if &(*id.as_str()) == "sin" {
                 // FIXME: is_func()
                 ret_node.ty = NodeType::Func;
                 ret_node.op = Token::Ident(id.clone());
@@ -180,22 +181,21 @@ fn primary(tok: &[Token], index: usize) -> (Node, usize) {
                             i += 1;
                             continue;
                         } else {
-                            let (t, j) = expr(tok, i);
+                            let (t, j) = expr(env, tok, i);
                             i = j;
                             ret_node.child.push(t);
                         }
                     }
                 }
-                (ret_node, i + 1)
-            } else {
-                (ret_node, i)
+                return (ret_node, i + 1);
             }
+            (ret_node, i)
         }
         _ => num(tok, i),
     }
 }
 
-fn unary(tok: &[Token], i: usize) -> (Node, usize) {
+fn unary(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
     // println!("unary {:?} {}", tok, i);
     if tok.len() <= i {
         return (Node::new(), i);
@@ -205,20 +205,20 @@ fn unary(tok: &[Token], i: usize) -> (Node, usize) {
             let mut node = Node::new();
             node.ty = NodeType::Unary;
             node.op = tok[i].clone();
-            let (rhs, i) = primary(tok, i + 1);
+            let (rhs, i) = primary(env, tok, i + 1);
             node.child.push(rhs);
             (node, i)
         }
-        _ => primary(tok, i),
+        _ => primary(env, tok, i),
     }
 }
 
-fn mul(tok: &[Token], i: usize) -> (Node, usize) {
+fn mul(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
     // println!("mul {:?} {}", tok, i);
     if tok.len() <= i {
         return (Node::new(), i);
     }
-    let (mut lhs, mut i) = unary(tok, i);
+    let (mut lhs, mut i) = unary(env, tok, i);
     loop {
         if tok.len() <= i {
             return (lhs, i);
@@ -228,7 +228,7 @@ fn mul(tok: &[Token], i: usize) -> (Node, usize) {
                 let mut node = Node::new();
                 node.ty = NodeType::BinOp;
                 node.op = tok[i].clone();
-                let (rhs, j) = unary(tok, i + 1);
+                let (rhs, j) = unary(env, tok, i + 1);
                 node.child.push(lhs);
                 node.child.push(rhs);
                 i = j;
@@ -241,12 +241,12 @@ fn mul(tok: &[Token], i: usize) -> (Node, usize) {
     }
 }
 
-fn expr(tok: &[Token], i: usize) -> (Node, usize) {
+fn expr(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
     // println!("expr {:?} {}", tok, i);
     if tok.len() <= i {
         return (Node::new(), i);
     }
-    let (mut lhs, mut i) = mul(tok, i);
+    let (mut lhs, mut i) = mul(env, tok, i);
     loop {
         if tok.len() <= i {
             return (lhs, i);
@@ -256,7 +256,7 @@ fn expr(tok: &[Token], i: usize) -> (Node, usize) {
                 let mut node = Node::new();
                 node.ty = NodeType::BinOp;
                 node.op = tok[i].clone();
-                let (rhs, j) = mul(tok, i + 1);
+                let (rhs, j) = mul(env, tok, i + 1);
                 node.child.push(lhs);
                 node.child.push(rhs);
                 i = j;
@@ -271,18 +271,21 @@ fn expr(tok: &[Token], i: usize) -> (Node, usize) {
 
 /// Input: `&Vec<Token>`   output of `lexer()`
 /// Output: `Node()`       AST as the paser result
-/// 
+///
 /// # Examples
 /// ```
 /// use rc::lexer;
 /// use rc::Token;
 /// use rc::parse;
-/// assert_eq!(format!("{:?}", parse(&(lexer("1+2".to_string()).unwrap()))),"BinOp(Op('+') [Num(1), Num(2)])");
-/// assert_eq!(format!("{:?}", parse(&(lexer("1-2".to_string()).unwrap()))),"BinOp(Op('-') [Num(1), Num(2)])");
+/// use rc::Env;
+/// let mut env = Env::new();
+/// env.built_in();
+/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_string()).unwrap()))),"BinOp(Op('+') [Num(1), Num(2)])");
+/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1-2".to_string()).unwrap()))),"BinOp(Op('-') [Num(1), Num(2)])");
 /// ```
 // TODO: handle vars/functions.
-pub fn parse(tok: &[Token]) -> Node {
-    let (node, _i) = expr(&tok, 0);
+pub fn parse(env: &mut Env, tok: &[Token]) -> Node {
+    let (node, _i) = expr(env, &tok, 0);
 
     // println!("{:?} {}", node, i);
     node
@@ -292,74 +295,77 @@ pub fn parse(tok: &[Token]) -> Node {
 mod tests {
     use super::*;
 
+    fn parse_as_string(env: &mut Env, input: &str) -> String {
+        let n = parse(env, &(lexer(input.to_string())).unwrap());
+        format!("{:?}", n)
+    }
+
     #[test]
     fn test_parser() {
+        let mut env = Env::new();
+        env.built_in();
+
         assert_eq!(
-            format!("{:?}", parse(&(lexer("1+2".to_string()).unwrap()))),
+            parse_as_string(&mut env, "1+2"),
             "BinOp(Op('+') [Num(1), Num(2)])"
         );
+
         assert_eq!(
-            format!("{:?}", parse(&(lexer("1-2".to_string()).unwrap()))),
+            parse_as_string(&mut env, "1-2"),
             "BinOp(Op('-') [Num(1), Num(2)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("1+-2".to_string()).unwrap()))),
+            parse_as_string(&mut env, "1+-2"),
             "BinOp(Op('+') [Num(1), Unary(Op('-') Num(2))])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("1*2".to_string()).unwrap()))),
+            parse_as_string(&mut env, "1*2"),
             "BinOp(Op('*') [Num(1), Num(2)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("1*2+3".to_string()).unwrap()))),
+            parse_as_string(&mut env, "1*2+3"),
             "BinOp(Op('+') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("1*(2+3)".to_string()).unwrap()))),
+            parse_as_string(&mut env, "1*(2+3)"),
             "BinOp(Op('*') [Num(1), BinOp(Op('+') [Num(2), Num(3)])])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("1+2+3".to_string())).unwrap())),
+            parse_as_string(&mut env, "1+2+3"),
             "BinOp(Op('+') [BinOp(Op('+') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("(1+2)+3".to_string())).unwrap())),
+            parse_as_string(&mut env, "(1+2)+3"),
             "BinOp(Op('+') [BinOp(Op('+') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("1*2*3".to_string())).unwrap())),
+            parse_as_string(&mut env, "1*2*3"),
             "BinOp(Op('*') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("(1*2)*3".to_string())).unwrap())),
+            parse_as_string(&mut env, "(1*2)*3"),
             "BinOp(Op('*') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("-(2+3)".to_string())).unwrap())),
+            parse_as_string(&mut env, "-(2+3)"),
             "Unary(Op('-') BinOp(Op('+') [Num(2), Num(3)]))"
         );
+        assert_eq!(parse_as_string(&mut env, "pi"), "Var(Ident(\"pi\"))");
         assert_eq!(
-            format!("{:?}", parse(&(lexer("pi".to_string())).unwrap())),
-            "Var(Ident(\"pi\"))"
-        );
-        assert_eq!(
-            format!("{:?}", parse(&(lexer("2.0*pi".to_string())).unwrap())),
+            parse_as_string(&mut env, "2.0*pi"),
             "BinOp(Op('*') [FNum(2), Var(Ident(\"pi\"))])"
         );
+        assert_eq!(parse_as_string(&mut env, "2k"), "FNum(2000)");
         assert_eq!(
-            format!("{:?}", parse(&(lexer("2k".to_string())).unwrap())),
-            "FNum(2000)"
-        );
-        assert_eq!(
-            format!("{:?}", parse(&(lexer("2u*pi".to_string())).unwrap())),
+            parse_as_string(&mut env, "2u*pi"),
             "BinOp(Op('*') [FNum(0.000002), Var(Ident(\"pi\"))])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("2*sin(0.5*pi)".to_string())).unwrap())),
+            parse_as_string(&mut env, "2*sin(0.5*pi)"),
             "BinOp(Op('*') [Num(2), Func(Ident(\"sin\") [BinOp(Op('*') [FNum(0.5), Var(Ident(\"pi\"))])])])"
         );
         assert_eq!(
-            format!("{:?}", parse(&(lexer("2*sin(1, 2)".to_string())).unwrap())),
+            parse_as_string(&mut env, "2*sin(1, 2)"),
             "BinOp(Op('*') [Num(2), Func(Ident(\"sin\") [Num(1), Num(2)])])"
         );
     }

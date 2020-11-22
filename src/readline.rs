@@ -3,7 +3,7 @@ use std::io::Write;
 
 use super::*;
 
-pub fn readline() -> String {
+pub fn readline(env: &mut Env) -> String {
     let mut line = String::new();
     loop {
         print!("rc> ");
@@ -14,8 +14,8 @@ pub fn readline() -> String {
         // println!("{}", line);
         match lexer(line.clone()) {
             Ok(v) => {
-                let node = parse(&v);
-                println!("{:?}", eval(&node));
+                let node = parse(env, &v);
+                println!("{:?}", eval(env, &node));
             }
             Err(e) => {
                 println!("{}", e);
