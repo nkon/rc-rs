@@ -308,83 +308,94 @@ fn eval_binop(n: &Node) -> Node {
 
 pub fn eval(n: &Node) -> Node {
     // println!("eval {:?}", n);
-    if n.ty == NodeType::Num {
-        let mut ret_node = Node::new();
-        ret_node.ty = NodeType::Num;
-        ret_node.value = n.value;
-        return ret_node;
-    } else if n.ty == NodeType::FNum {
-        let mut ret_node = Node::new();
-        ret_node.ty = NodeType::FNum;
-        ret_node.fvalue = n.fvalue;
-        return ret_node;
-    } else if n.ty == NodeType::Unary {
-        if n.op == Token::Op('-') {
+    match n.ty {
+        NodeType::Num => {
             let mut ret_node = Node::new();
-            if n.child[0].ty == NodeType::Num {
-                ret_node.ty = NodeType::Num;
-                ret_node.value = -n.child[0].value;
-                return ret_node;
-            }
-            if n.child[0].ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                ret_node.fvalue = -n.child[0].fvalue;
-                return ret_node;
-            }
-            if n.child[0].ty == NodeType::BinOp {
-                let n = eval_binop(&n.child[0]);
-                if n.ty == NodeType::FNum {
-                    let mut ret_node = Node::new();
-                    ret_node.ty = NodeType::FNum;
-                    ret_node.fvalue = -n.fvalue;
-                    return ret_node;
-                }
-                if n.ty == NodeType::Num {
-                    let mut ret_node = Node::new();
-                    ret_node.ty = NodeType::Num;
-                    ret_node.value = -n.value;
-                    return ret_node;
-                }
-            }
+            ret_node.ty = NodeType::Num;
+            ret_node.value = n.value;
+            return ret_node;
         }
-        if n.op == Token::Op('+') {
+        NodeType::FNum => {
             let mut ret_node = Node::new();
-            if n.child[0].ty == NodeType::Num {
-                ret_node.ty = NodeType::Num;
-                ret_node.value = n.child[0].value;
-                return ret_node;
-            }
-            if n.child[0].ty == NodeType::FNum {
-                ret_node.ty = NodeType::FNum;
-                ret_node.fvalue = n.child[0].fvalue;
-                return ret_node;
-            }
-            if n.child[0].ty == NodeType::BinOp {
-                let n = eval_binop(&n.child[0]);
-                if n.ty == NodeType::FNum {
-                    let mut ret_node = Node::new();
-                    ret_node.ty = NodeType::FNum;
-                    ret_node.fvalue = n.fvalue;
-                    return ret_node;
-                }
-                if n.ty == NodeType::Num {
-                    let mut ret_node = Node::new();
-                    ret_node.ty = NodeType::Num;
-                    ret_node.value = n.value;
-                    return ret_node;
-                }
-            }
+            ret_node.ty = NodeType::FNum;
+            ret_node.fvalue = n.fvalue;
+            return ret_node;
         }
-    } else if n.ty == NodeType::BinOp {
-        return eval_binop(n);
-    } else if n.ty == NodeType::Var {
-        return eval_const(n);
+        NodeType::Unary => {
+            if n.op == Token::Op('-') {
+                let mut ret_node = Node::new();
+                if n.child[0].ty == NodeType::Num {
+                    ret_node.ty = NodeType::Num;
+                    ret_node.value = -n.child[0].value;
+                    return ret_node;
+                }
+                if n.child[0].ty == NodeType::FNum {
+                    ret_node.ty = NodeType::FNum;
+                    ret_node.fvalue = -n.child[0].fvalue;
+                    return ret_node;
+                }
+                if n.child[0].ty == NodeType::BinOp {
+                    let n = eval_binop(&n.child[0]);
+                    if n.ty == NodeType::FNum {
+                        let mut ret_node = Node::new();
+                        ret_node.ty = NodeType::FNum;
+                        ret_node.fvalue = -n.fvalue;
+                        return ret_node;
+                    } else if n.ty == NodeType::Num {
+                        let mut ret_node = Node::new();
+                        ret_node.ty = NodeType::Num;
+                        ret_node.value = -n.value;
+                        return ret_node;
+                    }
+                }
+            } else if n.op == Token::Op('+') {
+                let mut ret_node = Node::new();
+                if n.child[0].ty == NodeType::Num {
+                    ret_node.ty = NodeType::Num;
+                    ret_node.value = n.child[0].value;
+                    return ret_node;
+                }
+                if n.child[0].ty == NodeType::FNum {
+                    ret_node.ty = NodeType::FNum;
+                    ret_node.fvalue = n.child[0].fvalue;
+                    return ret_node;
+                }
+                if n.child[0].ty == NodeType::BinOp {
+                    let n = eval_binop(&n.child[0]);
+                    if n.ty == NodeType::FNum {
+                        let mut ret_node = Node::new();
+                        ret_node.ty = NodeType::FNum;
+                        ret_node.fvalue = n.fvalue;
+                        return ret_node;
+                    }
+                    if n.ty == NodeType::Num {
+                        let mut ret_node = Node::new();
+                        ret_node.ty = NodeType::Num;
+                        ret_node.value = n.value;
+                        return ret_node;
+                    }
+                }
+            }
+            let mut ret_node = Node::new();
+            ret_node.ty = n.ty;
+            ret_node.value = n.value;
+            ret_node.fvalue = n.fvalue;
+            return ret_node;
+        }
+        NodeType::BinOp => {
+            return eval_binop(n);
+        }
+        NodeType::Var => {
+            return eval_const(n);
+        }
+        _ => {
+            let mut ret_node = Node::new();
+            ret_node.ty = n.ty;
+            ret_node.value = n.value;
+            ret_node.fvalue = n.fvalue;
+            ret_node
+        }
     }
-    let mut ret_node = Node::new();
-    ret_node.ty = n.ty;
-    ret_node.value = n.value;
-    ret_node.fvalue = n.fvalue;
-    ret_node
 }
 
 #[cfg(test)]
