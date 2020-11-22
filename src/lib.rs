@@ -12,6 +12,7 @@ pub use run_test::run_test;
 // <mul>     ::= <unary> ( '*' <unary> | '/' <unary>)*
 // <unary>   ::= <primary> | '-' <primary> | '+' <primary>
 // <primary> ::= <num> | '(' <expr> ')' | <var>
+// <num>     ::= <num> | <num> <postfix>
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum NodeType {
@@ -82,16 +83,68 @@ fn num(tok: &[Token], i: usize) -> (Node, usize) {
         return (Node::new(), i);
     }
     let mut node = Node::new();
+    let mut f_postfix = 1.0;
+    let mut has_postfix = false;
+    if (i + 1) < tok.len() {
+        if let Token::Ident(id) = &tok[i + 1] {
+            match id.as_ref() {
+                "k" => {
+                    f_postfix = 1000.0;
+                    has_postfix = true;
+                }
+                "M" => {
+                    f_postfix = 1_000_000.0;
+                    has_postfix = true;
+                }
+                "G" => {
+                    f_postfix = 1_000_000_000.0;
+                    has_postfix = true;
+                }
+                "T" => {
+                    f_postfix = 1_000_000_000_000.0;
+                    has_postfix = true;
+                }
+                "m" => {
+                    f_postfix = 0.001;
+                    has_postfix = true;
+                }
+                "u" => {
+                    f_postfix = 0.000_001;
+                    has_postfix = true;
+                }
+                "n" => {
+                    f_postfix = 0.000_000_001;
+                    has_postfix = true;
+                }
+                "p" => {
+                    f_postfix = 0.000_000_000_001;
+                    has_postfix = true;
+                }
+                _ => {}
+            }
+        }
+    }
     match tok[i] {
         Token::Num(n) => {
-            node.ty = NodeType::Num;
-            node.value = n;
-            (node, i + 1)
+            if has_postfix {
+                node.ty = NodeType::FNum;
+                node.fvalue = n as f64 * f_postfix;
+                (node, i + 2)
+            } else {
+                node.ty = NodeType::Num;
+                node.value = n;
+                (node, i + 1)
+            }
         }
         Token::FNum(n) => {
             node.ty = NodeType::FNum;
-            node.fvalue = n;
-            (node, i + 1)
+            if has_postfix {
+                node.fvalue = n * f_postfix;
+                (node, i + 2)
+            } else {
+                node.fvalue = n;
+                (node, i + 1)
+            }
         }
         _ => (node, i),
     }
@@ -195,7 +248,6 @@ fn expr(tok: &[Token], i: usize) -> (Node, usize) {
 }
 
 // TODO: handle vars/functions.
-// TODO: support SI postifx(k/M/G/T/m/u/n/p)
 pub fn parse(tok: &[Token]) -> Node {
     let (node, _i) = expr(&tok, 0);
 
@@ -210,14 +262,12 @@ fn eval_const(n: &Node) -> Node {
             "pi" => {
                 ret_node.ty = NodeType::FNum;
                 ret_node.fvalue = std::f64::consts::PI;
-                return ret_node;
+                ret_node
             }
-            _ => {
-                return Node::new();
-            }
+            _ => Node::new(),
         }
     } else {
-        return Node::new();
+        Node::new()
     }
 }
 
@@ -313,13 +363,13 @@ pub fn eval(n: &Node) -> Node {
             let mut ret_node = Node::new();
             ret_node.ty = NodeType::Num;
             ret_node.value = n.value;
-            return ret_node;
+            ret_node
         }
         NodeType::FNum => {
             let mut ret_node = Node::new();
             ret_node.ty = NodeType::FNum;
             ret_node.fvalue = n.fvalue;
-            return ret_node;
+            ret_node
         }
         NodeType::Unary => {
             if n.op == Token::Op('-') {
@@ -380,14 +430,10 @@ pub fn eval(n: &Node) -> Node {
             ret_node.ty = n.ty;
             ret_node.value = n.value;
             ret_node.fvalue = n.fvalue;
-            return ret_node;
+            ret_node
         }
-        NodeType::BinOp => {
-            return eval_binop(n);
-        }
-        NodeType::Var => {
-            return eval_const(n);
-        }
+        NodeType::BinOp => eval_binop(n),
+        NodeType::Var => eval_const(n),
         _ => {
             let mut ret_node = Node::new();
             ret_node.ty = n.ty;
@@ -455,6 +501,14 @@ mod tests {
         assert_eq!(
             format!("{:?}", parse(&(lexer("2.0*pi".to_string())).unwrap())),
             "BinOp(Op('*') [FNum(2), Var(Ident(\"pi\"))])"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&(lexer("2k".to_string())).unwrap())),
+            "FNum(2000)"
+        );
+        assert_eq!(
+            format!("{:?}", parse(&(lexer("2u*pi".to_string())).unwrap())),
+            "BinOp(Op('*') [FNum(0.000002), Var(Ident(\"pi\"))])"
         );
     }
 
@@ -553,6 +607,10 @@ mod tests {
         assert_eq!(
             format!("{:?}", eval(&parse(&(lexer("pi".to_string())).unwrap()))),
             "FNum(3.141592653589793)"
+        );
+        assert_eq!(
+            format!("{:?}", eval(&parse(&(lexer("2k*3u".to_string())).unwrap()))),
+            "FNum(0.006)"
         );
     }
 }
