@@ -151,4 +151,5 @@ pub fn run_test(env: &mut Env) {
         eval_as_string(env, "1/(2*pi*10k*4.7u)")
     );
     println!("sin(pi/2) -> {:?}", eval_as_string(env, "sin(pi/2)"));
+    println!("abs(-2) -> {:?}", eval_as_string(env, "abs(-2)"));
 }

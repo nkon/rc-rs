@@ -282,7 +282,8 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
 /// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_string()).unwrap()))),"BinOp(Op('+') [Num(1), Num(2)])");
 /// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1-2".to_string()).unwrap()))),"BinOp(Op('-') [Num(1), Num(2)])");
 /// ```
-// TODO: handle vars/functions.
+// TODO: user define var
+// TODO: user devine function
 pub fn parse(env: &mut Env, tok: &[Token]) -> Node {
     let (node, _i) = expr(env, &tok, 0);
 

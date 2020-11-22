@@ -27,12 +27,20 @@ fn eval_func(env: &mut Env, n: &Node) -> Node {
     if let Token::Ident(ident) = &n.op {
         if let Some(func_tupple) = env.is_func(ident.as_str()) {
             let mut params: Vec<Node> = Vec::new();
-            for i in 0..func_tupple.1 {
+            for i in 0..n.child.len() {
                 let param = eval(env, &n.child[i]);
                 let mut n_param = Node::new();
-                n_param.ty = param.ty;
-                n_param.fvalue = param.fvalue;
-                n_param.value = param.value;
+                match param.ty {
+                    NodeType::Num => {
+                        n_param.ty = NodeType::FNum;
+                        n_param.fvalue = param.value as f64;
+                    }
+                    NodeType::FNum => {
+                        n_param.ty = param.ty;
+                        n_param.fvalue = param.fvalue;
+                    }
+                    _ => {}
+                }
                 params.push(n_param);
             }
             ret_node.ty = NodeType::FNum;
@@ -264,5 +272,6 @@ mod tests {
         assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0)".to_string());
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
+        assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
     }
 }
