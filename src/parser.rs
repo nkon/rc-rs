@@ -168,8 +168,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> (Node, usize) {
                 ret_node.op = Token::Ident(id.clone());
                 return (ret_node, i + 1);
             }
-            if &(*id.as_str()) == "sin" {
-                // FIXME: is_func()
+            if let Some(_func_tupple) = env.is_func(id.as_str()) {
                 ret_node.ty = NodeType::Func;
                 ret_node.op = Token::Ident(id.clone());
                 if (i + 1) < tok.len() || tok[i + 1] == Token::Op('(') {
@@ -309,7 +308,6 @@ mod tests {
             parse_as_string(&mut env, "1+2"),
             "BinOp(Op('+') [Num(1), Num(2)])"
         );
-
         assert_eq!(
             parse_as_string(&mut env, "1-2"),
             "BinOp(Op('-') [Num(1), Num(2)])"

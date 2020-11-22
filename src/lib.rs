@@ -25,22 +25,22 @@ fn eval_const(env: &mut Env, n: &Node) -> Node {
 fn eval_func(env: &mut Env, n: &Node) -> Node {
     let mut ret_node = Node::new();
     if let Token::Ident(ident) = &n.op {
-        match ident.as_str() {
-            "sin" => {
-                ret_node.ty = NodeType::FNum;
-                let mut arg = eval(env, &n.child[0]);
-                if arg.ty == NodeType::Num {
-                    arg.ty = NodeType::FNum;
-                    arg.fvalue = arg.value as f64;
-                }
-                ret_node.fvalue = arg.fvalue.sin();
-                ret_node
+        if let Some(func_tupple) = env.is_func(ident.as_str()) {
+            let mut params: Vec<Node> = Vec::new();
+            for i in 0..func_tupple.1 {
+                let param = eval(env, &n.child[i]);
+                let mut n_param = Node::new();
+                n_param.ty = param.ty;
+                n_param.fvalue = param.fvalue;
+                n_param.value = param.value;
+                params.push(n_param);
             }
-            _ => Node::new(),
+            ret_node.ty = NodeType::FNum;
+            ret_node.fvalue = func_tupple.0(&params);
+            return ret_node;
         }
-    } else {
-        Node::new()
     }
+    Node::new()
 }
 
 fn eval_binop(env: &mut Env, n: &Node) -> Node {
@@ -227,6 +227,13 @@ mod tests {
         format!("{:?}", n)
     }
 
+    fn eval_as_f64(env: &mut Env, input: &str) -> f64 {
+        let n = parse(env, &(lexer(input.to_string())).unwrap());
+        let n = eval(env, &n);
+        assert!(n.ty == NodeType::FNum);
+        n.fvalue
+    }
+
     #[test]
     fn test_eval() {
         let mut env = Env::new();
@@ -242,10 +249,7 @@ mod tests {
             eval_as_string(&mut env, "-9223372036854775807"),
             "Num(-9223372036854775807)".to_string()
         );
-        assert_eq!(
-            eval_as_string(&mut env, "1.1+2.2"),
-            "FNum(3.3000000000000003)".to_string()
-        );
+        assert!(((eval_as_f64(&mut env, "1.1+2.2") - 3.3).abs()) < 1e-10);
         assert_eq!(eval_as_string(&mut env, "-(2+3)"), "Num(-5)".to_string());
         assert_eq!(eval_as_string(&mut env, "+(2+3)"), "Num(5)".to_string());
         assert_eq!(eval_as_string(&mut env, "1.0+2"), "FNum(3)".to_string());
@@ -258,15 +262,7 @@ mod tests {
         assert_eq!(eval_as_string(&mut env, "2k*3u"), "FNum(0.006)".to_string());
         assert_eq!(eval_as_string(&mut env, "sin(0.0)"), "FNum(0)".to_string());
         assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0)".to_string());
-
-        let n = parse(&mut env, &(lexer("sin(pi)".to_string())).unwrap());
-        let n = eval(&mut env, &n);
-        assert!(n.ty == NodeType::FNum);
-        assert!((n.fvalue.abs()) < 1e-10);
-
-        let n = parse(&mut env, &(lexer("sin(pi/2)".to_string())).unwrap());
-        let n = eval(&mut env, &n);
-        assert!(n.ty == NodeType::FNum);
-        assert!(((n.fvalue - 1.0).abs()) < 1e-10);
+        assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
+        assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
     }
 }
