@@ -23,6 +23,9 @@ fn main() {
         print_usage(&program, opts);
         std::process::exit(0);
     }
+    let mut env = Env::new();
+    env.built_in();
+
     if matches.opt_present("test") {
         run_test();
         std::process::exit(0);

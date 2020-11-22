@@ -2,10 +2,11 @@ mod lexer;
 mod parser;
 mod readline;
 mod run_test;
-
+mod env;
 
 pub use lexer::*;
 pub use parser::*;
+pub use env::*;
 pub use readline::readline;
 pub use run_test::run_test;
 
