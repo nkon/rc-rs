@@ -269,6 +269,17 @@ fn expr(tok: &[Token], i: usize) -> (Node, usize) {
     }
 }
 
+/// Input: `&Vec<Token>`   output of `lexer()`
+/// Output: `Node()`       AST as the paser result
+/// 
+/// # Examples
+/// ```
+/// use rc::lexer;
+/// use rc::Token;
+/// use rc::parse;
+/// assert_eq!(format!("{:?}", parse(&(lexer("1+2".to_string()).unwrap()))),"BinOp(Op('+') [Num(1), Num(2)])");
+/// assert_eq!(format!("{:?}", parse(&(lexer("1-2".to_string()).unwrap()))),"BinOp(Op('-') [Num(1), Num(2)])");
+/// ```
 // TODO: handle vars/functions.
 pub fn parse(tok: &[Token]) -> Node {
     let (node, _i) = expr(&tok, 0);
