@@ -32,3 +32,9 @@ fn main() {
     }
     readline(&mut env);
 }
+
+// TODO: script mode (input from FILE or stdin(--))
+// TODO: script mode test(diff)
+// TODO: online help
+// TODO: syntax error handling
+

@@ -12,6 +12,7 @@ rc>
 
 I used `iMemo` on Windows for schientific caluclation.
 `rc` is a tool to replace `iMemo`.
+This runs on Windows/Linux/Mac/Raspberry Pi.
 
 https://www.vector.co.jp/soft/win95/personal/se213459.html
 
@@ -24,11 +25,14 @@ https://www.vector.co.jp/soft/win95/personal/se213459.html
     + binary(0b....), decimal, hexdecimal(0x....) format.
         - '_' ... separator
     + built-in functions
+        - Arithmetic: sin/cos/abs/...
+        - Engineering: E12/para/...
     + user defined variable/function
 * REPL
     + history
     + hilight parlens
     + Online help
+    + Script mode(input from stdin, output to stdout)
 * Install
     + Single binary
     + Support Linux/Windows/Mac

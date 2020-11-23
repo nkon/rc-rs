@@ -169,6 +169,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> (Node, usize) {
                 return (ret_node, i + 1);
             }
             if let Some(_func_tupple) = env.is_func(id.as_str()) {
+                // TODO: parameter number check
                 ret_node.ty = NodeType::Func;
                 ret_node.op = Token::Ident(id.clone());
                 if (i + 1) < tok.len() || tok[i + 1] == Token::Op('(') {
@@ -240,6 +241,8 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
     }
 }
 
+
+// TODO: Error handling in parser: Result<(Node, usize), String>
 fn expr(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
     // println!("expr {:?} {}", tok, i);
     if tok.len() <= i {
