@@ -26,7 +26,7 @@ fn main() {
     let mut env = Env::new();
     env.built_in();
 
-    if matches.opt_present("debug"){
+    if matches.opt_present("debug") {
         env.set_debug(true);
     }
     if matches.opt_present("test") {

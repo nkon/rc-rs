@@ -10,11 +10,15 @@ pub use parser::*;
 pub use readline::readline;
 pub use run_test::run_test;
 
-pub fn eval_fvalue(n: &Node) -> f64 {
+pub fn eval_fvalue(env: &mut Env, n: &Node) -> f64 {
     match n.ty {
         NodeType::Num => n.value as f64,
         NodeType::FNum => n.fvalue,
-        _ => 0.0,
+        NodeType::None => unreachable!(),
+        _ => {
+            let node = eval(env, n);
+            eval_fvalue(env, &node)
+        }
     }
 }
 
@@ -30,6 +34,7 @@ fn eval_const(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         }
     }
+    eprintln!("Error: unknown constant: {:?}\r", n);
     Node::new()
 }
 
@@ -58,10 +63,11 @@ fn eval_func(env: &mut Env, n: &Node) -> Node {
                 params.push(n_param);
             }
             ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = func_tupple.0(&params);
+            ret_node.fvalue = func_tupple.0(env, &params);
             return ret_node;
         }
     }
+    eprintln!("Error: unknown function: {:?}\r", n);
     Node::new()
 }
 
@@ -80,7 +86,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         } else {
             ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = eval_fvalue(&lhs) + eval_fvalue(&rhs);
+            ret_node.fvalue = eval_fvalue(env, &lhs) + eval_fvalue(env, &rhs);
             return ret_node;
         }
     }
@@ -91,7 +97,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         } else {
             ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = eval_fvalue(&lhs) - eval_fvalue(&rhs);
+            ret_node.fvalue = eval_fvalue(env, &lhs) - eval_fvalue(env, &rhs);
             return ret_node;
         }
     }
@@ -102,7 +108,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         } else {
             ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = eval_fvalue(&lhs) * eval_fvalue(&rhs);
+            ret_node.fvalue = eval_fvalue(env, &lhs) * eval_fvalue(env, &rhs);
             return ret_node;
         }
     }
@@ -113,7 +119,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         } else {
             ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = eval_fvalue(&lhs) / eval_fvalue(&rhs);
+            ret_node.fvalue = eval_fvalue(env, &lhs) / eval_fvalue(env, &rhs);
             return ret_node;
         }
     }
@@ -126,6 +132,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         }
     }
+    eprintln!("Error: binary operator: {:?}\r", n);
     Node::new()
 }
 

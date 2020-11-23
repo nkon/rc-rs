@@ -1,7 +1,7 @@
 use super::*;
 use std::collections::HashMap;
 
-pub type TypeFn = fn(&[Node]) -> f64;
+pub type TypeFn = fn(&mut Env, &[Node]) -> f64;
 
 pub struct Env<'a> {
     pub constant: HashMap<&'a str, f64>,
@@ -10,18 +10,18 @@ pub struct Env<'a> {
 }
 
 // warp all functions
-fn impl_sin(arg: &[Node]) -> f64 {
-    eval_fvalue(&arg[0]).sin()
+fn impl_sin(env: &mut Env, arg: &[Node]) -> f64 {
+    eval_fvalue(env, &arg[0]).sin()
 }
-fn impl_abs(arg: &[Node]) -> f64 {
-    eval_fvalue(&arg[0]).abs()
+fn impl_abs(env: &mut Env, arg: &[Node]) -> f64 {
+    eval_fvalue(env, &arg[0]).abs()
 }
-fn impl_max2(arg: &[Node]) -> f64 {
+fn impl_max2(env: &mut Env, arg: &[Node]) -> f64 {
     assert!(arg.len() >= 2);
-    if eval_fvalue(&arg[0]) > eval_fvalue(&arg[1]) {
-        return eval_fvalue(&arg[0]);
+    if eval_fvalue(env, &arg[0]) > eval_fvalue(env, &arg[1]) {
+        eval_fvalue(env, &arg[0])
     } else {
-        return eval_fvalue(&arg[1]);
+        eval_fvalue(env, &arg[1])
     }
 }
 
