@@ -38,7 +38,31 @@ pub fn readline(env: &mut Env) -> String {
                     cursor::Left(line.len() as u16 + 5)
                 )
                 .unwrap();
-                write!(stdout, "rc> {}", line).unwrap();
+                write!(
+                    stdout,
+                    "rc> {}{}",
+                    line,
+                    cursor::Left(line.len() as u16 - cur_x as u16)
+                )
+                .unwrap();
+                stdout.flush().unwrap();
+            }
+            Ok(event::Key::Left) => {
+                cur_x -= 1;
+                write!(
+                    stdout,
+                    "{}{}",
+                    clear::CurrentLine,
+                    cursor::Left(line.len() as u16 + 5)
+                )
+                .unwrap();
+                write!(
+                    stdout,
+                    "rc> {}{}",
+                    line,
+                    cursor::Left(line.len() as u16 - cur_x as u16)
+                )
+                .unwrap();
                 stdout.flush().unwrap();
             }
             Ok(event::Key::Char(c)) => match c {
