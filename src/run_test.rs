@@ -116,6 +116,10 @@ pub fn run_test(env: &mut Env) {
             &(lexer("1/(2*3.14*270e-12*31.4e3)".to_string()).unwrap())
         )
     );
+    println!(
+        "1+2+ -> {:?}",
+        parse(env, &(lexer("1+2+".to_string()).unwrap()))
+    );
     println!();
     println!("eval");
     println!("1 -> {:?}", eval_as_string(env, "1"));
@@ -152,4 +156,5 @@ pub fn run_test(env: &mut Env) {
     );
     println!("sin(pi/2) -> {:?}", eval_as_string(env, "sin(pi/2)"));
     println!("abs(-2) -> {:?}", eval_as_string(env, "abs(-2)"));
+    println!("1+2+ -> {:?}", eval_as_string(env, "1+2+"));
 }

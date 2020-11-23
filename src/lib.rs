@@ -10,14 +10,17 @@ pub use parser::*;
 pub use readline::readline;
 pub use run_test::run_test;
 
-pub fn eval_fvalue(env: &mut Env, n: &Node) -> f64 {
+pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
     match n.ty {
         NodeType::Num => n.value as f64,
         NodeType::FNum => n.fvalue,
-        NodeType::None => unreachable!(),
+        // NodeType::None => unreachable!(),
+        // BUG: commentout -> come here
         _ => {
-            let node = eval(env, n);
-            eval_fvalue(env, &node)
+            // let node = eval(env, n);
+            // eval_fvalue(env, &node)
+            // BUG: commentout -> come here
+        0.0
         }
     }
 }
