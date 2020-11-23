@@ -25,7 +25,7 @@ pub fn readline(env: &mut Env) -> String {
             Ok(event::Key::Ctrl('c')) => break,
             Ok(event::Key::Backspace) => {
                 line.pop();
-                write!(stdout, "{}{}", clear::CurrentLine, cursor::Left(500)).unwrap();
+                write!(stdout, "{}{}", clear::CurrentLine, cursor::Left(line.len() as u16 +5)).unwrap();
                 write!(stdout, "rc> {}", line).unwrap();
                 stdout.flush().unwrap();
             }
