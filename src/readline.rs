@@ -47,6 +47,13 @@ where
     output.flush().unwrap();
 }
 
+fn do_delete(line: &mut String, prev: u16) -> u16 {
+    if prev < line.len() as u16 {
+        line.remove(prev as usize);
+    }
+    prev
+}
+
 fn do_backspace(line: &mut String, prev: u16) -> u16 {
     if prev == 0 {
         0
@@ -108,7 +115,9 @@ pub fn readline(env: &mut Env) {
             }
             match keyev.code {
                 KeyCode::Delete => {
-                    // TODO: Delete
+                    prev_cur_x = cur_x;
+                    cur_x = do_delete(&mut line, prev_cur_x);
+                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
                 KeyCode::Backspace => {
                     prev_cur_x = cur_x;
@@ -183,7 +192,6 @@ pub fn readline(env: &mut Env) {
                     redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
                 KeyCode::Char(c) => {
-                    // TODO: do_insert and test.
                     prev_cur_x = cur_x;
                     cur_x = do_insert(&mut line, cur_x, c);
                     redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
@@ -220,6 +228,16 @@ mod tests {
         let next = do_backspace(&mut line, 5);
         assert_eq!(next, 4);
         assert_eq!(line, "0123");
+
+        let mut line = String::from("01234");
+        let next = do_delete(&mut line, 4);
+        assert_eq!(next, 4);
+        assert_eq!(line, "0123");
+
+        let mut line = String::from("01234");
+        let next = do_insert(&mut line, 5, 'c');
+        assert_eq!(next, 6);
+        assert_eq!(line, "01234c");
     }
 }
 
