@@ -37,4 +37,3 @@ fn main() {
 // TODO: script mode test(diff)
 // TODO: online help
 // TODO: syntax error handling
-

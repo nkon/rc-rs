@@ -241,7 +241,6 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
     }
 }
 
-
 // TODO: Error handling in parser: Result<(Node, usize), String>
 fn expr(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
     // println!("expr {:?} {}", tok, i);

@@ -71,7 +71,7 @@ fn do_insert(line: &mut String, prev: u16, c: char) -> u16 {
 pub fn readline(env: &mut Env) -> String {
     let mut line = String::new();
     let mut cur_x: u16 = 0;
-    let mut prev_cur_x: u16 = 0;
+    let mut prev_cur_x: u16;
     let mut history_index = 0;
     let mut history: Vec<String> = Vec::new();
 
@@ -107,26 +107,23 @@ pub fn readline(env: &mut Env) -> String {
                 if history_index > 0 {
                     history_index -= 1;
                     if history_index < history.len() {
-                        line = history[history_index].clone();
                         prev_cur_x = line.len() as u16;
+                        line = history[history_index].clone();
                         cur_x = line.len() as u16;
                         redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                     }
                 }
             }
             Ok(event::Key::Down) => {
-                if history_index < (history.len() - 1) {
-                    history_index += 1;
+                history_index += 1;
+                prev_cur_x = line.len() as u16;
+                if history_index < history.len() {
                     line = history[history_index].clone();
-                    prev_cur_x = line.len() as u16;
-                    cur_x = line.len() as u16;
-                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
-                } else if history_index == (history.len() - 1) {
-                    history_index += 1;
+                } else {
                     line = String::new();
-                    prev_cur_x = line.len() as u16;
-                    cur_x = line.len() as u16;
-                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);                }
+                }
+                cur_x = line.len() as u16;
+                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
             }
             Ok(event::Key::Char(c)) => match c {
                 '\n' => {
@@ -135,9 +132,6 @@ pub fn readline(env: &mut Env) -> String {
                     writeln!(stdout).unwrap();
                     write!(stdout, "{}", cursor::Left(500)).unwrap();
                     cur_x = 0;
-                    if line.len() == 0 {
-                        continue;
-                    }
                     match lexer(line.clone()) {
                         Ok(v) => {
                             let node = parse(env, &v);
