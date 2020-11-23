@@ -24,16 +24,29 @@ pub fn readline(env: &mut Env) -> String {
         match c {
             Ok(event::Key::Ctrl('c')) => break,
             Ok(event::Key::Backspace) => {
-                line.pop();
-                write!(stdout, "{}{}", clear::CurrentLine, cursor::Left(line.len() as u16 +5)).unwrap();
+                let mut chars: Vec<char> = line.chars().collect();
+                if chars.is_empty() {
+                    continue;
+                }
+                chars.remove(cur_x - 1);
+                cur_x -= 1;
+                line = chars.into_iter().collect();
+                write!(
+                    stdout,
+                    "{}{}",
+                    clear::CurrentLine,
+                    cursor::Left(line.len() as u16 + 5)
+                )
+                .unwrap();
                 write!(stdout, "rc> {}", line).unwrap();
                 stdout.flush().unwrap();
             }
             Ok(event::Key::Char(c)) => match c {
                 '\n' => {
                     history.push(line.clone());
-                    writeln!(stdout, "").unwrap();
+                    writeln!(stdout).unwrap();
                     write!(stdout, "{}", cursor::Left(500)).unwrap();
+                    cur_x = 0;
                     match lexer(line.clone()) {
                         Ok(v) => {
                             let node = parse(env, &v);
