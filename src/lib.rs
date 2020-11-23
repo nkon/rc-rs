@@ -283,5 +283,6 @@ mod tests {
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
+        assert_eq!(eval_as_string(&mut env, "max2(1.0, 2.0)"), "FNum(2)".to_string());
     }
 }

@@ -16,6 +16,14 @@ fn impl_sin(arg: &[Node]) -> f64 {
 fn impl_abs(arg: &[Node]) -> f64 {
     arg[0].fvalue.abs()
 }
+fn impl_max2(arg: &[Node]) -> f64 {
+    assert!(arg.len() >= 2);
+    if arg[0].fvalue > arg[1].fvalue {
+        return arg[0].fvalue;
+    } else {
+        return arg[1].fvalue;
+    }
+}
 
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
@@ -32,6 +40,7 @@ impl<'a> Env<'a> {
         self.constant.insert("eps", std::f64::EPSILON);
         self.func.insert("sin", (impl_sin as TypeFn, 1));
         self.func.insert("abs", (impl_abs as TypeFn, 1));
+        self.func.insert("max2", (impl_max2 as TypeFn, 2));
     }
 
     pub fn is_const(&mut self, key: &str) -> Option<f64> {
