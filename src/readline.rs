@@ -88,6 +88,7 @@ pub fn readline(env: &mut Env) -> String {
     for c in stdin.keys() {
         match c {
             Ok(event::Key::Ctrl('c')) => break,
+            // TODO: Delete
             Ok(event::Key::Backspace) => {
                 prev_cur_x = cur_x;
                 cur_x = do_backspace(&mut line, prev_cur_x);
@@ -163,6 +164,7 @@ pub fn readline(env: &mut Env) -> String {
                     stdout.flush().unwrap();
                 }
                 c => {
+                    // TODO: do_insert and test.
                     prev_cur_x = cur_x;
                     cur_x = do_insert(&mut line, cur_x, c);
                     redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
@@ -201,3 +203,6 @@ mod tests {
         assert_eq!(line, "0123");
     }
 }
+
+// BUG: test
+// FIXME: test
