@@ -6,6 +6,7 @@ pub type TypeFn = fn(&[Node]) -> f64;
 pub struct Env<'a> {
     pub constant: HashMap<&'a str, f64>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
+    pub debug: bool,
 }
 
 // warp all functions
@@ -21,6 +22,7 @@ impl<'a> Env<'a> {
         Env {
             constant: HashMap::new(),
             func: HashMap::new(),
+            debug: false,
         }
     }
 
@@ -44,6 +46,13 @@ impl<'a> Env<'a> {
             Some(&f) => Some(f),
             None => None,
         }
+    }
+
+    pub fn set_debug(&mut self, flag: bool) {
+        self.debug = flag;
+    }
+    pub fn is_debug(&self) -> bool {
+        self.debug
     }
 }
 

@@ -73,9 +73,10 @@ impl fmt::Debug for Node {
     }
 }
 
-// `num()` does not depend on env, as of now.
-fn num(tok: &[Token], i: usize) -> (Node, usize) {
-    // println!("num {:?} {}", tok, i);
+fn num(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
+    if env.is_debug() {
+        eprintln!("num {:?} {}\r", tok, i);
+    }
     if tok.len() <= i {
         return (Node::new(), i);
     }
@@ -149,7 +150,9 @@ fn num(tok: &[Token], i: usize) -> (Node, usize) {
 
 fn primary(env: &mut Env, tok: &[Token], index: usize) -> (Node, usize) {
     let mut i = index;
-    // println!("primary {:?} {}", tok, i);
+    if env.is_debug() {
+        eprintln!("primary {:?} {}\r", tok, i);
+    }
     if tok.len() <= i {
         return (Node::new(), i);
     }
@@ -191,12 +194,14 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> (Node, usize) {
             }
             (ret_node, i)
         }
-        _ => num(tok, i),
+        _ => num(env, tok, i),
     }
 }
 
 fn unary(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
-    // println!("unary {:?} {}", tok, i);
+    if env.is_debug() {
+        eprintln!("unary {:?} {}\r", tok, i);
+    }
     if tok.len() <= i {
         return (Node::new(), i);
     }
@@ -214,7 +219,9 @@ fn unary(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
 }
 
 fn mul(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
-    // println!("mul {:?} {}", tok, i);
+    if env.is_debug() {
+        eprintln!("mul {:?} {}\r", tok, i);
+    }
     if tok.len() <= i {
         return (Node::new(), i);
     }
@@ -243,7 +250,9 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
 
 // TODO: Error handling in parser: Result<(Node, usize), String>
 fn expr(env: &mut Env, tok: &[Token], i: usize) -> (Node, usize) {
-    // println!("expr {:?} {}", tok, i);
+    if env.is_debug() {
+        eprintln!("expr {:?} {}\r", tok, i);
+    }
     if tok.len() <= i {
         return (Node::new(), i);
     }

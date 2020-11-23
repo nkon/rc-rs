@@ -11,6 +11,9 @@ pub use readline::readline;
 pub use run_test::run_test;
 
 fn eval_const(env: &mut Env, n: &Node) -> Node {
+    if env.is_debug() {
+        eprintln!("eval_const {:?}\r", n);
+    }
     let mut ret_node = Node::new();
     if let Token::Ident(ident) = &n.op {
         if let Some(constant) = env.is_const(ident.as_str()) {
@@ -23,6 +26,9 @@ fn eval_const(env: &mut Env, n: &Node) -> Node {
 }
 
 fn eval_func(env: &mut Env, n: &Node) -> Node {
+    if env.is_debug() {
+        eprintln!("eval_func {:?}\r", n);
+    }
     let mut ret_node = Node::new();
     if let Token::Ident(ident) = &n.op {
         if let Some(func_tupple) = env.is_func(ident.as_str()) {
@@ -52,7 +58,9 @@ fn eval_func(env: &mut Env, n: &Node) -> Node {
 }
 
 fn eval_binop(env: &mut Env, n: &Node) -> Node {
-    // println!("eval_binop {:?}", n);
+    if env.is_debug() {
+        eprintln!("eval_binop {:?}\r", n);
+    }
     assert!(n.child.len() == 2);
     let lhs = eval(env, &n.child[0]);
     let rhs = eval(env, &n.child[1]);
@@ -137,7 +145,9 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
 }
 
 pub fn eval(env: &mut Env, n: &Node) -> Node {
-    // println!("eval {:?}", n);
+    if env.is_debug() {
+        eprintln!("eval {:?}\r", n);
+    }
     match n.ty {
         NodeType::Num => {
             let mut ret_node = Node::new();
