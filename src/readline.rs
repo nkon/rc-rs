@@ -103,13 +103,41 @@ pub fn readline(env: &mut Env) -> String {
                 cur_x = do_right(&mut line, prev_cur_x);
                 redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
             }
+            Ok(event::Key::Up) => {
+                if history_index > 0 {
+                    history_index -= 1;
+                    if history_index < history.len() {
+                        line = history[history_index].clone();
+                        prev_cur_x = line.len() as u16;
+                        cur_x = line.len() as u16;
+                        redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                    }
+                }
+            }
+            Ok(event::Key::Down) => {
+                if history_index < (history.len() - 1) {
+                    history_index += 1;
+                    line = history[history_index].clone();
+                    prev_cur_x = line.len() as u16;
+                    cur_x = line.len() as u16;
+                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                } else if history_index == (history.len() - 1) {
+                    history_index += 1;
+                    line = String::new();
+                    prev_cur_x = line.len() as u16;
+                    cur_x = line.len() as u16;
+                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);                }
+            }
             Ok(event::Key::Char(c)) => match c {
                 '\n' => {
                     history.push(line.clone());
-                    history_index = history.len() - 1;
+                    history_index = history.len();
                     writeln!(stdout).unwrap();
                     write!(stdout, "{}", cursor::Left(500)).unwrap();
                     cur_x = 0;
+                    if line.len() == 0 {
+                        continue;
+                    }
                     match lexer(line.clone()) {
                         Ok(v) => {
                             let node = parse(env, &v);
@@ -151,8 +179,6 @@ pub fn readline(env: &mut Env) -> String {
     }
     String::new()
 }
-
-// TODO: history
 
 #[cfg(test)]
 mod tests {
