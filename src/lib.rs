@@ -10,6 +10,14 @@ pub use parser::*;
 pub use readline::readline;
 pub use run_test::run_test;
 
+pub fn eval_fvalue(n: &Node) -> f64 {
+    match n.ty {
+        NodeType::Num => n.value as f64,
+        NodeType::FNum => n.fvalue,
+        _ => 0.0,
+    }
+}
+
 fn eval_const(env: &mut Env, n: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval_const {:?}\r", n);
@@ -72,15 +80,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         } else {
             ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = if lhs.ty == NodeType::Num {
-                lhs.value as f64
-            } else {
-                lhs.fvalue
-            } + if rhs.ty == NodeType::Num {
-                rhs.value as f64
-            } else {
-                rhs.fvalue
-            };
+            ret_node.fvalue = eval_fvalue(&lhs) + eval_fvalue(&rhs);
             return ret_node;
         }
     }
@@ -91,15 +91,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         } else {
             ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = if lhs.ty == NodeType::Num {
-                lhs.value as f64
-            } else {
-                lhs.fvalue
-            } - if rhs.ty == NodeType::Num {
-                rhs.value as f64
-            } else {
-                rhs.fvalue
-            };
+            ret_node.fvalue = eval_fvalue(&lhs) - eval_fvalue(&rhs);
             return ret_node;
         }
     }
@@ -110,15 +102,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         } else {
             ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = if lhs.ty == NodeType::Num {
-                lhs.value as f64
-            } else {
-                lhs.fvalue
-            } * if rhs.ty == NodeType::Num {
-                rhs.value as f64
-            } else {
-                rhs.fvalue
-            };
+            ret_node.fvalue = eval_fvalue(&lhs) * eval_fvalue(&rhs);
             return ret_node;
         }
     }
@@ -129,15 +113,16 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         } else {
             ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = if lhs.ty == NodeType::Num {
-                lhs.value as f64
-            } else {
-                lhs.fvalue
-            } / if rhs.ty == NodeType::Num {
-                rhs.value as f64
-            } else {
-                rhs.fvalue
-            };
+            ret_node.fvalue = eval_fvalue(&lhs) / eval_fvalue(&rhs);
+            return ret_node;
+        }
+    }
+    if n.op == Token::Op('%') {
+        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
+            ret_node.ty = NodeType::Num;
+            ret_node.value = lhs.value % rhs.value;
+            return ret_node;
+        } else {
             return ret_node;
         }
     }
@@ -201,19 +186,7 @@ pub fn eval(env: &mut Env, n: &Node) -> Node {
                     return ret_node;
                 }
                 if n.child[0].ty == NodeType::BinOp {
-                    let n = eval_binop(env, &n.child[0]);
-                    if n.ty == NodeType::FNum {
-                        let mut ret_node = Node::new();
-                        ret_node.ty = NodeType::FNum;
-                        ret_node.fvalue = n.fvalue;
-                        return ret_node;
-                    }
-                    if n.ty == NodeType::Num {
-                        let mut ret_node = Node::new();
-                        ret_node.ty = NodeType::Num;
-                        ret_node.value = n.value;
-                        return ret_node;
-                    }
+                    return eval_binop(env, &n.child[0]);
                 }
             }
             let mut ret_node = Node::new();
@@ -283,6 +256,21 @@ mod tests {
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
-        assert_eq!(eval_as_string(&mut env, "max2(1.0, 2.0)"), "FNum(2)".to_string());
+        assert_eq!(
+            eval_as_string(&mut env, "max2(1.0, 2.0)"),
+            "FNum(2)".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "max2(1, 2)"),
+            "FNum(2)".to_string()
+        );
+        assert_eq!(eval_as_string(&mut env, "sin(0))"), "FNum(0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "1%3"), "Num(1)".to_string());
+        assert_eq!(eval_as_string(&mut env, "2%3"), "Num(2)".to_string());
+        assert_eq!(eval_as_string(&mut env, "3%3"), "Num(0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "3.0%3"), "None".to_string());
+        assert_eq!(eval_as_string(&mut env, "1/3"), "Num(0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "3/3"), "Num(1)".to_string());
+        assert_eq!(eval_as_string(&mut env, "3.0/2"), "FNum(1.5)".to_string());
     }
 }

@@ -11,17 +11,17 @@ pub struct Env<'a> {
 
 // warp all functions
 fn impl_sin(arg: &[Node]) -> f64 {
-    arg[0].fvalue.sin()
+    eval_fvalue(&arg[0]).sin()
 }
 fn impl_abs(arg: &[Node]) -> f64 {
-    arg[0].fvalue.abs()
+    eval_fvalue(&arg[0]).abs()
 }
 fn impl_max2(arg: &[Node]) -> f64 {
     assert!(arg.len() >= 2);
-    if arg[0].fvalue > arg[1].fvalue {
-        return arg[0].fvalue;
+    if eval_fvalue(&arg[0]) > eval_fvalue(&arg[1]) {
+        return eval_fvalue(&arg[0]);
     } else {
-        return arg[1].fvalue;
+        return eval_fvalue(&arg[1]);
     }
 }
 
