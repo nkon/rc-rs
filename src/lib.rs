@@ -20,7 +20,7 @@ pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
             // let node = eval(env, n);
             // eval_fvalue(env, &node)
             // BUG: commentout -> come here
-        0.0
+            0.0
         }
     }
 }

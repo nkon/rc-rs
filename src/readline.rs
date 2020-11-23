@@ -1,36 +1,49 @@
-use std::io::{stdin, stdout, Write};
-use termion::input::TermRead;
-use termion::raw::IntoRawMode;
-use termion::*;
+pub use crossterm::{
+    cursor,
+    event::{self, read, Event, KeyCode, KeyEvent, KeyModifiers},
+    execute, queue, style,
+    terminal::{self, disable_raw_mode, enable_raw_mode, ClearType},
+    Command, Result,
+};
+use std::io::{stdout, Write};
 
 use super::*;
 
-fn redraw(
-    output: &mut termion::raw::RawTerminal<std::io::Stdout>,
-    prompt: &str,
-    line: &str,
-    prev: u16,
-    cur: u16,
-) {
-    write!(
+fn redraw<W>(output: &mut W, prompt: &str, line: &str, prev: u16, cur: u16)
+where
+    W: Write,
+{
+    queue!(
         output,
-        "{}{}",
-        clear::CurrentLine,
-        cursor::Left(prev + prompt.len() as u16)
+        terminal::Clear(ClearType::CurrentLine),
+        cursor::MoveLeft(prev + prompt.len() as u16)
     )
     .unwrap();
     if cur < line.len() as u16 {
-        write!(
+        queue!(
             output,
-            "{}{}{}",
-            prompt,
-            line,
-            cursor::Left(line.len() as u16 - cur)
+            style::Print(format!("{}{}", prompt, line)),
+            cursor::MoveLeft(line.len() as u16 - cur)
         )
         .unwrap();
     } else {
-        write!(output, "{}{}", prompt, line).unwrap();
+        queue!(output, style::Print(format!("{}{}", prompt, line))).unwrap();
     }
+    output.flush().unwrap();
+}
+
+fn bold_print<W>(output: &mut W, s: &str)
+where
+    W: Write,
+{
+    queue!(
+        output,
+        style::SetAttribute(style::Attribute::Bold),
+        style::SetForegroundColor(style::Color::Yellow),
+        style::Print(s),
+        style::SetAttribute(style::Attribute::Reset),
+    )
+    .unwrap();
     output.flush().unwrap();
 }
 
@@ -68,112 +81,118 @@ fn do_insert(line: &mut String, prev: u16, c: char) -> u16 {
     prev + 1
 }
 
-pub fn readline(env: &mut Env) -> String {
+pub fn readline(env: &mut Env) {
     let mut line = String::new();
     let mut cur_x: u16 = 0;
     let mut prev_cur_x: u16;
     let mut history_index = 0;
     let mut history: Vec<String> = Vec::new();
 
-    // goto raw mode
-    let stdin = stdin();
-    let mut stdout = stdout().into_raw_mode().unwrap();
-    stdout.flush().unwrap();
+    enable_raw_mode().unwrap();
+    let mut stdout = stdout();
 
-    writeln!(stdout, "Ctrl-c to exit").unwrap();
-    write!(stdout, "{}", cursor::Left(500)).unwrap();
+    // goto raw mode
+    write!(stdout, "Ctrl-c to exit\r\n").unwrap();
     write!(stdout, "rc> ").unwrap();
     stdout.flush().unwrap();
 
-    for c in stdin.keys() {
-        match c {
-            Ok(event::Key::Ctrl('c')) => break,
-            // TODO: Delete
-            Ok(event::Key::Backspace) => {
-                prev_cur_x = cur_x;
-                cur_x = do_backspace(&mut line, prev_cur_x);
-                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+    loop {
+        let event = read().unwrap();
+        // println!("Event::{:?}\r", event);
+
+        if let Event::Key(keyev) = event {
+            // print!("keyev={:?}\r\n", keyev);
+            if keyev.modifiers == KeyModifiers::CONTROL && keyev.code == KeyCode::Char('c') {
+                write!(stdout, "\r\n").unwrap();
+                break;
             }
-            Ok(event::Key::Left) => {
-                prev_cur_x = cur_x;
-                cur_x = do_left(&mut line, prev_cur_x);
-                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
-            }
-            Ok(event::Key::Right) => {
-                prev_cur_x = cur_x;
-                cur_x = do_right(&mut line, prev_cur_x);
-                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
-            }
-            Ok(event::Key::Up) => {
-                if history_index > 0 {
-                    history_index -= 1;
-                    if history_index < history.len() {
-                        prev_cur_x = line.len() as u16;
-                        line = history[history_index].clone();
-                        cur_x = line.len() as u16;
-                        redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+            match keyev.code {
+                KeyCode::Delete => {
+                    // TODO: Delete
+                }
+                KeyCode::Backspace => {
+                    prev_cur_x = cur_x;
+                    cur_x = do_backspace(&mut line, prev_cur_x);
+                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                }
+                KeyCode::Left => {
+                    prev_cur_x = cur_x;
+                    cur_x = do_left(&mut line, prev_cur_x);
+                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                }
+                KeyCode::Right => {
+                    prev_cur_x = cur_x;
+                    cur_x = do_right(&mut line, prev_cur_x);
+                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                }
+                KeyCode::Up => {
+                    if history_index > 0 {
+                        history_index -= 1;
+                        if history_index < history.len() {
+                            prev_cur_x = line.len() as u16;
+                            line = history[history_index].clone();
+                            cur_x = line.len() as u16;
+                            redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                        }
                     }
                 }
-            }
-            Ok(event::Key::Down) => {
-                history_index += 1;
-                prev_cur_x = line.len() as u16;
-                if history_index < history.len() {
-                    line = history[history_index].clone();
-                } else {
-                    line = String::new();
+                KeyCode::Down => {
+                    history_index += 1;
+                    prev_cur_x = line.len() as u16;
+                    if history_index < history.len() {
+                        line = history[history_index].clone();
+                    } else {
+                        line = String::new();
+                    }
+                    cur_x = line.len() as u16;
+                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
-                cur_x = line.len() as u16;
-                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
-            }
-            Ok(event::Key::Char(c)) => match c {
-                '\n' => {
+                KeyCode::Enter => {
                     history.push(line.clone());
                     history_index = history.len();
-                    writeln!(stdout).unwrap();
-                    write!(stdout, "{}", cursor::Left(500)).unwrap();
-                    cur_x = 0;
+                    write!(stdout, "\r\n").unwrap();
                     match lexer(line.clone()) {
                         Ok(v) => {
                             let node = parse(env, &v);
                             let result = eval(env, &node);
                             match result.ty {
                                 NodeType::Num => {
-                                    write!(stdout, "{}", style::Bold).unwrap();
-                                    writeln!(stdout, "{}", result.value).unwrap();
-                                    write!(stdout, "{}", style::Reset).unwrap();
+                                    bold_print(
+                                        &mut stdout,
+                                        format!("{}\r\n", result.value).as_str(),
+                                    );
                                 }
                                 NodeType::FNum => {
-                                    write!(stdout, "{}", style::Bold).unwrap();
-                                    writeln!(stdout, "{}", result.fvalue).unwrap();
-                                    write!(stdout, "{}", style::Reset).unwrap();
+                                    bold_print(
+                                        &mut stdout,
+                                        format!("{}\r\n", result.fvalue).as_str(),
+                                    );
                                 }
                                 _ => {
-                                    writeln!(stdout, "eval eror").unwrap();
+                                    write!(stdout, "eval eror\r\n").unwrap();
                                 }
                             }
                         }
                         Err(e) => {
-                            writeln!(stdout, "{}", e).unwrap();
+                            write!(stdout, "{}\r\n", e).unwrap();
                         }
                     }
                     line.clear();
-                    write!(stdout, "").unwrap();
-                    write!(stdout, "{}", cursor::Left(500)).unwrap();
-                    write!(stdout, "rc> ").unwrap();
-                    stdout.flush().unwrap();
+                    cur_x = 0;
+                    prev_cur_x = cur_x;
+                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
-                c => {
+                KeyCode::Char(c) => {
                     // TODO: do_insert and test.
                     prev_cur_x = cur_x;
                     cur_x = do_insert(&mut line, cur_x, c);
                     redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
-            },
-            _ => {}
+                _ => {}
+            }
         }
     }
-    String::new()
+    disable_raw_mode().unwrap();
 }
 
 #[cfg(test)]
