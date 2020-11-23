@@ -5,9 +5,74 @@ use termion::*;
 
 use super::*;
 
+fn redraw(
+    output: &mut termion::raw::RawTerminal<std::io::Stdout>,
+    prompt: &str,
+    line: &str,
+    prev: u16,
+    cur: u16,
+) {
+    write!(
+        output,
+        "{}{}",
+        clear::CurrentLine,
+        cursor::Left(prev + prompt.len() as u16)
+    )
+    .unwrap();
+    if cur < line.len() as u16 {
+        write!(
+            output,
+            "{}{}{}",
+            prompt,
+            line,
+            cursor::Left(line.len() as u16 - cur)
+        )
+        .unwrap();
+    } else {
+        write!(output, "{}{}", prompt, line).unwrap();
+    }
+    output.flush().unwrap();
+}
+
+fn do_backspace(line: &mut String, prev: u16) -> u16 {
+    if prev == 0 {
+        0
+    } else if prev <= line.len() as u16 {
+        line.remove(prev as usize - 1);
+        prev - 1
+    } else {
+        unreachable!()
+    }
+}
+
+fn do_left(line: &mut String, prev: u16) -> u16 {
+    if prev == 0 {
+        0
+    } else if prev <= line.len() as u16 {
+        prev - 1
+    } else {
+        unreachable!()
+    }
+}
+
+fn do_right(line: &mut String, prev: u16) -> u16 {
+    if prev < line.len() as u16 {
+        prev + 1
+    } else {
+        prev
+    }
+}
+
+fn do_insert(line: &mut String, prev: u16, c: char) -> u16 {
+    line.insert(prev as usize, c);
+    prev + 1
+}
+
 pub fn readline(env: &mut Env) -> String {
     let mut line = String::new();
-    let mut cur_x = 0;
+    let mut cur_x: u16 = 0;
+    let mut prev_cur_x: u16 = 0;
+    let mut history_index = 0;
     let mut history: Vec<String> = Vec::new();
 
     // goto raw mode
@@ -24,50 +89,24 @@ pub fn readline(env: &mut Env) -> String {
         match c {
             Ok(event::Key::Ctrl('c')) => break,
             Ok(event::Key::Backspace) => {
-                let mut chars: Vec<char> = line.chars().collect();
-                if chars.is_empty() {
-                    continue;
-                }
-                chars.remove(cur_x - 1);
-                cur_x -= 1;
-                line = chars.into_iter().collect();
-                write!(
-                    stdout,
-                    "{}{}",
-                    clear::CurrentLine,
-                    cursor::Left(line.len() as u16 + 5)
-                )
-                .unwrap();
-                write!(
-                    stdout,
-                    "rc> {}{}",
-                    line,
-                    cursor::Left(line.len() as u16 - cur_x as u16)
-                )
-                .unwrap();
-                stdout.flush().unwrap();
+                prev_cur_x = cur_x;
+                cur_x = do_backspace(&mut line, prev_cur_x);
+                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
             }
             Ok(event::Key::Left) => {
-                cur_x -= 1;
-                write!(
-                    stdout,
-                    "{}{}",
-                    clear::CurrentLine,
-                    cursor::Left(line.len() as u16 + 5)
-                )
-                .unwrap();
-                write!(
-                    stdout,
-                    "rc> {}{}",
-                    line,
-                    cursor::Left(line.len() as u16 - cur_x as u16)
-                )
-                .unwrap();
-                stdout.flush().unwrap();
+                prev_cur_x = cur_x;
+                cur_x = do_left(&mut line, prev_cur_x);
+                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+            }
+            Ok(event::Key::Right) => {
+                prev_cur_x = cur_x;
+                cur_x = do_right(&mut line, prev_cur_x);
+                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
             }
             Ok(event::Key::Char(c)) => match c {
                 '\n' => {
                     history.push(line.clone());
+                    history_index = history.len() - 1;
                     writeln!(stdout).unwrap();
                     write!(stdout, "{}", cursor::Left(500)).unwrap();
                     cur_x = 0;
@@ -101,11 +140,10 @@ pub fn readline(env: &mut Env) -> String {
                     write!(stdout, "rc> ").unwrap();
                     stdout.flush().unwrap();
                 }
-                _ => {
-                    write!(stdout, "{}", c).unwrap();
-                    line.push(c);
-                    cur_x += 1;
-                    stdout.flush().unwrap();
+                c => {
+                    prev_cur_x = cur_x;
+                    cur_x = do_insert(&mut line, cur_x, c);
+                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
             },
             _ => {}
@@ -116,3 +154,30 @@ pub fn readline(env: &mut Env) -> String {
 
 // TODO: history
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_backspace() {
+        let mut line = String::from("01234");
+        let next = do_backspace(&mut line, 0);
+        assert_eq!(next, 0);
+        assert_eq!(line, "01234");
+
+        let mut line = String::from("01234");
+        let next = do_backspace(&mut line, 1);
+        assert_eq!(next, 0);
+        assert_eq!(line, "1234");
+
+        let mut line = String::from("01234");
+        let next = do_backspace(&mut line, 4);
+        assert_eq!(next, 3);
+        assert_eq!(line, "0124");
+
+        let mut line = String::from("01234");
+        let next = do_backspace(&mut line, 5);
+        assert_eq!(next, 4);
+        assert_eq!(line, "0123");
+    }
+}
