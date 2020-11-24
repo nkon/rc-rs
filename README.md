@@ -9,24 +9,23 @@ rc> 1+2*3
 rc> 
 ```
 
-
-I used `iMemo` on Windows for schientific caluclation.
-`rc` is a tool to replace `iMemo`.
-This runs on Windows/Linux/Mac/Raspberry Pi.
-
-https://www.vector.co.jp/soft/win95/personal/se213459.html
+* `rc` is better `bc`, which is famous command line caluclator.
+* `rc` is designed for schientific/engineering caluclation.
+* `rc` runs on terminal on Windows/Linux/Mac/Raspberry Pi.
+* `rc` is written by rust. Example of parser by rust.
 
 ## feature
 
 * Calculator
     + Arithmetic operations including multiple parentheses
-    + support integer, bignum and float
+    + support integer and float
     + k/M/G/T/m/u/n/p ... suffix
     + binary(0b....), decimal, hexdecimal(0x....) format.
         - '_' ... separator
     + built-in functions
         - Arithmetic: sin/cos/abs/...
         - Engineering: E12/para/...
+        - unit conversion: inch2mm/mm2inch/...
     + user defined variable/function
 * REPL
     + Line Edit/History
