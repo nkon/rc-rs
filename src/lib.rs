@@ -277,5 +277,6 @@ mod tests {
         assert_eq!(eval_as_string(&mut env, "1/3"), "Num(0)".to_string());
         assert_eq!(eval_as_string(&mut env, "3/3"), "Num(1)".to_string());
         assert_eq!(eval_as_string(&mut env, "3.0/2"), "FNum(1.5)".to_string());
+        assert_eq!(eval_as_string(&mut env, "ave(1,2,3)"), "FNum(2)".to_string());
     }
 }

@@ -25,7 +25,14 @@ fn impl_max2(env: &mut Env, arg: &[Node]) -> f64 {
         eval_fvalue(env, &arg[1])
     }
 }
-// TODO: max(...)  variable parameter function.
+fn impl_ave(env: &mut Env, arg: &[Node]) -> f64 {
+    assert!(arg.len() >= 1);
+    let mut sum : f64 = 0.0;
+    for i in 0..arg.len() {
+        sum += eval_fvalue(env, &arg[i]);
+    }
+    return sum / arg.len() as f64
+}
 
 
 impl<'a> Env<'a> {
@@ -44,6 +51,7 @@ impl<'a> Env<'a> {
         self.func.insert("sin", (impl_sin as TypeFn, 1));
         self.func.insert("abs", (impl_abs as TypeFn, 1));
         self.func.insert("max2", (impl_max2 as TypeFn, 2));
+        self.func.insert("ave", (impl_ave as TypeFn, 0));
     }
 
     pub fn is_const(&mut self, key: &str) -> Option<f64> {
