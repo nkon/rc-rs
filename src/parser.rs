@@ -7,7 +7,7 @@ use std::fmt;
 // <primary> ::= <num> | '(' <expr> ')' | <var> | <func> '(' <expr>* ',' ')'
 // <num>     ::= <num> | <num> <postfix>
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NodeType {
     None,
     Num,   // value <- value
@@ -16,20 +16,6 @@ pub enum NodeType {
     BinOp, // op <- operator, child[0] <- lhs, child[1] <- rhs
     Var,   // op <- Token::Ident(ident)
     Func,  // op <- Token::Ident(ident), child[] <- parameter
-}
-
-impl fmt::Debug for NodeType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            NodeType::None => write!(f, "None"),
-            NodeType::Num => write!(f, "Num"),
-            NodeType::FNum => write!(f, "FNum"),
-            NodeType::Unary => write!(f, "Unary"),
-            NodeType::BinOp => write!(f, "BinOp"),
-            NodeType::Var => write!(f, "Var"),
-            NodeType::Func => write!(f, "Func"),
-        }
-    }
 }
 
 // TODO: change from struct to Enum to maximize Rust power
@@ -48,7 +34,7 @@ impl Node {
             value: 0,
             fvalue: 0.0,
             child: Vec::new(),
-            op: Token::Op(' '),
+            op: Token::Op(TokenOp::None),
         }
     }
 }
@@ -167,9 +153,9 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
         ));
     }
     match &tok[i] {
-        Token::Op('(') => match expr(env, tok, i + 1) {
+        Token::Op(TokenOp::ParenLeft) => match expr(env, tok, i + 1) {
             Ok((ex, i)) => {
-                if tok[i] != Token::Op(')') {
+                if tok[i] != Token::Op(TokenOp::ParenRight) {
                     Err(format!("Error: ')' not found: {:?} {}", tok, i))
                 } else {
                     Ok((ex, i + 1))
@@ -188,10 +174,10 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                 ret_node.op = Token::Ident(id.clone());
                 if tok.len() <= (i + 1) {
                     return Err(format!("Error: function has no parameter: {:?} {}", tok, i));
-                } else if tok[i + 1] == Token::Op('(') {
+                } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
                     i += 2;
                     while i < tok.len() {
-                        if tok[i] == Token::Op(')') {
+                        if tok[i] == Token::Op(TokenOp::ParenRight) {
                             if func_tupple.1 != 0 && func_tupple.1 != ret_node.child.len() {
                                 return Err(format!(
                                     "Error: function parameter number: {:?} {}",
@@ -199,7 +185,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                                 ));
                             }
                             return Ok((ret_node, i + 1));
-                        } else if tok[i] == Token::Op(',') {
+                        } else if tok[i] == Token::Op(TokenOp::Comma) {
                             i += 1;
                             continue;
                         } else if let Ok((t, j)) = expr(env, tok, i) {
@@ -234,7 +220,7 @@ fn unary(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String
         ));
     }
     match tok[i] {
-        Token::Op('-') | Token::Op('+') => {
+        Token::Op(TokenOp::Minus) | Token::Op(TokenOp::Plus) => {
             let mut node = Node::new();
             node.ty = NodeType::Unary;
             node.op = tok[i].clone();
@@ -267,7 +253,10 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> 
                 return Ok((lhs, i));
             }
             match tok[i] {
-                Token::Op('*') | Token::Op('/') | Token::Op('%') => {
+                Token::Op(TokenOp::Mul)
+                | Token::Op(TokenOp::Div)
+                | Token::Op(TokenOp::Mod)
+                | Token::Op(TokenOp::Para) => {
                     let mut node = Node::new();
                     node.ty = NodeType::BinOp;
                     node.op = tok[i].clone();
@@ -309,7 +298,7 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String>
                 return Ok((lhs, i));
             }
             match tok[i] {
-                Token::Op('+') | Token::Op('-') => {
+                Token::Op(TokenOp::Plus) | Token::Op(TokenOp::Minus) => {
                     let mut node = Node::new();
                     node.ty = NodeType::BinOp;
                     node.op = tok[i].clone();
@@ -345,8 +334,8 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String>
 /// use rc::Env;
 /// let mut env = Env::new();
 /// env.built_in();
-/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_string()).unwrap())).unwrap()),"BinOp(Op('+') [Num(1), Num(2)])");
-/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1-2".to_string()).unwrap())).unwrap()),"BinOp(Op('-') [Num(1), Num(2)])");
+/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_string()).unwrap())).unwrap()),"BinOp(Op(Plus) [Num(1), Num(2)])");
+/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1-2".to_string()).unwrap())).unwrap()),"BinOp(Op(Minus) [Num(1), Num(2)])");
 /// ```
 // TODO: user define var
 // TODO: user devine function
@@ -385,61 +374,61 @@ mod tests {
 
         assert_eq!(
             parse_as_string(&mut env, "1+2"),
-            "BinOp(Op('+') [Num(1), Num(2)])"
+            "BinOp(Op(Plus) [Num(1), Num(2)])"
         );
         assert_eq!(
             parse_as_string(&mut env, "1-2"),
-            "BinOp(Op('-') [Num(1), Num(2)])"
+            "BinOp(Op(Minus) [Num(1), Num(2)])"
         );
         assert_eq!(
             parse_as_string(&mut env, "1+-2"),
-            "BinOp(Op('+') [Num(1), Unary(Op('-') Num(2))])"
+            "BinOp(Op(Plus) [Num(1), Unary(Op(Minus) Num(2))])"
         );
         assert_eq!(
             parse_as_string(&mut env, "1*2"),
-            "BinOp(Op('*') [Num(1), Num(2)])"
+            "BinOp(Op(Mul) [Num(1), Num(2)])"
         );
         assert_eq!(
             parse_as_string(&mut env, "1*2+3"),
-            "BinOp(Op('+') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
+            "BinOp(Op(Plus) [BinOp(Op(Mul) [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
             parse_as_string(&mut env, "1*(2+3)"),
-            "BinOp(Op('*') [Num(1), BinOp(Op('+') [Num(2), Num(3)])])"
+            "BinOp(Op(Mul) [Num(1), BinOp(Op(Plus) [Num(2), Num(3)])])"
         );
         assert_eq!(
             parse_as_string(&mut env, "1+2+3"),
-            "BinOp(Op('+') [BinOp(Op('+') [Num(1), Num(2)]), Num(3)])"
+            "BinOp(Op(Plus) [BinOp(Op(Plus) [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
             parse_as_string(&mut env, "(1+2)+3"),
-            "BinOp(Op('+') [BinOp(Op('+') [Num(1), Num(2)]), Num(3)])"
+            "BinOp(Op(Plus) [BinOp(Op(Plus) [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
             parse_as_string(&mut env, "1*2*3"),
-            "BinOp(Op('*') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
+            "BinOp(Op(Mul) [BinOp(Op(Mul) [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
             parse_as_string(&mut env, "(1*2)*3"),
-            "BinOp(Op('*') [BinOp(Op('*') [Num(1), Num(2)]), Num(3)])"
+            "BinOp(Op(Mul) [BinOp(Op(Mul) [Num(1), Num(2)]), Num(3)])"
         );
         assert_eq!(
             parse_as_string(&mut env, "-(2+3)"),
-            "Unary(Op('-') BinOp(Op('+') [Num(2), Num(3)]))"
+            "Unary(Op(Minus) BinOp(Op(Plus) [Num(2), Num(3)]))"
         );
         assert_eq!(parse_as_string(&mut env, "pi"), "Var(Ident(\"pi\"))");
         assert_eq!(
             parse_as_string(&mut env, "2.0*pi"),
-            "BinOp(Op('*') [FNum(2), Var(Ident(\"pi\"))])"
+            "BinOp(Op(Mul) [FNum(2), Var(Ident(\"pi\"))])"
         );
         assert_eq!(parse_as_string(&mut env, "2k"), "FNum(2000)");
         assert_eq!(
             parse_as_string(&mut env, "2u*pi"),
-            "BinOp(Op('*') [FNum(0.000002), Var(Ident(\"pi\"))])"
+            "BinOp(Op(Mul) [FNum(0.000002), Var(Ident(\"pi\"))])"
         );
         assert_eq!(
             parse_as_string(&mut env, "2*sin(0.5*pi)"),
-            "BinOp(Op('*') [Num(2), Func(Ident(\"sin\") [BinOp(Op('*') [FNum(0.5), Var(Ident(\"pi\"))])])])"
+            "BinOp(Op(Mul) [Num(2), Func(Ident(\"sin\") [BinOp(Op(Mul) [FNum(0.5), Var(Ident(\"pi\"))])])])"
         );
     }
 

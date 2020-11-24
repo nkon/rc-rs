@@ -76,7 +76,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
     let lhs = eval(env, &n.child[0]);
     let rhs = eval(env, &n.child[1]);
     let mut ret_node = Node::new();
-    if n.op == Token::Op('+') {
+    if n.op == Token::Op(TokenOp::Plus) {
         if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
             ret_node.ty = NodeType::Num;
             ret_node.value = lhs.value + rhs.value;
@@ -87,7 +87,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         }
     }
-    if n.op == Token::Op('-') {
+    if n.op == Token::Op(TokenOp::Minus) {
         if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
             ret_node.ty = NodeType::Num;
             ret_node.value = lhs.value - rhs.value;
@@ -98,7 +98,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         }
     }
-    if n.op == Token::Op('*') {
+    if n.op == Token::Op(TokenOp::Mul) {
         if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
             ret_node.ty = NodeType::Num;
             ret_node.value = lhs.value * rhs.value;
@@ -109,7 +109,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         }
     }
-    if n.op == Token::Op('/') {
+    if n.op == Token::Op(TokenOp::Div) {
         if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
             ret_node.ty = NodeType::Num;
             ret_node.value = lhs.value / rhs.value;
@@ -120,7 +120,14 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
             return ret_node;
         }
     }
-    if n.op == Token::Op('%') {
+    if n.op == Token::Op(TokenOp::Para) {
+        ret_node.ty = NodeType::FNum;
+        let lhs = eval_fvalue(env, &lhs);
+        let rhs = eval_fvalue(env, &rhs);
+        ret_node.fvalue = (lhs * rhs) / (lhs + rhs);
+        return ret_node;
+    }
+    if n.op == Token::Op(TokenOp::Mod) {
         if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
             ret_node.ty = NodeType::Num;
             ret_node.value = lhs.value % rhs.value;
@@ -152,7 +159,7 @@ pub fn eval(env: &mut Env, n: &Node) -> Node {
             ret_node
         }
         NodeType::Unary => {
-            if n.op == Token::Op('-') {
+            if n.op == Token::Op(TokenOp::Minus) {
                 let mut ret_node = Node::new();
                 if n.child[0].ty == NodeType::Num {
                     ret_node.ty = NodeType::Num;
@@ -178,7 +185,7 @@ pub fn eval(env: &mut Env, n: &Node) -> Node {
                         return ret_node;
                     }
                 }
-            } else if n.op == Token::Op('+') {
+            } else if n.op == Token::Op(TokenOp::Plus) {
                 let mut ret_node = Node::new();
                 if n.child[0].ty == NodeType::Num {
                     ret_node.ty = NodeType::Num;
@@ -256,6 +263,9 @@ mod tests {
             "FNum(3.141592653589793)".to_string()
         );
         assert_eq!(eval_as_string(&mut env, "2k*3u"), "FNum(0.006)".to_string());
+
+        assert_eq!(eval_as_string(&mut env, "5//5"), "FNum(2.5)".to_string());
+
         assert_eq!(eval_as_string(&mut env, "sin(0.0)"), "FNum(0)".to_string());
         assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0)".to_string());
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);

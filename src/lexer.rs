@@ -1,8 +1,23 @@
 #[derive(Debug, Clone, PartialEq)]
+pub enum TokenOp {
+    Plus,       // +
+    Minus,      // -
+    Mul,        // *
+    Div,        // /
+    Mod,        // %
+    Para,       // //
+    ParenLeft,  // (
+    ParenRight, // )
+    Hat,        // ^
+    Comma,      // ,
+    None,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Num(i128),
     FNum(f64),
-    Op(char), // TODO: use Enum for Op, for 2char operators, i.e.; `//` pararell operator.
+    Op(TokenOp),
     Ident(String),
 }
 
@@ -231,9 +246,45 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
                     }
                 }
             }
-            '+' | '-' | '*' | '/' | '%' | '(' | ')' | '^' | ',' => {
-                // operators
-                ret.push(Token::Op(chars[i]));
+            '+' => {
+                ret.push(Token::Op(TokenOp::Plus));
+                i += 1;
+            }
+            '-' => {
+                ret.push(Token::Op(TokenOp::Minus));
+                i += 1;
+            }
+            '*' => {
+                ret.push(Token::Op(TokenOp::Mul));
+                i += 1;
+            }
+            '/' => {
+                if i + 1 < chars.len() && chars[i + 1] == '/' {
+                    ret.push(Token::Op(TokenOp::Para));
+                    i += 2;
+                } else {
+                    ret.push(Token::Op(TokenOp::Div));
+                    i += 1;
+                }
+            }
+            '%' => {
+                ret.push(Token::Op(TokenOp::Mod));
+                i += 1;
+            }
+            '(' => {
+                ret.push(Token::Op(TokenOp::ParenLeft));
+                i += 1;
+            }
+            ')' => {
+                ret.push(Token::Op(TokenOp::ParenRight));
+                i += 1;
+            }
+            '^' => {
+                ret.push(Token::Op(TokenOp::Hat));
+                i += 1;
+            }
+            ',' => {
+                ret.push(Token::Op(TokenOp::Comma));
                 i += 1;
             }
             'a'..='z' | 'A'..='Z' => {
@@ -344,9 +395,9 @@ mod tests {
             lexer("1+2+3".to_string()).unwrap(),
             [
                 Token::Num(1),
-                Token::Op('+'),
+                Token::Op(TokenOp::Plus),
                 Token::Num(2),
-                Token::Op('+'),
+                Token::Op(TokenOp::Plus),
                 Token::Num(3)
             ]
         );
@@ -354,9 +405,9 @@ mod tests {
             lexer(" 1 + 2 + 3 ".to_string()).unwrap(),
             [
                 Token::Num(1),
-                Token::Op('+'),
+                Token::Op(TokenOp::Plus),
                 Token::Num(2),
-                Token::Op('+'),
+                Token::Op(TokenOp::Plus),
                 Token::Num(3)
             ]
         );
@@ -366,24 +417,24 @@ mod tests {
                 Token::Num(1),
                 Token::Num(2),
                 Token::Num(34),
-                Token::Op('+'),
-                Token::Op('-'),
-                Token::Op('*'),
-                Token::Op('/'),
-                Token::Op('%'),
-                Token::Op('('),
-                Token::Op(')'),
-                Token::Op('-'),
-                Token::Op('^')
+                Token::Op(TokenOp::Plus),
+                Token::Op(TokenOp::Minus),
+                Token::Op(TokenOp::Mul),
+                Token::Op(TokenOp::Div),
+                Token::Op(TokenOp::Mod),
+                Token::Op(TokenOp::ParenLeft),
+                Token::Op(TokenOp::ParenRight),
+                Token::Op(TokenOp::Minus),
+                Token::Op(TokenOp::Hat)
             ]
         );
         assert_eq!(
             lexer("sin(2.0)".to_string()).unwrap(),
             [
                 Token::Ident("sin".to_string()),
-                Token::Op('('),
+                Token::Op(TokenOp::ParenLeft),
                 Token::FNum(2.0),
-                Token::Op(')'),
+                Token::Op(TokenOp::ParenRight),
             ]
         );
         assert_eq!(
@@ -391,7 +442,7 @@ mod tests {
             [
                 Token::Num(1),
                 Token::Ident("k".to_string()),
-                Token::Op('*'),
+                Token::Op(TokenOp::Mul),
                 Token::FNum(3.0),
                 Token::Ident("u".to_string()),
             ]
@@ -400,11 +451,11 @@ mod tests {
             lexer("sin(0.5*pi)".to_string()).unwrap(),
             [
                 Token::Ident("sin".to_string()),
-                Token::Op('('),
+                Token::Op(TokenOp::ParenLeft),
                 Token::FNum(0.5),
-                Token::Op('*'),
+                Token::Op(TokenOp::Mul),
                 Token::Ident("pi".to_string()),
-                Token::Op(')'),
+                Token::Op(TokenOp::ParenRight),
             ]
         );
     }
