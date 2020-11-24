@@ -441,9 +441,35 @@ mod tests {
             parse_as_string(&mut env, "2*sin(0.5*pi)"),
             "BinOp(Op('*') [Num(2), Func(Ident(\"sin\") [BinOp(Op('*') [FNum(0.5), Var(Ident(\"pi\"))])])])"
         );
-        assert_eq!(
-            parse_as_string(&mut env, "2*sin(1, 2)"),
-            "Error: Operator \'*\' \'/\' \'%\' requires right side operand. [Num(2), Op(\'*\'), Ident(\"sin\"), Op(\'(\'), Num(1), Op(\',\'), Num(2), Op(\')\')] 1"
-        );
+    }
+
+    #[test]
+    fn test_parser_error() {
+        let mut env = Env::new();
+        env.built_in();
+
+        if let Ok(_) = parse(&mut env, &(lexer("2*sin(1, 2)".to_string())).unwrap()) {
+            assert!(false);
+        }
+        if let Ok(_) = parse(&mut env, &(lexer("sin(".to_string())).unwrap()) {
+            assert!(false);
+        }
+
+        if let Ok(_) = parse(&mut env, &(lexer("sin()".to_string())).unwrap()) {
+            assert!(false);
+        }
+
+        if let Ok(_) = parse(&mut env, &(lexer("1+2+".to_string())).unwrap()) {
+            assert!(false);
+        }
+
+        if let Ok(_) = parse(&mut env, &(lexer("sin".to_string())).unwrap()) {
+            assert!(false);
+        }
+
+        if let Ok(_) = parse(&mut env, &(lexer("ssss".to_string())).unwrap()) {
+            assert!(false);
+        }
+
     }
 }

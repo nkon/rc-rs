@@ -316,6 +316,17 @@ mod tests {
             (Ok(Token::Num(18446744073709551615)), 20)
         );
     }
+
+    #[test]
+    fn test_tok_num_error() {
+        if let Ok(_) = lexer("018".to_string()){
+            assert!(false);
+        }
+        if let Ok(_) = lexer("0b12".to_string()){
+            assert!(false);
+        }
+    }
+
     #[test]
     fn test_tok_ident() {
         assert_eq!(
