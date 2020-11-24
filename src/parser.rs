@@ -470,6 +470,5 @@ mod tests {
         if let Ok(_) = parse(&mut env, &(lexer("ssss".to_string())).unwrap()) {
             assert!(false);
         }
-
     }
 }

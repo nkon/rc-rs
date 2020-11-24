@@ -14,26 +14,34 @@ pub struct Env<'a> {
 fn impl_sin(env: &mut Env, arg: &[Node]) -> f64 {
     eval_fvalue(env, &arg[0]).sin()
 }
+
 fn impl_abs(env: &mut Env, arg: &[Node]) -> f64 {
     eval_fvalue(env, &arg[0]).abs()
 }
-fn impl_max2(env: &mut Env, arg: &[Node]) -> f64 {
-    assert!(arg.len() >= 2);
-    if eval_fvalue(env, &arg[0]) > eval_fvalue(env, &arg[1]) {
-        eval_fvalue(env, &arg[0])
-    } else {
-        eval_fvalue(env, &arg[1])
+
+fn impl_max(env: &mut Env, arg: &[Node]) -> f64 {
+    if arg.is_empty() {
+        return 0.0;
     }
-}
-fn impl_ave(env: &mut Env, arg: &[Node]) -> f64 {
-    assert!(arg.len() >= 1);
-    let mut sum : f64 = 0.0;
-    for i in 0..arg.len() {
-        sum += eval_fvalue(env, &arg[i]);
+    let mut max = eval_fvalue(env, &arg[0]);
+    for i in arg {
+        if max < eval_fvalue(env, &i) {
+            max = eval_fvalue(env, &i);
+        }
     }
-    return sum / arg.len() as f64
+    max
 }
 
+fn impl_ave(env: &mut Env, arg: &[Node]) -> f64 {
+    if arg.is_empty() {
+        return 0.0;
+    }
+    let mut sum: f64 = 0.0;
+    for i in arg {
+        sum += eval_fvalue(env, &i);
+    }
+    sum / arg.len() as f64
+}
 
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
@@ -50,7 +58,7 @@ impl<'a> Env<'a> {
         self.constant.insert("eps", std::f64::EPSILON);
         self.func.insert("sin", (impl_sin as TypeFn, 1));
         self.func.insert("abs", (impl_abs as TypeFn, 1));
-        self.func.insert("max2", (impl_max2 as TypeFn, 2));
+        self.func.insert("max", (impl_max as TypeFn, 0));
         self.func.insert("ave", (impl_ave as TypeFn, 0));
     }
 

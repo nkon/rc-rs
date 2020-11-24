@@ -261,14 +261,6 @@ mod tests {
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
-        assert_eq!(
-            eval_as_string(&mut env, "max2(1.0, 2.0)"),
-            "FNum(2)".to_string()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "max2(1, 2)"),
-            "FNum(2)".to_string()
-        );
         assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0)".to_string());
         assert_eq!(eval_as_string(&mut env, "1%3"), "Num(1)".to_string());
         assert_eq!(eval_as_string(&mut env, "2%3"), "Num(2)".to_string());
@@ -277,6 +269,13 @@ mod tests {
         assert_eq!(eval_as_string(&mut env, "1/3"), "Num(0)".to_string());
         assert_eq!(eval_as_string(&mut env, "3/3"), "Num(1)".to_string());
         assert_eq!(eval_as_string(&mut env, "3.0/2"), "FNum(1.5)".to_string());
-        assert_eq!(eval_as_string(&mut env, "ave(1,2,3)"), "FNum(2)".to_string());
+        assert_eq!(
+            eval_as_string(&mut env, "ave(1,2,3)"),
+            "FNum(2)".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "max(1,2,3)"),
+            "FNum(3)".to_string()
+        );
     }
 }
