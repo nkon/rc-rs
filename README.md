@@ -12,7 +12,7 @@ rc>
 * `rc` is better `bc`, which is famous command line caluclator.
 * `rc` is designed for schientific/engineering caluclation.
 * `rc` runs on terminal on Windows/Linux/Mac/Raspberry Pi.
-* `rc` is written by rust. Example of parser by rust.
+* `rc` is example of imprementation of parser written by rust.
 
 ## feature
 
