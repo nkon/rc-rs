@@ -175,7 +175,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                     Ok((ex, i + 1))
                 }
             }
-            Err(e) => Err(format!("Error: primary() {} {}: {}", file!(), line!(), e)),
+            Err(e) => Err(e),
         },
         Token::Ident(id) => {
             let mut ret_node = Node::new();
@@ -239,11 +239,12 @@ fn unary(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String
             let mut node = Node::new();
             node.ty = NodeType::Unary;
             node.op = tok[i].clone();
-            if let Ok((rhs, i)) = primary(env, tok, i + 1) {
-                node.child.push(rhs);
-                Ok((node, i))
-            } else {
-                Err(format!("Error: unary(): {} {}", file!(), line!()))
+            match primary(env, tok, i + 1) {
+                Ok((rhs, i)) => {
+                    node.child.push(rhs);
+                    Ok((node, i))
+                }
+                Err(e) => Err(e),
             }
         }
         _ => primary(env, tok, i),
