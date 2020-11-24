@@ -184,7 +184,6 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                 ret_node.op = Token::Ident(id.clone());
                 return Ok((ret_node, i + 1));
             } else if let Some(func_tupple) = env.is_func(id.as_str()) {
-                // TODO: parameter number check
                 ret_node.ty = NodeType::Func;
                 ret_node.op = Token::Ident(id.clone());
                 if tok.len() <= (i + 1) {

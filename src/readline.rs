@@ -176,34 +176,43 @@ pub fn readline(env: &mut Env) {
                     history_index = history.len();
                     write!(stdout, "\r\n").unwrap();
                     match lexer(line.clone()) {
-                        Ok(v) => match parse(env, &v) {
-                            Ok(node) => {
-                                let result = eval(env, &node);
-                                match result.ty {
-                                    NodeType::Num => {
-                                        result_print(
-                                            &mut stdout,
-                                            format!("{}\r\n", result.value).as_str(),
-                                        );
-                                    }
-                                    NodeType::FNum => {
-                                        result_print(
-                                            &mut stdout,
-                                            format!("{}\r\n", result.fvalue).as_str(),
-                                        );
-                                    }
-                                    _ => {
-                                        error_print(&mut stdout, "eval eror\r\n");
+                        Ok(v) => {
+                            if v.is_empty() {
+                                line.clear();
+                                cur_x = 0;
+                                prev_cur_x = cur_x;
+                                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                                continue;
+                            }
+                            match parse(env, &v) {
+                                Ok(node) => {
+                                    let result = eval(env, &node);
+                                    match result.ty {
+                                        NodeType::Num => {
+                                            result_print(
+                                                &mut stdout,
+                                                format!("{}\r\n", result.value).as_str(),
+                                            );
+                                        }
+                                        NodeType::FNum => {
+                                            result_print(
+                                                &mut stdout,
+                                                format!("{}\r\n", result.fvalue).as_str(),
+                                            );
+                                        }
+                                        _ => {
+                                            error_print(&mut stdout, "eval eror\r\n");
+                                        }
                                     }
                                 }
+                                Err(e) => {
+                                    error_print(
+                                        &mut stdout,
+                                        format!("parse error: {}\r\n", e).as_str(),
+                                    );
+                                }
                             }
-                            Err(e) => {
-                                error_print(
-                                    &mut stdout,
-                                    format!("parse error: {}\r\n", e).as_str(),
-                                );
-                            }
-                        },
+                        }
                         Err(e) => {
                             error_print(&mut stdout, format!("{}\r\n", e).as_str());
                         }

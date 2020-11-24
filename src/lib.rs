@@ -14,14 +14,8 @@ pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
     match n.ty {
         NodeType::Num => n.value as f64,
         NodeType::FNum => n.fvalue,
-        // NodeType::None => unreachable!(),
-        // BUG: commentout -> come here
-        _ => {
-            // let node = eval(env, n);
-            // eval_fvalue(env, &node)
-            // BUG: commentout -> come here
-            0.0
-        }
+        NodeType::None => unreachable!(),
+        _ => unreachable!(),
     }
 }
 
