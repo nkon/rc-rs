@@ -7,6 +7,7 @@ pub struct Env<'a> {
     pub constant: HashMap<&'a str, f64>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
     pub debug: bool,
+    // TODO: imprement command and status.
 }
 
 // warp all functions
@@ -24,6 +25,8 @@ fn impl_max2(env: &mut Env, arg: &[Node]) -> f64 {
         eval_fvalue(env, &arg[1])
     }
 }
+// TODO: max(...)  variable parameter function.
+
 
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {

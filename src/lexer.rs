@@ -2,7 +2,7 @@
 pub enum Token {
     Num(i128),
     FNum(f64),
-    Op(char),
+    Op(char), // TODO: use Enum for Op, for 2char operators, i.e.; `//` pararell operator.
     Ident(String),
 }
 
@@ -319,10 +319,10 @@ mod tests {
 
     #[test]
     fn test_tok_num_error() {
-        if let Ok(_) = lexer("018".to_string()){
+        if let Ok(_) = lexer("018".to_string()) {
             assert!(false);
         }
-        if let Ok(_) = lexer("0b12".to_string()){
+        if let Ok(_) = lexer("0b12".to_string()) {
             assert!(false);
         }
     }

@@ -37,5 +37,9 @@ fn main() {
 }
 
 // TODO: script mode (input from FILE or stdin(--))
+// TODO: script and comment
 // TODO: script mode test(diff)
+// TODO: load history, history command
 // TODO: online help
+// TODO: initial file `~.rc-rs`
+// TODO: complex number and functions
