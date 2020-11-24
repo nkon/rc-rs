@@ -79,9 +79,10 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> 
     }
     if tok.len() <= i {
         return Err(format!(
-            "Error: unexpected end of input: {} {}",
+            "Error: unexpected end of input: {} {}: {:?}",
             file!(),
-            line!()
+            line!(),
+            tok
         ));
     }
     let mut node = Node::new();
@@ -159,37 +160,45 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
     }
     if tok.len() <= i {
         return Err(format!(
-            "Error: unexpected end of input: {} {}",
+            "Error: unexpected end of input: {} {}: {:?}",
             file!(),
-            line!()
+            line!(),
+            tok
         ));
     }
     match &tok[i] {
-        Token::Op('(') => {
-            if let Ok((expr, i)) = expr(env, tok, i + 1) {
+        Token::Op('(') => match expr(env, tok, i + 1) {
+            Ok((ex, i)) => {
                 if tok[i] != Token::Op(')') {
-                    println!("')' not found.");
+                    Err(format!("Error: ')' not found: {:?} {}", tok, i))
+                } else {
+                    Ok((ex, i + 1))
                 }
-                Ok((expr, i + 1))
-            } else {
-                Err(format!("Error: primary() {} {}", file!(), line!()))
             }
-        }
+            Err(e) => Err(format!("Error: primary() {} {}: {}", file!(), line!(), e)),
+        },
         Token::Ident(id) => {
             let mut ret_node = Node::new();
             if let Some(_constant) = env.is_const(id.as_str()) {
                 ret_node.ty = NodeType::Var;
                 ret_node.op = Token::Ident(id.clone());
                 return Ok((ret_node, i + 1));
-            }
-            if let Some(_func_tupple) = env.is_func(id.as_str()) {
+            } else if let Some(func_tupple) = env.is_func(id.as_str()) {
                 // TODO: parameter number check
                 ret_node.ty = NodeType::Func;
                 ret_node.op = Token::Ident(id.clone());
-                if (i + 1) < tok.len() || tok[i + 1] == Token::Op('(') {
+                if tok.len() <= (i + 1) {
+                    return Err(format!("Error: function has no parameter: {:?} {}", tok, i));
+                } else if tok[i + 1] == Token::Op('(') {
                     i += 2;
                     while i < tok.len() {
                         if tok[i] == Token::Op(')') {
+                            if func_tupple.1 != 0 && func_tupple.1 != ret_node.child.len() {
+                                return Err(format!(
+                                    "Error: function parameter number: {:?} {}",
+                                    tok, i
+                                ));
+                            }
                             return Ok((ret_node, i + 1));
                         } else if tok[i] == Token::Op(',') {
                             i += 1;
@@ -198,11 +207,15 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                             i = j;
                             ret_node.child.push(t);
                         } else {
-                            return Err(format!("Error: primary() {} {}", file!(), line!()));
+                            return Err(format!("Error: function parameter: {:?} {}", tok, i));
                         }
                     }
+                    if tok.len() <= i {
+                        return Err(format!("Error: function has no ')': {:?} {}", tok, i));
+                    }
+                } else {
+                    return Err(format!("Error: function has no '(': {:?} {}", tok, i));
                 }
-                return Ok((ret_node, i + 1));
             }
             Ok((ret_node, i))
         }
@@ -248,8 +261,8 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> 
             line!()
         ));
     }
-    if let Ok((mut lhs, mut i)) = unary(env, tok, i) {
-        loop {
+    match unary(env, tok, i) {
+        Ok((mut lhs, mut i)) => loop {
             if tok.len() <= i {
                 return Ok((lhs, i));
             }
@@ -274,12 +287,11 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> 
                     return Ok((lhs, i));
                 }
             }
-        }
+        },
+        Err(e) => Err(e),
     }
-    Err(format!("Error: expr(): {} {}", file!(), line!()))
 }
 
-// TODO: Error handling in parser: Result<(Node, usize), String>
 fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> {
     if env.is_debug() {
         eprintln!("expr {:?} {}\r", tok, i);
@@ -291,8 +303,8 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String>
             line!()
         ));
     }
-    if let Ok((mut lhs, mut i)) = mul(env, tok, i) {
-        loop {
+    match mul(env, tok, i) {
+        Ok((mut lhs, mut i)) => loop {
             if tok.len() <= i {
                 return Ok((lhs, i));
             }
@@ -317,9 +329,9 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String>
                     return Ok((lhs, i));
                 }
             }
-        }
+        },
+        Err(e) => Err(e),
     }
-    Err(format!("Error: expr(): {} {}", file!(), line!()))
 }
 
 /// Input: `&Vec<Token>`   output of `lexer()`
@@ -356,8 +368,14 @@ mod tests {
     use super::*;
 
     fn parse_as_string(env: &mut Env, input: &str) -> String {
-        let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
-        format!("{:?}", n)
+        match parse(env, &(lexer(input.to_string())).unwrap()) {
+            Ok(n) => {
+                format!("{:?}", n)
+            }
+            Err(e) => {
+                format!("{}", e)
+            }
+        }
     }
 
     #[test]
@@ -425,7 +443,7 @@ mod tests {
         );
         assert_eq!(
             parse_as_string(&mut env, "2*sin(1, 2)"),
-            "BinOp(Op('*') [Num(2), Func(Ident(\"sin\") [Num(1), Num(2)])])"
+            "Error: Operator \'*\' \'/\' \'%\' requires right side operand. [Num(2), Op(\'*\'), Ident(\"sin\"), Op(\'(\'), Num(1), Op(\',\'), Num(2), Op(\')\')] 1"
         );
     }
 }
