@@ -1,9 +1,15 @@
 use super::*;
 
 fn eval_as_string(env: &mut Env, input: &str) -> String {
-    let n = parse(env, &(lexer(input.to_string())).unwrap());
-    let n = eval(env, &n);
-    format!("{:?}", n)
+    match parse(env, &(lexer(input.to_string())).unwrap()) {
+        Ok(n) => {
+            let n = eval(env, &n);
+            format!("{:?}", n)
+        }
+        Err(e) => {
+            format!("parser error: {}", e)
+        }
+    }
 }
 
 pub fn run_test(env: &mut Env) {
@@ -157,4 +163,5 @@ pub fn run_test(env: &mut Env) {
     println!("sin(pi/2) -> {:?}", eval_as_string(env, "sin(pi/2)"));
     println!("abs(-2) -> {:?}", eval_as_string(env, "abs(-2)"));
     println!("1+2+ -> {:?}", eval_as_string(env, "1+2+"));
+    println!("1+2(3+4) -> {:?}", eval_as_string(env, "1+2(3+4)"));
 }

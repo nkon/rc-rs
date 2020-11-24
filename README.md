@@ -29,21 +29,34 @@ https://www.vector.co.jp/soft/win95/personal/se213459.html
         - Engineering: E12/para/...
     + user defined variable/function
 * REPL
-    + history
+    + Line Edit/History
     + hilight parlens
     + Online help
     + Script mode(input from stdin, output to stdout)
 * Install
     + Single binary
     + Support Linux/Windows/Mac
-## imprement
 
-* Fully hand written parser
-    + Training
+
+## screen capture
+
+
+## Install
+
+### build from source
+
+```
+$ git clone https://github.com/nkon/rc-rs.git
+$ cargo install --path .                       ## installed to ~/.cargo/bin/rc
+```
+
+### binary download
+
+
+
 
 ## future
 
-* Line Edit/History
 * REPL/CLI/Script
 * Graph
 * Single binary release

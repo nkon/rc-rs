@@ -32,7 +32,7 @@ where
     output.flush().unwrap();
 }
 
-fn bold_print<W>(output: &mut W, s: &str)
+fn result_print<W>(output: &mut W, s: &str)
 where
     W: Write,
 {
@@ -40,6 +40,21 @@ where
         output,
         style::SetAttribute(style::Attribute::Bold),
         style::SetForegroundColor(style::Color::Yellow),
+        style::Print(s),
+        style::SetAttribute(style::Attribute::Reset),
+    )
+    .unwrap();
+    output.flush().unwrap();
+}
+
+fn error_print<W>(output: &mut W, s: &str)
+where
+    W: Write,
+{
+    queue!(
+        output,
+        style::SetAttribute(style::Attribute::Bold),
+        style::SetForegroundColor(style::Color::Red),
         style::Print(s),
         style::SetAttribute(style::Attribute::Reset),
     )
@@ -161,29 +176,36 @@ pub fn readline(env: &mut Env) {
                     history_index = history.len();
                     write!(stdout, "\r\n").unwrap();
                     match lexer(line.clone()) {
-                        Ok(v) => {
-                            let node = parse(env, &v);
-                            let result = eval(env, &node);
-                            match result.ty {
-                                NodeType::Num => {
-                                    bold_print(
-                                        &mut stdout,
-                                        format!("{}\r\n", result.value).as_str(),
-                                    );
-                                }
-                                NodeType::FNum => {
-                                    bold_print(
-                                        &mut stdout,
-                                        format!("{}\r\n", result.fvalue).as_str(),
-                                    );
-                                }
-                                _ => {
-                                    write!(stdout, "eval eror\r\n").unwrap();
+                        Ok(v) => match parse(env, &v) {
+                            Ok(node) => {
+                                let result = eval(env, &node);
+                                match result.ty {
+                                    NodeType::Num => {
+                                        result_print(
+                                            &mut stdout,
+                                            format!("{}\r\n", result.value).as_str(),
+                                        );
+                                    }
+                                    NodeType::FNum => {
+                                        result_print(
+                                            &mut stdout,
+                                            format!("{}\r\n", result.fvalue).as_str(),
+                                        );
+                                    }
+                                    _ => {
+                                        error_print(&mut stdout, "eval eror\r\n");
+                                    }
                                 }
                             }
-                        }
+                            Err(e) => {
+                                error_print(
+                                    &mut stdout,
+                                    format!("parse error: {}\r\n", e).as_str(),
+                                );
+                            }
+                        },
                         Err(e) => {
-                            write!(stdout, "{}\r\n", e).unwrap();
+                            error_print(&mut stdout, format!("{}\r\n", e).as_str());
                         }
                     }
                     line.clear();

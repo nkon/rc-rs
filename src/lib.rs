@@ -224,13 +224,13 @@ mod tests {
     use super::*;
 
     fn eval_as_string(env: &mut Env, input: &str) -> String {
-        let n = parse(env, &(lexer(input.to_string())).unwrap());
+        let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
         let n = eval(env, &n);
         format!("{:?}", n)
     }
 
     fn eval_as_f64(env: &mut Env, input: &str) -> f64 {
-        let n = parse(env, &(lexer(input.to_string())).unwrap());
+        let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
         let n = eval(env, &n);
         assert!(n.ty == NodeType::FNum);
         n.fvalue
@@ -275,7 +275,7 @@ mod tests {
             eval_as_string(&mut env, "max2(1, 2)"),
             "FNum(2)".to_string()
         );
-        assert_eq!(eval_as_string(&mut env, "sin(0))"), "FNum(0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0)".to_string());
         assert_eq!(eval_as_string(&mut env, "1%3"), "Num(1)".to_string());
         assert_eq!(eval_as_string(&mut env, "2%3"), "Num(2)".to_string());
         assert_eq!(eval_as_string(&mut env, "3%3"), "Num(0)".to_string());
