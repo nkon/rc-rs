@@ -2,10 +2,10 @@ use getopts::Options;
 use rc::*;
 use std::env;
 use std::fs::File;
-use std::io::prelude::*;
+use std::io::BufReader;
 
 fn print_usage(program: &str, opts: Options) {
-    let brief = format!("Usage: {} [options]", program);
+    let brief = format!("rc: CUI calclator\nUsage: {} [options]", program);
     print!("{}", opts.usage(&brief));
 }
 
@@ -17,7 +17,7 @@ fn main() {
     opts.optflag("h", "help", "print this help");
     opts.optflag("d", "debug", "debug mode");
     opts.optflag("", "test", "run built-in test");
-    opts.optopt("s", "script", "run script", "FILE");
+    opts.optmulti("s", "script", "run script", "FILE");
 
     match opts.parse(&args[1..]) {
         Ok(matches) => {
@@ -36,20 +36,22 @@ fn main() {
                 std::process::exit(0);
             }
             if matches.opt_present("script") {
-                let mut script = String::new();
-                if let Some(filename) = matches.opt_str("script") {
-                    if filename == "--" {
-                        std::io::stdin()
-                            .read_to_string(&mut script)
-                            .expect("something went wrong reading stdin");
+                let filenames = matches.opt_strs("script");
+                if !filenames.is_empty() {
+                    if filenames[0] == "--" {
+                        let mut buf_file = BufReader::new(std::io::stdin());
+                        run_script(&mut env, &mut buf_file);
                     } else {
-                        let fname = filename.clone();
-                        let mut f = File::open(filename)
-                            .expect(format!("file not found: {}", fname).as_str());
-                        f.read_to_string(&mut script)
-                            .expect("something went wrong reading the file");
+                        filenames
+                            .iter()
+                            .for_each(|filename| match File::open(filename) {
+                                Ok(file) => {
+                                    run_script(&mut env, &mut BufReader::new(file));
+                                }
+                                Err(e) => println!("{}: {}", filename, e),
+                            })
                     }
-                    run_script(&mut env, &script);
+                    std::process::exit(0);
                 } else {
                     eprintln!("-s FILE required");
                     std::process::exit(1);
@@ -64,9 +66,7 @@ fn main() {
     }
 }
 
-// TODO: script mode (input from FILE or stdin(--))
 // TODO: script and comment
-// TODO: script mode test(diff)
 // TODO: load history, history command
 // TODO: online help
 // TODO: initial file `~.rc-rs`

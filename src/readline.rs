@@ -201,7 +201,7 @@ pub fn readline(env: &mut Env) {
                                             );
                                         }
                                         _ => {
-                                            error_print(&mut stdout, "eval eror\r\n");
+                                            error_print(&mut stdout, "eval error\r\n");
                                         }
                                     }
                                 }
