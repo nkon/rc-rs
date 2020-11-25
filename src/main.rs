@@ -87,7 +87,6 @@ fn main() {
     }
 }
 
-// TODO: script and comment
 // TODO: load history, history command
 // TODO: online help
 // TODO: complex number and functions
