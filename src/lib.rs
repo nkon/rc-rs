@@ -9,7 +9,7 @@ pub use env::*;
 pub use lexer::*;
 pub use parser::*;
 pub use readline::readline;
-pub use script::run_script;
+pub use script::{run_script, run_rc};
 pub use run_test::run_test;
 
 pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {

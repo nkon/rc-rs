@@ -3,6 +3,8 @@ use rc::*;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
+use std::path;
+use dirs;
 
 fn print_usage(program: &str, opts: Options) {
     let brief = format!("rc: CUI calclator\nUsage: {} [options]", program);
@@ -16,8 +18,15 @@ fn main() {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print this help");
     opts.optflag("d", "debug", "debug mode");
+    opts.optopt("r", "", "rc file path", "rc_file");
     opts.optflag("", "test", "run built-in test");
     opts.optmulti("s", "script", "run script", "FILE");
+
+    let mut rc_file_path = path::PathBuf::new();
+    if let Some(mut home_dir) = dirs::home_dir() {
+        home_dir.push(".rc_rc");
+        rc_file_path = home_dir;
+    }
 
     match opts.parse(&args[1..]) {
         Ok(matches) => {
@@ -27,6 +36,19 @@ fn main() {
             }
             let mut env = Env::new();
             env.built_in();
+
+            if let Some(rc_file_str) = matches.opt_str("r") {
+                rc_file_path = path::Path::new(&rc_file_str).to_path_buf();
+                if !rc_file_path.exists() {
+                    eprintln!("file not found {}", rc_file_path.to_str().unwrap());
+                    std::process::exit(1);
+                }
+            }
+            if rc_file_path.exists() {
+                if let Ok(file) = File::open(rc_file_path) {
+                    run_rc(&mut env, &mut BufReader::new(file));
+                }
+            }
 
             if matches.opt_present("debug") {
                 env.set_debug(true);
@@ -38,7 +60,7 @@ fn main() {
             if matches.opt_present("script") {
                 let filenames = matches.opt_strs("script");
                 if !filenames.is_empty() {
-                    if filenames[0] == "--" {
+                    if filenames[0] == "-" {
                         let mut buf_file = BufReader::new(std::io::stdin());
                         run_script(&mut env, &mut buf_file);
                     } else {
@@ -69,5 +91,4 @@ fn main() {
 // TODO: script and comment
 // TODO: load history, history command
 // TODO: online help
-// TODO: initial file `~.rc-rs`
 // TODO: complex number and functions

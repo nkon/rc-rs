@@ -44,3 +44,28 @@ pub fn run_script(env: &mut Env, stream: &mut dyn BufRead) {
         }
     }
 }
+
+pub fn run_rc(env: &mut Env, stream: &mut dyn BufRead) {
+    let mut line = String::new();
+    loop {
+        match stream.read_line(&mut line) {
+            Ok(0) => break, // EOF
+            Ok(_) => {
+                if env.debug {
+                    print!("{}", line);
+                }
+                if let Ok(tokens) = lexer(line.clone()) {
+                    if tokens.is_empty() {
+                        continue;
+                    }
+                    if let Ok(node) = parse(env, &tokens) {
+                        eval(env, &node);
+                    }
+                }
+            }
+            Err(_e) => {
+                break;
+            }
+        }
+    }
+}
