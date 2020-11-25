@@ -11,7 +11,7 @@ rc> 1+2*3
 rc> 
 ```
 
-* `rc` simmilar to `bc`, which is famous command line caluclator.
+* `rc` simmilar to `bc`, which is a famous command line caluclator.
 * `rc` is designed for schientific/engineering caluclation.
 * `rc` runs on terminal on Windows/Linux/Mac/Raspberry Pi.
 * `rc` is an example of imprementation of parser written by rust.
