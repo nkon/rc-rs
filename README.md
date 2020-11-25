@@ -9,12 +9,12 @@ rc> 1+2*3
 rc> 
 ```
 
-* `rc` is better `bc`, which is famous command line caluclator.
+* `rc` simmilar to `bc`, which is famous command line caluclator.
 * `rc` is designed for schientific/engineering caluclation.
 * `rc` runs on terminal on Windows/Linux/Mac/Raspberry Pi.
-* `rc` is example of imprementation of parser written by rust.
+* `rc` is an example of imprementation of parser written by rust.
 
-## feature
+## Features
 
 * Calculator
     + Arithmetic operations including multiple parentheses
@@ -24,41 +24,48 @@ rc>
         - '_' ... separator
     + built-in functions
         - Arithmetic: sin/cos/abs/...
-        - Engineering: E12/para/...
+        - Engineering: E12/pararell(`//`)/...
         - unit conversion: inch2mm/mm2inch/...
     + user defined variable/function
 * REPL
     + Line Edit/History
-    + hilight parlens
-    + Online help
+    + hilight parlens    <- not yet
+    + Online help        <- not yet
     + Script mode(input from stdin, output to stdout)
+    + initialize file (`~/.rc_rc`)
 * Install
-    + Single binary
+    + Statically linked single binary.
     + Support Linux/Windows/Mac
 
 
-## screen capture
+## Screen capture
 
 
 ## Install
 
-### build from source
+### Build from source
 
 ```
 $ git clone https://github.com/nkon/rc-rs.git
 $ cargo install --path .                       ## installed to ~/.cargo/bin/rc
 ```
 
-### binary download
+#### Build with musl(static linked binary)
 
+In case of x86_64-linux.
 
+```
+$ rustup target add x86_64-unknown-linux-musl
+$ rustup show   ## list of installed toolchain -> check: x86_64-unknown-linux-musl is exist.
+$ cargo build --release --target=x86_64-unknown-linux-musl
+$ ldd target/x86_64-unknown-linux-musl/release/rc
+    not a dynamic executable
+```
 
-
-## future
+## Future
 
 * REPL/CLI/Script
+    + hilight parlens
+    + Online help
 * Graph
-* Single binary release
-    + cross build for Linux, Windows, Mac
 * L10N using gettext-rs
-* Read .rc_rc as the init file, in which user defines constants and functions.
