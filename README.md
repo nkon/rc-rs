@@ -20,20 +20,20 @@ rc>
     + Arithmetic operations including multiple parentheses
     + support integer and float
     + k/M/G/T/m/u/n/p ... suffix
-    + binary(0b....), decimal, hexdecimal(0x....) format.
-        - '_' ... separator
+    + binary(0b....), decimal, hexdecimal(0x....) format
+        - '_' ... separator, i.e., `123_000_000`
     + built-in functions
         - Arithmetic: sin/cos/abs/...
         - Engineering: E12/pararell(`//`)/...
         - unit conversion: inch2mm/mm2inch/...
-    + user defined variable/function
+    + user defined variable/function  <- not yet
 * REPL
     + Line Edit/History
     + Script mode(input from stdin, output to stdout)
     + Initialize file (`~/.rc_rc`)
     + Comment `#...`
 * Install
-    + Statically linked single binary.
+    + Statically linked single binary
     + Support Linux/Windows/Mac
 
 
@@ -63,8 +63,11 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
 
 ## Future
 
-* REPL/CLI/Script
-    + Hilight parlens
-    + Online help
+* Hilight parlens
+* Online help
 * Graph
 * L10N using gettext-rs
+
+## Design Notes
+
+[NOTE.md](NOTE.md)
