@@ -4,7 +4,6 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::path;
-use dirs;
 
 fn print_usage(program: &str, opts: Options) {
     let brief = format!("rc: CUI calclator\nUsage: {} [options]", program);

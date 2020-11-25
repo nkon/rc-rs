@@ -2,15 +2,15 @@ mod env;
 mod lexer;
 mod parser;
 mod readline;
-mod script;
 mod run_test;
+mod script;
 
 pub use env::*;
 pub use lexer::*;
 pub use parser::*;
 pub use readline::readline;
-pub use script::{run_script, run_rc};
 pub use run_test::run_test;
+pub use script::{run_rc, run_script};
 
 pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
     match n.ty {
