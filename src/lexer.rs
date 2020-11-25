@@ -299,6 +299,9 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
                     }
                 }
             }
+            '#' => {
+                return Ok(ret);
+            }
             _ => {
                 i += 1;
             }
@@ -456,6 +459,12 @@ mod tests {
                 Token::Op(TokenOp::Mul),
                 Token::Ident("pi".to_string()),
                 Token::Op(TokenOp::ParenRight),
+            ]
+        );
+        assert_eq!(
+            lexer("123    #asdfasdfasfd".to_string()).unwrap(),
+            [
+                Token::Num(123)
             ]
         );
     }

@@ -29,10 +29,9 @@ rc>
     + user defined variable/function
 * REPL
     + Line Edit/History
-    + hilight parlens    <- not yet
-    + Online help        <- not yet
     + Script mode(input from stdin, output to stdout)
-    + initialize file (`~/.rc_rc`)
+    + Initialize file (`~/.rc_rc`)
+    + Comment `#...`
 * Install
     + Statically linked single binary.
     + Support Linux/Windows/Mac
@@ -65,7 +64,7 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
 ## Future
 
 * REPL/CLI/Script
-    + hilight parlens
+    + Hilight parlens
     + Online help
 * Graph
 * L10N using gettext-rs
