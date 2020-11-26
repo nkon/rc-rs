@@ -13,10 +13,10 @@ pub use run_test::run_test;
 pub use script::{run_rc, run_script};
 
 pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
-    match n.ty {
-        NodeType::Num => n.value as f64,
-        NodeType::FNum => n.fvalue,
-        NodeType::None => unreachable!(),
+    match n {
+        Node::Num(n) => *n as f64,
+        Node::FNum(f) => *f,
+        Node::None => unreachable!(),
         _ => unreachable!(),
     }
 }
@@ -25,121 +25,109 @@ fn eval_const(env: &mut Env, n: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval_const {:?}\r", n);
     }
-    let mut ret_node = Node::new();
-    if let Token::Ident(ident) = &n.op {
-        if let Some(constant) = env.is_const(ident.as_str()) {
-            ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = constant;
-            return ret_node;
+    if let Node::Var(id) = n {
+        if let Token::Ident(ident) = id {
+            if let Some(constant) = env.is_const(ident.as_str()) {
+                return Node::FNum(constant);
+            }
         }
     }
     eprintln!("Error: unknown constant: {:?}\r", n);
-    Node::new()
+    Node::None
 }
 
 fn eval_func(env: &mut Env, n: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval_func {:?}\r", n);
     }
-    let mut ret_node = Node::new();
-    if let Token::Ident(ident) = &n.op {
-        if let Some(func_tupple) = env.is_func(ident.as_str()) {
-            let mut params: Vec<Node> = Vec::new();
-            for i in 0..n.child.len() {
-                let param = eval(env, &n.child[i]);
-                let mut n_param = Node::new();
-                match param.ty {
-                    NodeType::Num => {
-                        n_param.ty = NodeType::FNum;
-                        n_param.fvalue = param.value as f64;
+    if let Node::Func(tok, param) = n {
+        if let Token::Ident(ident) = tok {
+            if let Some(func_tupple) = env.is_func(ident.as_str()) {
+                let mut params: Vec<Node> = Vec::new();
+                for i in param {
+                    let param_value = eval(env, &i);
+                    let n_param: Node;
+                    match param_value {
+                        Node::Num(n) => {
+                            n_param = Node::FNum(n as f64);
+                        }
+                        Node::FNum(f) => {
+                            n_param = Node::FNum(f);
+                        }
+                        _ => {
+                            n_param = Node::None;
+                        }
                     }
-                    NodeType::FNum => {
-                        n_param.ty = param.ty;
-                        n_param.fvalue = param.fvalue;
-                    }
-                    _ => {}
+                    params.push(n_param.clone());
                 }
-                params.push(n_param);
+                return Node::FNum(func_tupple.0(env, &params));
             }
-            ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = func_tupple.0(env, &params);
-            return ret_node;
         }
     }
     eprintln!("Error: unknown function: {:?}\r", n);
-    Node::new()
+    Node::None
 }
 
 fn eval_binop(env: &mut Env, n: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval_binop {:?}\r", n);
     }
-    assert!(n.child.len() == 2);
-    let lhs = eval(env, &n.child[0]);
-    let rhs = eval(env, &n.child[1]);
-    let mut ret_node = Node::new();
-    if n.op == Token::Op(TokenOp::Plus) {
-        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
-            ret_node.ty = NodeType::Num;
-            ret_node.value = lhs.value + rhs.value;
-            return ret_node;
-        } else {
-            ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = eval_fvalue(env, &lhs) + eval_fvalue(env, &rhs);
-            return ret_node;
-        }
-    }
-    if n.op == Token::Op(TokenOp::Minus) {
-        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
-            ret_node.ty = NodeType::Num;
-            ret_node.value = lhs.value - rhs.value;
-            return ret_node;
-        } else {
-            ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = eval_fvalue(env, &lhs) - eval_fvalue(env, &rhs);
-            return ret_node;
-        }
-    }
-    if n.op == Token::Op(TokenOp::Mul) {
-        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
-            ret_node.ty = NodeType::Num;
-            ret_node.value = lhs.value * rhs.value;
-            return ret_node;
-        } else {
-            ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = eval_fvalue(env, &lhs) * eval_fvalue(env, &rhs);
-            return ret_node;
-        }
-    }
-    if n.op == Token::Op(TokenOp::Div) {
-        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
-            ret_node.ty = NodeType::Num;
-            ret_node.value = lhs.value / rhs.value;
-            return ret_node;
-        } else {
-            ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = eval_fvalue(env, &lhs) / eval_fvalue(env, &rhs);
-            return ret_node;
-        }
-    }
-    if n.op == Token::Op(TokenOp::Para) {
-        ret_node.ty = NodeType::FNum;
-        let lhs = eval_fvalue(env, &lhs);
-        let rhs = eval_fvalue(env, &rhs);
-        ret_node.fvalue = (lhs * rhs) / (lhs + rhs);
-        return ret_node;
-    }
-    if n.op == Token::Op(TokenOp::Mod) {
-        if lhs.ty == NodeType::Num && rhs.ty == NodeType::Num {
-            ret_node.ty = NodeType::Num;
-            ret_node.value = lhs.value % rhs.value;
-            return ret_node;
-        } else {
-            return ret_node;
+    if let Node::BinOp(tok, lhs, rhs) = n {
+        let lhs = eval(env, lhs);
+        let rhs = eval(env, rhs);
+        match tok {
+            Token::Op(TokenOp::Plus) => {
+                if let Node::Num(nl) = lhs {
+                    if let Node::Num(nr) = rhs {
+                        return Node::Num(nl + nr);
+                    }
+                }
+                return Node::FNum(eval_fvalue(env, &lhs) + eval_fvalue(env, &rhs));
+            }
+            Token::Op(TokenOp::Minus) => {
+                if let Node::Num(nl) = lhs {
+                    if let Node::Num(nr) = rhs {
+                        return Node::Num(nl - nr);
+                    }
+                }
+                return Node::FNum(eval_fvalue(env, &lhs) - eval_fvalue(env, &rhs));
+            }
+            Token::Op(TokenOp::Mul) => {
+                if let Node::Num(nl) = lhs {
+                    if let Node::Num(nr) = rhs {
+                        return Node::Num(nl * nr);
+                    }
+                }
+                return Node::FNum(eval_fvalue(env, &lhs) * eval_fvalue(env, &rhs));
+            }
+            Token::Op(TokenOp::Div) => {
+                if let Node::Num(nl) = lhs {
+                    if let Node::Num(nr) = rhs {
+                        return Node::Num(nl / nr);
+                    }
+                }
+                return Node::FNum(eval_fvalue(env, &lhs) / eval_fvalue(env, &rhs));
+            }
+            Token::Op(TokenOp::Para) => {
+                let lhs = eval_fvalue(env, &lhs);
+                let rhs = eval_fvalue(env, &rhs);
+                return Node::FNum((lhs * rhs) / (lhs + rhs));
+            }
+            Token::Op(TokenOp::Mod) => {
+                if let Node::Num(nl) = lhs {
+                    if let Node::Num(nr) = rhs {
+                        return Node::Num(nl % nr);
+                    }
+                }
+                return Node::Num(0);
+            }
+            _ => {
+                return Node::None;
+            }
         }
     }
     eprintln!("Error: binary operator: {:?}\r", n);
-    Node::new()
+    Node::None
 }
 
 // TODO: command handling
@@ -147,78 +135,48 @@ pub fn eval(env: &mut Env, n: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval {:?}\r", n);
     }
-    match n.ty {
-        NodeType::Num => {
-            let mut ret_node = Node::new();
-            ret_node.ty = NodeType::Num;
-            ret_node.value = n.value;
-            ret_node
-        }
-        NodeType::FNum => {
-            let mut ret_node = Node::new();
-            ret_node.ty = NodeType::FNum;
-            ret_node.fvalue = n.fvalue;
-            ret_node
-        }
-        NodeType::Unary => {
-            if n.op == Token::Op(TokenOp::Minus) {
-                let mut ret_node = Node::new();
-                if n.child[0].ty == NodeType::Num {
-                    ret_node.ty = NodeType::Num;
-                    ret_node.value = -n.child[0].value;
-                    return ret_node;
-                }
-                if n.child[0].ty == NodeType::FNum {
-                    ret_node.ty = NodeType::FNum;
-                    ret_node.fvalue = -n.child[0].fvalue;
-                    return ret_node;
-                }
-                if n.child[0].ty == NodeType::BinOp {
-                    let n = eval_binop(env, &n.child[0]);
-                    if n.ty == NodeType::FNum {
-                        let mut ret_node = Node::new();
-                        ret_node.ty = NodeType::FNum;
-                        ret_node.fvalue = -n.fvalue;
-                        return ret_node;
-                    } else if n.ty == NodeType::Num {
-                        let mut ret_node = Node::new();
-                        ret_node.ty = NodeType::Num;
-                        ret_node.value = -n.value;
-                        return ret_node;
+    match &*n {
+        Node::Num(n) => Node::Num(*n),
+        Node::FNum(f) => Node::FNum(*f),
+        Node::Unary(tok, para_boxed) => {
+            let para: Node = *(*para_boxed).clone();
+            match tok {
+                Token::Op(TokenOp::Minus) => {
+                    if let Node::Num(n) = para {
+                        Node::Num(-n)
+                    } else if let Node::FNum(f) = para {
+                        Node::FNum(-f)
+                    } else if let Node::BinOp(tok, lhs_box, rhs_box) = para {
+                        let n_result = eval_binop(env, &Node::BinOp(tok, lhs_box, rhs_box));
+                        if let Node::Num(n) = n_result {
+                            Node::Num(-n)
+                        } else if let Node::FNum(f) = n_result {
+                            Node::FNum(-f)
+                        } else {
+                            Node::None
+                        }
+                    } else {
+                        Node::None
                     }
                 }
-            } else if n.op == Token::Op(TokenOp::Plus) {
-                let mut ret_node = Node::new();
-                if n.child[0].ty == NodeType::Num {
-                    ret_node.ty = NodeType::Num;
-                    ret_node.value = n.child[0].value;
-                    return ret_node;
+                Token::Op(TokenOp::Plus) => {
+                    if let Node::Num(n) = para {
+                        Node::Num(n)
+                    } else if let Node::FNum(f) = para {
+                        Node::FNum(f)
+                    } else if let Node::BinOp(tok, lhs_box, rhs_box) = para {
+                        eval_binop(env, &Node::BinOp(tok, lhs_box, rhs_box))
+                    } else {
+                        Node::None
+                    }
                 }
-                if n.child[0].ty == NodeType::FNum {
-                    ret_node.ty = NodeType::FNum;
-                    ret_node.fvalue = n.child[0].fvalue;
-                    return ret_node;
-                }
-                if n.child[0].ty == NodeType::BinOp {
-                    return eval_binop(env, &n.child[0]);
-                }
+                _ => Node::None,
             }
-            let mut ret_node = Node::new();
-            ret_node.ty = n.ty;
-            ret_node.value = n.value;
-            ret_node.fvalue = n.fvalue;
-            ret_node
         }
-        NodeType::BinOp => eval_binop(env, n),
-        NodeType::Var => eval_const(env, n),
-        NodeType::Func => eval_func(env, n),
-        _ => {
-            let mut ret_node = Node::new();
-            ret_node.ty = n.ty;
-            ret_node.value = n.value;
-            ret_node.fvalue = n.fvalue;
-            ret_node
-        }
+        Node::BinOp(_tok, _lhs, _rhs) => eval_binop(env, n),
+        Node::Var(_tok) => eval_const(env, n),
+        Node::Func(_tok, _params) => eval_func(env, n),
+        _ => n.clone(),
     }
 }
 
@@ -234,9 +192,11 @@ mod tests {
 
     fn eval_as_f64(env: &mut Env, input: &str) -> f64 {
         let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
-        let n = eval(env, &n);
-        assert!(n.ty == NodeType::FNum);
-        n.fvalue
+        if let Node::FNum(f) = eval(env, &n) {
+            return f;
+        }
+        assert!(false);
+        0.0
     }
 
     #[test]
@@ -257,9 +217,12 @@ mod tests {
         assert!(((eval_as_f64(&mut env, "1.1+2.2") - 3.3).abs()) < 1e-10);
         assert_eq!(eval_as_string(&mut env, "-(2+3)"), "Num(-5)".to_string());
         assert_eq!(eval_as_string(&mut env, "+(2+3)"), "Num(5)".to_string());
-        assert_eq!(eval_as_string(&mut env, "1.0+2"), "FNum(3)".to_string());
-        assert_eq!(eval_as_string(&mut env, "1+2.0"), "FNum(3)".to_string());
-        assert_eq!(eval_as_string(&mut env, "(1+2.0)*3"), "FNum(9)".to_string());
+        assert_eq!(eval_as_string(&mut env, "1.0+2"), "FNum(3.0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "1+2.0"), "FNum(3.0)".to_string());
+        assert_eq!(
+            eval_as_string(&mut env, "(1+2.0)*3"),
+            "FNum(9.0)".to_string()
+        );
         assert_eq!(
             eval_as_string(&mut env, "pi"),
             "FNum(3.141592653589793)".to_string()
@@ -268,26 +231,29 @@ mod tests {
 
         assert_eq!(eval_as_string(&mut env, "5//5"), "FNum(2.5)".to_string());
 
-        assert_eq!(eval_as_string(&mut env, "sin(0.0)"), "FNum(0)".to_string());
-        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0)".to_string());
+        assert_eq!(
+            eval_as_string(&mut env, "sin(0.0)"),
+            "FNum(0.0)".to_string()
+        );
+        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0)".to_string());
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
-        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0)".to_string());
         assert_eq!(eval_as_string(&mut env, "1%3"), "Num(1)".to_string());
         assert_eq!(eval_as_string(&mut env, "2%3"), "Num(2)".to_string());
         assert_eq!(eval_as_string(&mut env, "3%3"), "Num(0)".to_string());
-        assert_eq!(eval_as_string(&mut env, "3.0%3"), "None".to_string());
+        assert_eq!(eval_as_string(&mut env, "3.0%3"), "Num(0)".to_string());
         assert_eq!(eval_as_string(&mut env, "1/3"), "Num(0)".to_string());
         assert_eq!(eval_as_string(&mut env, "3/3"), "Num(1)".to_string());
         assert_eq!(eval_as_string(&mut env, "3.0/2"), "FNum(1.5)".to_string());
         assert_eq!(
             eval_as_string(&mut env, "ave(1,2,3)"),
-            "FNum(2)".to_string()
+            "FNum(2.0)".to_string()
         );
         assert_eq!(
             eval_as_string(&mut env, "max(1,2,3)"),
-            "FNum(3)".to_string()
+            "FNum(3.0)".to_string()
         );
     }
 }

@@ -16,20 +16,17 @@ pub fn run_script(env: &mut Env, stream: &mut dyn BufRead) {
                         continue;
                     }
                     match parse(env, &tokens) {
-                        Ok(node) => {
-                            let result = eval(env, &node);
-                            match result.ty {
-                                NodeType::Num => {
-                                    println!("{}", result.value);
-                                }
-                                NodeType::FNum => {
-                                    println!("{}", result.fvalue);
-                                }
-                                _ => {
-                                    println!("eval error");
-                                }
+                        Ok(node) => match eval(env, &node) {
+                            Node::Num(n) => {
+                                println!("{}", n);
                             }
-                        }
+                            Node::FNum(f) => {
+                                println!("{}", f);
+                            }
+                            _ => {
+                                println!("eval error");
+                            }
+                        },
                         Err(e) => {
                             println!("parse error: {}", e);
                         }

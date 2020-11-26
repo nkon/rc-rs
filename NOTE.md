@@ -27,21 +27,29 @@ Lexerの特徴として、`-100`を、単項演算子`-`と整数リテラル（
 
 パーサと評価系は再帰がすべて。手書きの再帰降順パーサを用いてトークン列をASTに変換し、ASTを再帰的に辿って値を決定する。文法と評価ツリーのトラバースがしっかりと設計できていれば、自分の予想外のことまでうまくいく。単純な再帰ではなく、複数の関数の間を循環するような再帰になっているので、どこに再帰させるかを間違えないようにだけ注意が必要。
 
-Parserは`Vec<Token>`を受け取り、`Result<Node, String>`を返す。`Node`は`child: Vec<Node>`を持ち、ASTを構成する。Lexerとおなじく、入力はIteratorではなく配列とインデックスでアクセスする。`Node`は`enum`ではなく構造体になっている。`NodeType`がノードの種類を表し、他のメンバーには、それぞれの要素に必要な値が入っている。`enum`の方がrustっぽいのだが、エラー処理が面倒だったので構造体になっている。将来的には`enum`にしたい。
+Parserは`Vec<Token>`を受け取り、`Result<Node, String>`を返す。`Node`は必要であればNodeへのポインターを持ち、ASTを構成する。Lexerとおなじく、入力はIteratorではなく配列とインデックスでアクセスする。
 
 ```rust
-pub struct Node {
-    pub ty: NodeType,
-    pub value: i128,
-    pub fvalue: f64,
-    pub op: Token,
-    pub child: Vec<Node>, // child[0]: LHS, child[1]: RHS
+pub enum Node {
+    None,
+    Num(i128),
+    FNum(f64),
+    Unary(Token, Box<Node>),
+    BinOp(Token, Box<Node>, Box<Node>),
+    Var(Token),
+    Func(Token, Vec<Node>),
 }
 ```
 
+### Enum
+
+当初、Cでの類似の実装経験から、Node構造体などをStructで表し、Node.Typeといったメンバー変数で処理を分岐するように書いていた。しかしRustらしくそういったタグでの分岐をEnumの型タグによる分岐にまとめてみた。処理漏れもなくなるし、余計な初期化や分岐も無くなった。短くて情報量が多い、なんというか「力強い」コードになった。Enumの威力を実感した。しかし、最初の実装を慣れているStructで行い、ロジックのバグを潰しておいたから、Enumのコードがスムーズに導入できたようにも思う。Enumに慣れていなかったら、パーサのバグとEnumの使いこなしの両方を同時にするのは大変だっただろう。
+
+
+
 ## Eval
 
-Parserが返したASTをevalすることで計算結果を得る。
+Parserが返したASTを再帰的にevalすることで計算結果を得る。
 
 ## オブジェクト指向
 

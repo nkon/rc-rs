@@ -463,9 +463,7 @@ mod tests {
         );
         assert_eq!(
             lexer("123    #asdfasdfasfd".to_string()).unwrap(),
-            [
-                Token::Num(123)
-            ]
+            [Token::Num(123)]
         );
     }
 }

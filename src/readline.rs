@@ -185,26 +185,17 @@ pub fn readline(env: &mut Env) {
                                 continue;
                             }
                             match parse(env, &v) {
-                                Ok(node) => {
-                                    let result = eval(env, &node);
-                                    match result.ty {
-                                        NodeType::Num => {
-                                            result_print(
-                                                &mut stdout,
-                                                format!("{}\r\n", result.value).as_str(),
-                                            );
-                                        }
-                                        NodeType::FNum => {
-                                            result_print(
-                                                &mut stdout,
-                                                format!("{}\r\n", result.fvalue).as_str(),
-                                            );
-                                        }
-                                        _ => {
-                                            error_print(&mut stdout, "eval error\r\n");
-                                        }
+                                Ok(node) => match eval(env, &node) {
+                                    Node::Num(n) => {
+                                        result_print(&mut stdout, format!("{}\r\n", n).as_str());
                                     }
-                                }
+                                    Node::FNum(f) => {
+                                        result_print(&mut stdout, format!("{}\r\n", f).as_str());
+                                    }
+                                    _ => {
+                                        error_print(&mut stdout, "eval error\r\n");
+                                    }
+                                },
                                 Err(e) => {
                                     error_print(
                                         &mut stdout,
