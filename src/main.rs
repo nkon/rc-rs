@@ -17,8 +17,8 @@ fn main() {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print this help");
     opts.optflag("d", "debug", "debug mode");
-    opts.optopt("r", "", "rc file path", "rc_file");
     opts.optflag("", "test", "run built-in test");
+    opts.optopt("r", "init_file", "rc file path", "rc_file");
     opts.optmulti("s", "script", "run script", "FILE");
 
     let mut rc_file_path = path::PathBuf::new();
