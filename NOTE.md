@@ -53,6 +53,62 @@ Parserが返したASTを再帰的にevalすることで計算結果を得る。
 
 Rustではエラー処理に、Result<T,E>を使う。エラー処理のためにEdition2018では`?`構文が導入されているが、それを有効に使うためには`String`でエラーを返すのではなく、独自エラー型を導入して置くほうが便利だ。2020年現在、Rustのエラー処理の状況は混沌としている。現時点でもっとも有力な方法は「MyErrorを定義してthiserrorで実装を付ける、それ以外はanyhowでエラーを返す」のようだ。
 
+### thiserror
+
+現時点で`thiserror`の詳しい説明はあまり見当たらない。
+
+`thiserror`は自作のエラーに実装を簡単に付けるためのクレートである。
+`Cargo.toml`に次のように書くことで使えるようになる。
+
+```
+[dependencies]
+thiserror = "1.0"
+```
+
+使いたいところで`use thiserror::Error;`と書けば次のようなマクロが使える。
+
+```rust
+#[derive(Error, Debug)]
+pub enum MyError {
+    #[error("lexer error: {1} {0}")]
+    LexerIntError(String, #[source] std::num::ParseIntError),
+    #[error("lexer error: {1} {0}")]
+    LexerFloatError(String, #[source] std::num::ParseFloatError),
+    #[error("parser error: {0}")]
+    ParseError(String),
+}
+```
+
+このように、自分で定義したエラー型に対して、`Display`トレイトを`#[error("...")]`で簡便に定義することができることが特徴。フォーマット書式は`fmt!`に準ずる。エラー型は`Enum`でも`Struct`でも良い。また、`From`トレイトも`#[from]`で自動生成できる。
+
+MyErrorを発生させるときは次のようになるだろう。
+
+```rust
+match i128::from_str_radix(&mantissa, radix) {
+    Ok(int) => Ok((Token::Num(int), i)),
+    Err(e) => Err(MyError::LexerIntError(mantissa, e)),
+}
+```
+
+```rust
+match tok[i] {
+    Token::Op(TokenOp::Plus) | Token::Op(TokenOp::Minus) => {
+        if let Ok((rhs, j)) = mul(env, tok, i + 1) {
+            i = j;
+            lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
+        } else {
+            return Err(MyError::ParseError(format!(
+                "Operator'+'/'-' requires right side operand. {:?} {}",
+                tok, i
+            )));
+        }
+    }
+    _ => {
+        return Ok((lhs, i));
+    }
+}
+```
+
 ## Comand
 
 計算の実行では無く、アプリの動作を変更したいときなどに「コマンド」が用意されている。たとえばデバッグ設定の変更や出力フォーマットの変更などだ。

@@ -28,7 +28,7 @@ pub fn run_script(env: &mut Env, stream: &mut dyn BufRead) {
                             }
                         },
                         Err(e) => {
-                            println!("parse error: {}", e);
+                            println!("{}", e);
                         }
                     }
                 }

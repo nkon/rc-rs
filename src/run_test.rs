@@ -7,7 +7,7 @@ fn eval_as_string(env: &mut Env, input: &str) -> String {
             format!("{:?}", n)
         }
         Err(e) => {
-            format!("parser error: {}", e)
+            format!("{}", e)
         }
     }
 }

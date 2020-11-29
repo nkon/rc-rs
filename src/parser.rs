@@ -106,7 +106,10 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
         Token::Op(TokenOp::ParenLeft) => match expr(env, tok, i + 1) {
             Ok((ex, i)) => {
                 if tok[i] != Token::Op(TokenOp::ParenRight) {
-                    Err(MyError::ParseError(format!("')' not found: {:?} {}", tok, i)))
+                    Err(MyError::ParseError(format!(
+                        "')' not found: {:?} {}",
+                        tok, i
+                    )))
                 } else {
                     Ok((ex, i + 1))
                 }
@@ -119,7 +122,10 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
             } else if let Some(func_tupple) = env.is_func(id.as_str()) {
                 let mut params = Vec::new();
                 if tok.len() <= (i + 1) {
-                    return Err(MyError::ParseError(format!("function has no parameter: {:?} {}", tok, i)));
+                    return Err(MyError::ParseError(format!(
+                        "function has no parameter: {:?} {}",
+                        tok, i
+                    )));
                 } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
                     i += 2;
                     while i < tok.len() {
@@ -138,19 +144,31 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                             i = j;
                             params.push(t);
                         } else {
-                            return Err(MyError::ParseError(format!("function parameter: {:?} {}", tok, i)));
+                            return Err(MyError::ParseError(format!(
+                                "function parameter: {:?} {}",
+                                tok, i
+                            )));
                         }
                     }
                     if tok.len() <= i {
-                        return Err(MyError::ParseError(format!("function has no ')': {:?} {}", tok, i)));
+                        return Err(MyError::ParseError(format!(
+                            "function has no ')': {:?} {}",
+                            tok, i
+                        )));
                     }
                 } else {
-                    return Err(MyError::ParseError(format!("function has no '(': {:?} {}", tok, i)));
+                    return Err(MyError::ParseError(format!(
+                        "function has no '(': {:?} {}",
+                        tok, i
+                    )));
                 }
             } else if let Some(cmd_tupple) = env.is_cmd(id.as_str()) {
                 let mut params = Vec::new();
                 if tok.len() <= (i + 1) {
-                    return Err(MyError::ParseError(format!("command has no parameter: {:?} {}", tok, i)));
+                    return Err(MyError::ParseError(format!(
+                        "command has no parameter: {:?} {}",
+                        tok, i
+                    )));
                 } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
                     i += 2;
                     while i < tok.len() {
@@ -173,10 +191,16 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                         }
                     }
                     if tok.len() <= i {
-                        return Err(MyError::ParseError(format!("command has no ')': {:?} {}", tok, i)));
+                        return Err(MyError::ParseError(format!(
+                            "command has no ')': {:?} {}",
+                            tok, i
+                        )));
                     }
                 } else {
-                    return Err(MyError::ParseError(format!("command has no '(': {:?} {}", tok, i)));
+                    return Err(MyError::ParseError(format!(
+                        "command has no '(': {:?} {}",
+                        tok, i
+                    )));
                 }
             }
             Ok((Node::None, i))
@@ -301,17 +325,17 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError
 // TODO: user define var
 // TODO: user devine function
 // TODO: multiple expression
-// TODO: use MyError
-pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, String> {
+// TODO: use '?' syntax
+pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, MyError> {
     match expr(env, &tok, 0) {
         Ok((node, i)) => {
             if i < tok.len() {
-                Err(format!("parse error: token left: {:?} {}", tok, i))
+                Err(MyError::ParseError(format!("token left: {:?} {}", tok, i)))
             } else {
                 Ok(node)
             }
         }
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(e),
     }
 }
 
