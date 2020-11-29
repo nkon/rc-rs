@@ -86,6 +86,31 @@ pub fn output_format(env: &mut Env, n: i128) -> String {
     }
 }
 
+fn impl_debug(env: &mut Env, arg: &[Token]) {
+    if env.is_debug() {
+        eprintln!("impl_debug {:?}\r", arg);
+    }
+    if arg.is_empty() {
+        return;
+    }
+    match &arg[0] {
+        Token::Num(0) => {
+            env.debug = false;
+        }
+        Token::Num(1) => {
+            env.debug = true;
+        }
+        Token::Ident(id) => {
+            if id == "on" || id == "true" {
+                env.debug = true;
+            } else if id == "off" || id == "faluse" {
+                env.debug = false;
+            }
+        }
+        _ => {}
+    }
+}
+
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
         Env {
@@ -107,6 +132,7 @@ impl<'a> Env<'a> {
         self.func.insert("ave", (impl_ave as TypeFn, 0));
         self.cmd
             .insert("output_format", (impl_output_format as TypeCmd, 0));
+        self.cmd.insert("debug", (impl_debug as TypeCmd, 1));
     }
 
     pub fn is_const(&mut self, key: &str) -> Option<f64> {
