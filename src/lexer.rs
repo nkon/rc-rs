@@ -103,7 +103,7 @@ fn tok_num_int(chars: &[char], index: usize) -> Result<(Token, usize), MyError> 
 
     match i128::from_str_radix(&mantissa, radix) {
         Ok(int) => Ok((Token::Num(int), i)),
-        Err(e) => Err(MyError::LexerIntError(e, err_str)),
+        Err(e) => Err(MyError::LexerIntError(err_str, e)),
     }
 }
 
@@ -175,7 +175,7 @@ fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
                 return Ok((Token::Num(int), i));
             }
             Err(e) => {
-                return Err(MyError::LexerIntError(e, mantissa));
+                return Err(MyError::LexerIntError(mantissa, e));
             }
         }
     }
@@ -185,7 +185,7 @@ fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
     }
     match mantissa.parse::<f64>() {
         Ok(float) => Ok((Token::FNum(float), i)),
-        Err(e) => Err(MyError::LexerFloatError(e, mantissa)),
+        Err(e) => Err(MyError::LexerFloatError(mantissa, e)),
     }
 }
 

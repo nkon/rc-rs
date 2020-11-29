@@ -17,17 +17,17 @@ pub enum Node {
     Func(Token, Vec<Node>),
 }
 
-fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> {
+fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
     if env.is_debug() {
         eprintln!("num {:?} {}\r", tok, i);
     }
     if tok.len() <= i {
-        return Err(format!(
-            "Error: unexpected end of input: {} {}: {:?}",
+        return Err(MyError::ParseError(format!(
+            "unexpected end of input: {} {}: {:?}",
             file!(),
             line!(),
             tok
-        ));
+        )));
     }
     let mut f_postfix = 1.0;
     let mut has_postfix = false;
@@ -89,24 +89,24 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> 
     }
 }
 
-fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), String> {
+fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
     let mut i = index;
     if env.is_debug() {
         eprintln!("primary {:?} {}\r", tok, i);
     }
     if tok.len() <= i {
-        return Err(format!(
-            "Error: unexpected end of input: {} {}: {:?}",
+        return Err(MyError::ParseError(format!(
+            "unexpected end of input: {} {}: {:?}",
             file!(),
             line!(),
             tok
-        ));
+        )));
     }
     match &tok[i] {
         Token::Op(TokenOp::ParenLeft) => match expr(env, tok, i + 1) {
             Ok((ex, i)) => {
                 if tok[i] != Token::Op(TokenOp::ParenRight) {
-                    Err(format!("Error: ')' not found: {:?} {}", tok, i))
+                    Err(MyError::ParseError(format!("')' not found: {:?} {}", tok, i)))
                 } else {
                     Ok((ex, i + 1))
                 }
@@ -119,16 +119,16 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
             } else if let Some(func_tupple) = env.is_func(id.as_str()) {
                 let mut params = Vec::new();
                 if tok.len() <= (i + 1) {
-                    return Err(format!("Error: function has no parameter: {:?} {}", tok, i));
+                    return Err(MyError::ParseError(format!("function has no parameter: {:?} {}", tok, i)));
                 } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
                     i += 2;
                     while i < tok.len() {
                         if tok[i] == Token::Op(TokenOp::ParenRight) {
                             if func_tupple.1 != 0 && func_tupple.1 != params.len() {
-                                return Err(format!(
-                                    "Error: function parameter number: {:?} {}",
+                                return Err(MyError::ParseError(format!(
+                                    "function parameter number: {:?} {}",
                                     tok, i
-                                ));
+                                )));
                             }
                             return Ok((Node::Func(Token::Ident(id.clone()), params), i + 1));
                         } else if tok[i] == Token::Op(TokenOp::Comma) {
@@ -138,28 +138,28 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                             i = j;
                             params.push(t);
                         } else {
-                            return Err(format!("Error: function parameter: {:?} {}", tok, i));
+                            return Err(MyError::ParseError(format!("function parameter: {:?} {}", tok, i)));
                         }
                     }
                     if tok.len() <= i {
-                        return Err(format!("Error: function has no ')': {:?} {}", tok, i));
+                        return Err(MyError::ParseError(format!("function has no ')': {:?} {}", tok, i)));
                     }
                 } else {
-                    return Err(format!("Error: function has no '(': {:?} {}", tok, i));
+                    return Err(MyError::ParseError(format!("function has no '(': {:?} {}", tok, i)));
                 }
             } else if let Some(cmd_tupple) = env.is_cmd(id.as_str()) {
                 let mut params = Vec::new();
                 if tok.len() <= (i + 1) {
-                    return Err(format!("Error: command has no parameter: {:?} {}", tok, i));
+                    return Err(MyError::ParseError(format!("command has no parameter: {:?} {}", tok, i)));
                 } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
                     i += 2;
                     while i < tok.len() {
                         if tok[i] == Token::Op(TokenOp::ParenRight) {
                             if cmd_tupple.1 != 0 && cmd_tupple.1 != params.len() {
-                                return Err(format!(
-                                    "Error: command parameter number: {:?} {}",
+                                return Err(MyError::ParseError(format!(
+                                    "command parameter number: {:?} {}",
                                     tok, i
-                                ));
+                                )));
                             }
                             cmd_tupple.0(env, &params);
                             return Ok((Node::Num(0), i + 1));
@@ -173,10 +173,10 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                         }
                     }
                     if tok.len() <= i {
-                        return Err(format!("Error: command has no ')': {:?} {}", tok, i));
+                        return Err(MyError::ParseError(format!("command has no ')': {:?} {}", tok, i)));
                     }
                 } else {
-                    return Err(format!("Error: command has no '(': {:?} {}", tok, i));
+                    return Err(MyError::ParseError(format!("command has no '(': {:?} {}", tok, i)));
                 }
             }
             Ok((Node::None, i))
@@ -185,16 +185,16 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
     }
 }
 
-fn unary(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> {
+fn unary(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
     if env.is_debug() {
         eprintln!("unary {:?} {}\r", tok, i);
     }
     if tok.len() <= i {
-        return Err(format!(
-            "Error: unexpected end of input: {} {}",
+        return Err(MyError::ParseError(format!(
+            "unexpected end of input: {} {}",
             file!(),
             line!()
-        ));
+        )));
     }
     let tok_orig = tok[i].clone();
     match tok[i] {
@@ -206,16 +206,16 @@ fn unary(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String
     }
 }
 
-fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> {
+fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
     if env.is_debug() {
         eprintln!("mul {:?} {}\r", tok, i);
     }
     if tok.len() <= i {
-        return Err(format!(
-            "Error: unexpected end of input: {} {}",
+        return Err(MyError::ParseError(format!(
+            "unexpected end of input: {} {}",
             file!(),
             line!()
-        ));
+        )));
     }
     match unary(env, tok, i) {
         Ok((mut lhs, mut i)) => loop {
@@ -232,10 +232,10 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> 
                         i = j;
                         lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
                     } else {
-                        return Err(format!(
-                            "Error: Operator '*' '/' '%' requires right side operand. {:?} {}",
+                        return Err(MyError::ParseError(format!(
+                            "Operator '*' '/' '%' requires right side operand. {:?} {}",
                             tok, i
-                        ));
+                        )));
                     }
                 }
                 _ => {
@@ -247,16 +247,16 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> 
     }
 }
 
-fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String> {
+fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
     if env.is_debug() {
         eprintln!("expr {:?} {}\r", tok, i);
     }
     if tok.len() <= i {
-        return Err(format!(
-            "Error: unexpected end of input: {} {}",
+        return Err(MyError::ParseError(format!(
+            "unexpected end of input: {} {}",
             file!(),
             line!()
-        ));
+        )));
     }
     match mul(env, tok, i) {
         Ok((mut lhs, mut i)) => loop {
@@ -270,10 +270,10 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String>
                         i = j;
                         lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
                     } else {
-                        return Err(format!(
-                            "Error: Operator'+'/'-' requires right side operand. {:?} {}",
+                        return Err(MyError::ParseError(format!(
+                            "Operator'+'/'-' requires right side operand. {:?} {}",
                             tok, i
-                        ));
+                        )));
                     }
                 }
                 _ => {
@@ -311,7 +311,7 @@ pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, String> {
                 Ok(node)
             }
         }
-        Err(e) => Err(e),
+        Err(e) => Err(e.to_string()),
     }
 }
 

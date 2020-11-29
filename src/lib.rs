@@ -17,10 +17,10 @@ pub use script::{run_rc, run_script};
 
 #[derive(Error, Debug)]
 pub enum MyError {
-    #[error("lexer error: {0} {1}")]
-    LexerIntError(std::num::ParseIntError, String),
-    #[error("lexer error: {0} {1}")]
-    LexerFloatError(std::num::ParseFloatError, String),
+    #[error("lexer error: {1} {0}")]
+    LexerIntError(String, #[source] std::num::ParseIntError),
+    #[error("lexer error: {1} {0}")]
+    LexerFloatError(String, #[source] std::num::ParseFloatError),
     #[error("parser error: {0}")]
     ParseError(String),
 }
