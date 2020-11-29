@@ -1,3 +1,6 @@
+use thiserror::Error;
+// use anyhow;
+
 mod env;
 mod lexer;
 mod parser;
@@ -11,6 +14,16 @@ pub use parser::*;
 pub use readline::readline;
 pub use run_test::run_test;
 pub use script::{run_rc, run_script};
+
+#[derive(Error, Debug)]
+pub enum MyError {
+    #[error("lexer error: {0} {1}")]
+    LexerIntError(std::num::ParseIntError, String),
+    #[error("lexer error: {0} {1}")]
+    LexerFloatError(std::num::ParseFloatError, String),
+    #[error("parser error: {0}")]
+    ParseError(String),
+}
 
 pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
     match n {

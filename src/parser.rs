@@ -301,6 +301,7 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), String>
 // TODO: user define var
 // TODO: user devine function
 // TODO: multiple expression
+// TODO: use MyError
 pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, String> {
     match expr(env, &tok, 0) {
         Ok((node, i)) => {

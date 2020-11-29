@@ -1,3 +1,5 @@
+use super::*;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenOp {
     Plus,       // +
@@ -54,7 +56,7 @@ fn tok_get_num(chars: &[char], index: usize) -> (String, usize) {
 /// Eat integer numbers from input array.
 /// Return `Token::Num()` with `Result<,Err(String)>`.
 /// Increment index and return as a member of tupple.
-fn tok_num_int(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
+fn tok_num_int(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
     let mut i = index;
     let radix: u32;
     let mut mantissa = String::from("0");
@@ -64,23 +66,23 @@ fn tok_num_int(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
         match chars[i] {
             'x' | 'X' => {
                 radix = 16;
-                i += 1;
                 err_str.push(chars[i]);
+                i += 1;
             }
             'b' | 'B' => {
                 radix = 2;
-                i += 1;
                 err_str.push(chars[i]);
+                i += 1;
             }
             '0'..='7' => {
                 radix = 8;
             }
             _ => {
-                return (Ok(Token::Num(0)), i);
+                return Ok((Token::Num(0), i));
             }
         }
     } else {
-        return (Ok(Token::Num(0)), i);
+        return Ok((Token::Num(0), i));
     }
 
     while i < chars.len() {
@@ -100,8 +102,8 @@ fn tok_num_int(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
     }
 
     match i128::from_str_radix(&mantissa, radix) {
-        Ok(int) => (Ok(Token::Num(int)), i),
-        Err(e) => (Err(format!("Error: Integer format: {} {}", e, err_str)), i),
+        Ok(int) => Ok((Token::Num(int), i)),
+        Err(e) => Err(MyError::LexerIntError(e, err_str)),
     }
 }
 
@@ -109,7 +111,7 @@ fn tok_num_int(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
 /// Forwared to `tok_num_int()` when interger, i.e. decimal, hexdecimal, octal or binary.
 /// Return `Token::Num()` or `Token::FNum()` with `Result<,Err(String)>`.
 /// Increment index and return as a member of tupple.
-fn tok_num(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
+fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
     let mut i = index;
     let mut mantissa = String::new();
     let mut exponent = String::new();
@@ -129,11 +131,11 @@ fn tok_num(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
                     i += 1;
                 }
                 _ => {
-                    return (Ok(Token::Num(0)), i);
+                    return Ok((Token::Num(0), i));
                 }
             }
         } else {
-            return (Ok(Token::Num(0)), i + 1);
+            return Ok((Token::Num(0), i + 1));
         }
     }
     while i < chars.len() {
@@ -170,10 +172,10 @@ fn tok_num(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
     if !has_dot {
         match mantissa.parse::<i128>() {
             Ok(int) => {
-                return (Ok(Token::Num(int)), i);
+                return Ok((Token::Num(int), i));
             }
             Err(e) => {
-                return (Err(format!("Error: Integer format: {} {}", e, mantissa)), i);
+                return Err(MyError::LexerIntError(e, mantissa));
             }
         }
     }
@@ -182,12 +184,12 @@ fn tok_num(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
         mantissa.push_str(&exponent);
     }
     match mantissa.parse::<f64>() {
-        Ok(float) => (Ok(Token::FNum(float)), i),
-        Err(e) => (Err(format!("Error: Float format: {} {}", e, mantissa)), i),
+        Ok(float) => Ok((Token::FNum(float), i)),
+        Err(e) => Err(MyError::LexerFloatError(e, mantissa)),
     }
 }
 
-fn tok_ident(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
+fn tok_ident(chars: &[char], index: usize) -> (Token, usize) {
     let mut i = index;
     let mut ret = String::new();
     while i < chars.len() {
@@ -197,11 +199,11 @@ fn tok_ident(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
                 i += 1;
             }
             _ => {
-                return (Ok(Token::Ident(ret)), i);
+                return (Token::Ident(ret), i);
             }
         }
     }
-    (Ok(Token::Ident(ret)), i)
+    (Token::Ident(ret), i)
 }
 
 /// Input: `String`
@@ -227,7 +229,7 @@ fn tok_ident(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
 /// assert_eq!(lexer("18446744073709551615".to_string()).unwrap(), [Token::Num(18446744073709551615)]);
 /// ```
 // TODO: comment `#...`
-pub fn lexer(s: String) -> Result<Vec<Token>, String> {
+pub fn lexer(s: String) -> Result<Vec<Token>, MyError> {
     let mut ret = Vec::new();
 
     let chars: Vec<char> = s.chars().collect();
@@ -236,10 +238,9 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
         match chars[i] {
             '0'..='9' => {
                 // `Num` or `FNum` begin from '0'..='9'.
-                let (tk, b) = tok_num(&chars, i);
-                i = b;
-                match tk {
-                    Ok(tk) => {
+                match tok_num(&chars, i) {
+                    Ok((tk, j)) => {
+                        i = j;
                         ret.push(tk);
                     }
                     Err(e) => {
@@ -289,16 +290,9 @@ pub fn lexer(s: String) -> Result<Vec<Token>, String> {
                 i += 1;
             }
             'a'..='z' | 'A'..='Z' => {
-                let (tk, b) = tok_ident(&chars, i);
-                i = b;
-                match tk {
-                    Ok(tk) => {
-                        ret.push(tk);
-                    }
-                    Err(e) => {
-                        return Err(e);
-                    }
-                }
+                let (tk, j) = tok_ident(&chars, i);
+                i = j;
+                ret.push(tk);
             }
             '#' => {
                 return Ok(ret);
@@ -320,6 +314,16 @@ mod tests {
         str.chars().collect::<Vec<char>>()
     }
 
+    fn assert_tok_index(result: Result<(lexer::Token, usize), MyError>, tok: Token, index: usize) {
+        match result {
+            Ok((good, idx)) => {
+                assert_eq!(good, tok);
+                assert_eq!(idx, index);
+            }
+            _ => {}
+        }
+    }
+
     #[test]
     fn test_tok_get_num() {
         assert_eq!(tok_get_num(&s2v("0"), 0), ("0".to_string(), 1));
@@ -331,44 +335,46 @@ mod tests {
     }
     #[test]
     fn test_tok_num_int() {
-        assert_eq!(tok_num_int(&s2v("0x1"), 1), (Ok(Token::Num(1)), 3));
-        assert_eq!(tok_num_int(&s2v("0xa"), 1), (Ok(Token::Num(10)), 3));
-        assert_eq!(tok_num_int(&s2v("0x10"), 1), (Ok(Token::Num(16)), 4));
-        assert_eq!(tok_num_int(&s2v("0b10"), 1), (Ok(Token::Num(2)), 4));
-        assert_eq!(tok_num_int(&s2v("0b1_0"), 1), (Ok(Token::Num(2)), 5));
-        assert_eq!(tok_num_int(&s2v("010"), 1), (Ok(Token::Num(8)), 3));
+        assert_tok_index(tok_num_int(&s2v("0x1"), 1), Token::Num(1), 3);
+        assert_tok_index(tok_num_int(&s2v("0xa"), 1), Token::Num(10), 3);
+        assert_tok_index(tok_num_int(&s2v("0x10"), 1), Token::Num(16), 4);
+        assert_tok_index(tok_num_int(&s2v("0b10"), 1), Token::Num(2), 4);
+        assert_tok_index(tok_num_int(&s2v("0b1_0"), 1), Token::Num(2), 5);
+        assert_tok_index(tok_num_int(&s2v("010"), 1), Token::Num(8), 3);
     }
     #[test]
     fn test_tok_num() {
-        assert_eq!(tok_num(&s2v("0x1"), 0), (Ok(Token::Num(1)), 3));
-        assert_eq!(tok_num(&s2v("0xa"), 0), (Ok(Token::Num(10)), 3));
-        assert_eq!(tok_num(&s2v("0x10"), 0), (Ok(Token::Num(16)), 4));
-        assert_eq!(tok_num(&s2v("0b10"), 0), (Ok(Token::Num(2)), 4));
-        assert_eq!(tok_num(&s2v("0b1_0"), 0), (Ok(Token::Num(2)), 5));
-        assert_eq!(tok_num(&s2v("010"), 0), (Ok(Token::Num(8)), 3));
-        assert_eq!(tok_num(&s2v("10"), 0), (Ok(Token::Num(10)), 2));
-        assert_eq!(tok_num(&s2v("10.1"), 0), (Ok(Token::FNum(10.1)), 4));
-        assert_eq!(tok_num(&s2v("10e1"), 0), (Ok(Token::FNum(100.0)), 4));
-        assert_eq!(tok_num(&s2v("10e1+"), 0), (Ok(Token::FNum(100.0)), 4));
-        assert_eq!(tok_num(&s2v("1"), 0), (Ok(Token::Num(1)), 1));
-        assert_eq!(tok_num(&s2v("0"), 0), (Ok(Token::Num(0)), 1));
-        assert_eq!(tok_num(&s2v("10"), 0), (Ok(Token::Num(10)), 2));
-        assert_eq!(tok_num(&s2v("1.1"), 0), (Ok(Token::FNum(1.1)), 3));
-        assert_eq!(tok_num(&s2v("0.1"), 0), (Ok(Token::FNum(0.1)), 3));
-        assert_eq!(tok_num(&s2v("1.1E2"), 0), (Ok(Token::FNum(110.0)), 5));
-        assert_eq!(tok_num(&s2v("1.1E-2"), 0), (Ok(Token::FNum(0.011)), 6));
-        assert_eq!(tok_num(&s2v("100_000"), 0), (Ok(Token::Num(100000)), 7));
-        assert_eq!(tok_num(&s2v("0xa"), 0), (Ok(Token::Num(10)), 3));
-        assert_eq!(tok_num(&s2v("011"), 0), (Ok(Token::Num(9)), 3));
-        assert_eq!(tok_num(&s2v("0b11"), 0), (Ok(Token::Num(3)), 4));
-        assert_eq!(tok_num(&s2v("1e3"), 0), (Ok(Token::FNum(1000.0)), 3));
-        assert_eq!(
+        assert_tok_index(tok_num(&s2v("0x1"), 0), Token::Num(1), 3);
+        assert_tok_index(tok_num(&s2v("0xa"), 0), Token::Num(10), 3);
+        assert_tok_index(tok_num(&s2v("0x10"), 0), Token::Num(16), 4);
+        assert_tok_index(tok_num(&s2v("0b10"), 0), Token::Num(2), 4);
+        assert_tok_index(tok_num(&s2v("0b1_0"), 0), Token::Num(2), 5);
+        assert_tok_index(tok_num(&s2v("010"), 0), Token::Num(8), 3);
+        assert_tok_index(tok_num(&s2v("10"), 0), Token::Num(10), 2);
+        assert_tok_index(tok_num(&s2v("10.1"), 0), Token::FNum(10.1), 4);
+        assert_tok_index(tok_num(&s2v("10e1"), 0), Token::FNum(100.0), 4);
+        assert_tok_index(tok_num(&s2v("10e1+"), 0), Token::FNum(100.0), 4);
+        assert_tok_index(tok_num(&s2v("1"), 0), Token::Num(1), 1);
+        assert_tok_index(tok_num(&s2v("0"), 0), Token::Num(0), 1);
+        assert_tok_index(tok_num(&s2v("10"), 0), Token::Num(10), 2);
+        assert_tok_index(tok_num(&s2v("1.1"), 0), Token::FNum(1.1), 3);
+        assert_tok_index(tok_num(&s2v("0.1"), 0), Token::FNum(0.1), 3);
+        assert_tok_index(tok_num(&s2v("1.1E2"), 0), Token::FNum(110.0), 5);
+        assert_tok_index(tok_num(&s2v("1.1E-2"), 0), Token::FNum(0.011), 6);
+        assert_tok_index(tok_num(&s2v("100_000"), 0), Token::Num(100000), 7);
+        assert_tok_index(tok_num(&s2v("0xa"), 0), Token::Num(10), 3);
+        assert_tok_index(tok_num(&s2v("011"), 0), Token::Num(9), 3);
+        assert_tok_index(tok_num(&s2v("0b11"), 0), Token::Num(3), 4);
+        assert_tok_index(tok_num(&s2v("1e3"), 1), Token::FNum(1000.0), 3);
+        assert_tok_index(
             tok_num(&s2v("9223372036854775807"), 0),
-            (Ok(Token::Num(9223372036854775807)), 19)
+            Token::Num(9223372036854775807),
+            19,
         );
-        assert_eq!(
+        assert_tok_index(
             tok_num(&s2v("18446744073709551615"), 0),
-            (Ok(Token::Num(18446744073709551615)), 20)
+            Token::Num(18446744073709551615),
+            20,
         );
     }
 
@@ -384,14 +390,12 @@ mod tests {
 
     #[test]
     fn test_tok_ident() {
-        assert_eq!(
-            tok_ident(&s2v("i"), 0),
-            (Ok(Token::Ident("i".to_string())), 1)
-        );
-        assert_eq!(
-            tok_ident(&s2v("sin()"), 0),
-            (Ok(Token::Ident("sin".to_string())), 3)
-        );
+        let (tok, idx) = tok_ident(&s2v("i"), 0);
+        assert_eq!(tok, Token::Ident("i".to_string()));
+        assert_eq!(idx, 1);
+        let (tok, idx) = tok_ident(&s2v("sin()"), 0);
+        assert_eq!(tok, Token::Ident("sin".to_string()));
+        assert_eq!(idx, 3);
     }
     #[test]
     fn test_lexer() {
