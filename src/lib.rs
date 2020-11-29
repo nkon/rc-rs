@@ -130,7 +130,6 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
     Node::None
 }
 
-// TODO: command handling
 pub fn eval(env: &mut Env, n: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval {:?}\r", n);

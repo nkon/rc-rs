@@ -226,6 +226,7 @@ fn tok_ident(chars: &[char], index: usize) -> (Result<Token, String>, usize) {
 /// assert_eq!(lexer("9223372036854775807".to_string()).unwrap(), [Token::Num(9223372036854775807)]);
 /// assert_eq!(lexer("18446744073709551615".to_string()).unwrap(), [Token::Num(18446744073709551615)]);
 /// ```
+// TODO: comment `#...`
 pub fn lexer(s: String) -> Result<Vec<Token>, String> {
     let mut ret = Vec::new();
 
