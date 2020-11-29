@@ -3,3 +3,5 @@
 sin(0)
 abs(-2)
 max(1,2,3)
+output_format(16)
+65535

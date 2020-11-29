@@ -187,7 +187,10 @@ pub fn readline(env: &mut Env) {
                             match parse(env, &v) {
                                 Ok(node) => match eval(env, &node) {
                                     Node::Num(n) => {
-                                        result_print(&mut stdout, format!("{}\r\n", n).as_str());
+                                        result_print(
+                                            &mut stdout,
+                                            format!("{}\r\n", output_format(env, n)).as_str(),
+                                        );
                                     }
                                     Node::FNum(f) => {
                                         result_print(&mut stdout, format!("{}\r\n", f).as_str());

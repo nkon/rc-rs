@@ -147,6 +147,37 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                 } else {
                     return Err(format!("Error: function has no '(': {:?} {}", tok, i));
                 }
+            } else if let Some(cmd_tupple) = env.is_cmd(id.as_str()) {
+                let mut params = Vec::new();
+                if tok.len() <= (i + 1) {
+                    return Err(format!("Error: command has no parameter: {:?} {}", tok, i));
+                } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
+                    i += 2;
+                    while i < tok.len() {
+                        if tok[i] == Token::Op(TokenOp::ParenRight) {
+                            if cmd_tupple.1 != 0 && cmd_tupple.1 != params.len() {
+                                return Err(format!(
+                                    "Error: command parameter number: {:?} {}",
+                                    tok, i
+                                ));
+                            }
+                            cmd_tupple.0(env, &params);
+                            return Ok((Node::Num(0), i + 1));
+                        } else if tok[i] == Token::Op(TokenOp::Comma) {
+                            i += 1;
+                            continue;
+                        } else {
+                            params.push(tok[i].clone());
+                            i += 1;
+                            continue;
+                        }
+                    }
+                    if tok.len() <= i {
+                        return Err(format!("Error: command has no ')': {:?} {}", tok, i));
+                    }
+                } else {
+                    return Err(format!("Error: command has no '(': {:?} {}", tok, i));
+                }
             }
             Ok((Node::None, i))
         }

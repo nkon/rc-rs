@@ -2,15 +2,17 @@ use super::*;
 use std::collections::HashMap;
 
 pub type TypeFn = fn(&mut Env, &[Node]) -> f64;
+pub type TypeCmd = fn(&mut Env, &[Token]);
 
 pub struct Env<'a> {
     pub constant: HashMap<&'a str, f64>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
+    pub cmd: HashMap<&'a str, (TypeCmd, usize)>, // (function pointer, arg num: 0=variable)
     pub debug: bool,
-    // TODO: imprement command and status.
+    pub output_base: u8,
 }
 
-// warp all functions
+// Impliment of functions.
 fn impl_sin(env: &mut Env, arg: &[Node]) -> f64 {
     eval_fvalue(env, &arg[0]).sin()
 }
@@ -43,12 +45,55 @@ fn impl_ave(env: &mut Env, arg: &[Node]) -> f64 {
     sum / arg.len() as f64
 }
 
+// Impliment of commands.
+fn impl_output_format(env: &mut Env, arg: &[Token]) {
+    if env.is_debug() {
+        eprintln!("impl_output_format {:?}\r", arg);
+    }
+    if arg.is_empty() {
+        return;
+    }
+    for a in arg {
+        match a {
+            Token::Num(2) => {
+                env.output_base = 2;
+            }
+            Token::Num(10) => {
+                env.output_base = 10;
+            }
+            Token::Num(16) => {
+                env.output_base = 16;
+            }
+            _ => {}
+        }
+    }
+}
+
+pub fn output_format(env: &mut Env, n: i128) -> String {
+    match env.output_base {
+        2 => {
+            format!("0b{:b}", n)
+        }
+        10 => {
+            format!("{}", n)
+        }
+        16 => {
+            format!("0x{:x}", n)
+        }
+        _ => {
+            format!("{:?}", n)
+        }
+    }
+}
+
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
         Env {
             constant: HashMap::new(),
             func: HashMap::new(),
+            cmd: HashMap::new(),
             debug: false,
+            output_base: 10,
         }
     }
 
@@ -60,6 +105,8 @@ impl<'a> Env<'a> {
         self.func.insert("abs", (impl_abs as TypeFn, 1));
         self.func.insert("max", (impl_max as TypeFn, 0));
         self.func.insert("ave", (impl_ave as TypeFn, 0));
+        self.cmd
+            .insert("output_format", (impl_output_format as TypeCmd, 0));
     }
 
     pub fn is_const(&mut self, key: &str) -> Option<f64> {
@@ -76,9 +123,17 @@ impl<'a> Env<'a> {
         }
     }
 
+    pub fn is_cmd(&mut self, key: &str) -> Option<(TypeCmd, usize)> {
+        match self.cmd.get(key) {
+            Some(&f) => Some(f),
+            None => None,
+        }
+    }
+
     pub fn set_debug(&mut self, flag: bool) {
         self.debug = flag;
     }
+
     pub fn is_debug(&self) -> bool {
         self.debug
     }
