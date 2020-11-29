@@ -10,3 +10,7 @@ debug(1)
 1
 debug(0)
 2
+output_format(sep3)
+123456
+output_format(sep0)
+987654

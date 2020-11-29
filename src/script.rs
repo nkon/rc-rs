@@ -18,7 +18,7 @@ pub fn run_script(env: &mut Env, stream: &mut dyn BufRead) {
                     match parse(env, &tokens) {
                         Ok(node) => match eval(env, &node) {
                             Node::Num(n) => {
-                                println!("{}", output_format(env, n));
+                                println!("{}", output_format_num(env, n));
                             }
                             Node::FNum(f) => {
                                 println!("{}", f);

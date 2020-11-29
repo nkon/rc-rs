@@ -1,5 +1,6 @@
 use super::*;
 use std::collections::HashMap;
+use std::str;
 
 pub type TypeFn = fn(&mut Env, &[Node]) -> f64;
 pub type TypeCmd = fn(&mut Env, &[Token]);
@@ -9,7 +10,8 @@ pub struct Env<'a> {
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
     pub cmd: HashMap<&'a str, (TypeCmd, usize)>, // (function pointer, arg num: 0=variable)
     pub debug: bool,
-    pub output_base: u8,
+    pub output_radix: u8,
+    pub separate_digit: usize,
 }
 
 // Impliment of functions.
@@ -56,34 +58,78 @@ fn impl_output_format(env: &mut Env, arg: &[Token]) {
     for a in arg {
         match a {
             Token::Num(2) => {
-                env.output_base = 2;
+                env.output_radix = 2;
             }
             Token::Num(10) => {
-                env.output_base = 10;
+                env.output_radix = 10;
             }
             Token::Num(16) => {
-                env.output_base = 16;
+                env.output_radix = 16;
+            }
+            Token::Ident(id) => {
+                if id == "radix2" || id == "binary" {
+                    env.output_radix = 2;
+                } else if id == "radix10" || id == "decimal" {
+                    env.output_radix = 10;
+                } else if id == "radix16" || id == "hexadecimal" {
+                    env.output_radix = 2;
+                } else if id == "sep3" {
+                    env.separate_digit = 3;
+                } else if id == "sep4" {
+                    env.separate_digit = 4;
+                } else if id == "sep0" {
+                    env.separate_digit = 0;
+                } else {
+                }
             }
             _ => {}
         }
     }
 }
 
-pub fn output_format(env: &mut Env, n: i128) -> String {
-    match env.output_base {
+fn separate_digit(s: String, sep: &str, n: usize) -> String {
+    let bytes: Vec<_> = s.bytes().rev().collect();
+    let chunks: Vec<_> = bytes
+        .chunks(n)
+        .map(|chunk| str::from_utf8(chunk).unwrap())
+        .collect();
+    let result: Vec<_> = chunks.join(sep).bytes().rev().collect();
+    String::from_utf8(result).unwrap()
+}
+
+pub fn output_format_num(env: &mut Env, n: i128) -> String {
+    let mut num_string: String;
+
+    match env.output_radix {
         2 => {
-            format!("0b{:b}", n)
+            num_string = format!("{:b}", n);
         }
         10 => {
-            format!("{}", n)
+            num_string = format!("{}", n);
         }
         16 => {
-            format!("0x{:x}", n)
+            num_string = format!("{:x}", n);
         }
         _ => {
-            format!("{:?}", n)
+            num_string = format!("{:?}", n);
         }
     }
+
+    if env.separate_digit != 0 {
+        num_string = separate_digit(num_string, "_", env.separate_digit);
+    }
+
+    match env.output_radix {
+        2 => {
+            num_string = format!("0b{}", num_string);
+        }
+        16 => {
+            num_string = format!("0x{}", num_string);
+        }
+        _ => {}
+    }
+
+    num_string
 }
 
 fn impl_debug(env: &mut Env, arg: &[Token]) {
@@ -118,7 +164,8 @@ impl<'a> Env<'a> {
             func: HashMap::new(),
             cmd: HashMap::new(),
             debug: false,
-            output_base: 10,
+            output_radix: 10,
+            separate_digit: 0,
         }
     }
 
