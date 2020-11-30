@@ -195,6 +195,7 @@ pub fn readline(env: &mut Env) {
                                     Node::FNum(f) => {
                                         result_print(&mut stdout, format!("{}\r\n", f).as_str());
                                     }
+                                    Node::None => {}
                                     _ => {
                                         error_print(&mut stdout, "eval error\r\n");
                                     }

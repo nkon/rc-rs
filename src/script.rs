@@ -2,40 +2,41 @@ use std::io::BufRead;
 
 use super::*;
 
+fn do_script(env: &mut Env, line: &str) -> Result<String, MyError> {
+    if env.debug {
+        eprint!("{}", line);
+    }
+    let tokens = lexer(line.to_string())?;
+    if tokens.is_empty() {
+        return Ok("".to_owned());
+    }
+    let node = parse(env, &tokens)?;
+    match eval(env, &node) {
+        Node::Num(n) => Ok(output_format_num(env, n)),
+        Node::FNum(f) => Ok(format!("{}", f)),
+        Node::None => Ok("".to_owned()),
+        _ => Err(MyError::EvalError("".to_owned())),
+    }
+}
+
 pub fn run_script(env: &mut Env, stream: &mut dyn BufRead) {
     let mut line = String::new();
     loop {
         match stream.read_line(&mut line) {
             Ok(0) => break, // EOF
             Ok(_) => {
-                if env.debug {
-                    print!("{}", line);
-                }
-                if let Ok(tokens) = lexer(line.clone()) {
-                    if tokens.is_empty() {
-                        continue;
+                match do_script(env, &line) {
+                    Ok(str_result) => {
+                        println!("{}", str_result);
                     }
-                    match parse(env, &tokens) {
-                        Ok(node) => match eval(env, &node) {
-                            Node::Num(n) => {
-                                println!("{}", output_format_num(env, n));
-                            }
-                            Node::FNum(f) => {
-                                println!("{}", f);
-                            }
-                            _ => {
-                                println!("eval error");
-                            }
-                        },
-                        Err(e) => {
-                            println!("{}", e);
-                        }
+                    Err(e) => {
+                        eprintln!("{}", e);
                     }
                 }
                 line.clear();
             }
             Err(e) => {
-                println!("{}", e);
+                eprintln!("{}", e);
                 break;
             }
         }
@@ -48,17 +49,10 @@ pub fn run_rc(env: &mut Env, stream: &mut dyn BufRead) {
         match stream.read_line(&mut line) {
             Ok(0) => break, // EOF
             Ok(_) => {
-                if env.debug {
-                    print!("{}", line);
-                }
-                if let Ok(tokens) = lexer(line.clone()) {
-                    if tokens.is_empty() {
-                        continue;
-                    }
-                    if let Ok(node) = parse(env, &tokens) {
-                        eval(env, &node);
-                    }
-                }
+                do_script(env, &line)
+                    .map_err(|e| eprintln!("{}", e))
+                    .unwrap();
+                line.clear();
             }
             Err(_e) => {
                 break;

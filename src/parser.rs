@@ -103,19 +103,17 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
         )));
     }
     match &tok[i] {
-        Token::Op(TokenOp::ParenLeft) => match expr(env, tok, i + 1) {
-            Ok((ex, i)) => {
-                if tok[i] != Token::Op(TokenOp::ParenRight) {
-                    Err(MyError::ParseError(format!(
-                        "')' not found: {:?} {}",
-                        tok, i
-                    )))
-                } else {
-                    Ok((ex, i + 1))
-                }
+        Token::Op(TokenOp::ParenLeft) => {
+            let (ex, i) = expr(env, tok, i + 1)?;
+            if tok[i] != Token::Op(TokenOp::ParenRight) {
+                Err(MyError::ParseError(format!(
+                    "')' not found: {:?} {}",
+                    tok, i
+                )))
+            } else {
+                Ok((ex, i + 1))
             }
-            Err(e) => Err(e),
-        },
+        }
         Token::Ident(id) => {
             if let Some(_constant) = env.is_const(id.as_str()) {
                 return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
@@ -180,7 +178,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                                 )));
                             }
                             cmd_tupple.0(env, &params);
-                            return Ok((Node::Num(0), i + 1));
+                            return Ok((Node::None, i + 1));
                         } else if tok[i] == Token::Op(TokenOp::Comma) {
                             i += 1;
                             continue;
@@ -222,10 +220,10 @@ fn unary(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErro
     }
     let tok_orig = tok[i].clone();
     match tok[i] {
-        Token::Op(TokenOp::Minus) | Token::Op(TokenOp::Plus) => match primary(env, tok, i + 1) {
-            Ok((rhs, i)) => Ok((Node::Unary(tok_orig, Box::new(rhs)), i)),
-            Err(e) => Err(e),
-        },
+        Token::Op(TokenOp::Minus) | Token::Op(TokenOp::Plus) => {
+            let (rhs, i) = primary(env, tok, i + 1)?;
+            Ok((Node::Unary(tok_orig, Box::new(rhs)), i))
+        }
         _ => primary(env, tok, i),
     }
 }
@@ -241,33 +239,31 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
             line!()
         )));
     }
-    match unary(env, tok, i) {
-        Ok((mut lhs, mut i)) => loop {
-            if tok.len() <= i {
+    let (mut lhs, mut i) = unary(env, tok, i)?;
+    loop {
+        if tok.len() <= i {
+            return Ok((lhs, i));
+        }
+        let tok_orig = tok[i].clone();
+        match tok[i] {
+            Token::Op(TokenOp::Mul)
+            | Token::Op(TokenOp::Div)
+            | Token::Op(TokenOp::Mod)
+            | Token::Op(TokenOp::Para) => {
+                if let Ok((rhs, j)) = unary(env, tok, i + 1) {
+                    i = j;
+                    lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
+                } else {
+                    return Err(MyError::ParseError(format!(
+                        "Operator '*' '/' '%' requires right side operand. {:?} {}",
+                        tok, i
+                    )));
+                }
+            }
+            _ => {
                 return Ok((lhs, i));
             }
-            let tok_orig = tok[i].clone();
-            match tok[i] {
-                Token::Op(TokenOp::Mul)
-                | Token::Op(TokenOp::Div)
-                | Token::Op(TokenOp::Mod)
-                | Token::Op(TokenOp::Para) => {
-                    if let Ok((rhs, j)) = unary(env, tok, i + 1) {
-                        i = j;
-                        lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
-                    } else {
-                        return Err(MyError::ParseError(format!(
-                            "Operator '*' '/' '%' requires right side operand. {:?} {}",
-                            tok, i
-                        )));
-                    }
-                }
-                _ => {
-                    return Ok((lhs, i));
-                }
-            }
-        },
-        Err(e) => Err(e),
+        }
     }
 }
 
@@ -282,30 +278,28 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError
             line!()
         )));
     }
-    match mul(env, tok, i) {
-        Ok((mut lhs, mut i)) => loop {
-            if tok.len() <= i {
+    let (mut lhs, mut i) = mul(env, tok, i)?;
+    loop {
+        if tok.len() <= i {
+            return Ok((lhs, i));
+        }
+        let tok_orig = tok[i].clone();
+        match tok[i] {
+            Token::Op(TokenOp::Plus) | Token::Op(TokenOp::Minus) => {
+                if let Ok((rhs, j)) = mul(env, tok, i + 1) {
+                    i = j;
+                    lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
+                } else {
+                    return Err(MyError::ParseError(format!(
+                        "Operator'+'/'-' requires right side operand. {:?} {}",
+                        tok, i
+                    )));
+                }
+            }
+            _ => {
                 return Ok((lhs, i));
             }
-            let tok_orig = tok[i].clone();
-            match tok[i] {
-                Token::Op(TokenOp::Plus) | Token::Op(TokenOp::Minus) => {
-                    if let Ok((rhs, j)) = mul(env, tok, i + 1) {
-                        i = j;
-                        lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
-                    } else {
-                        return Err(MyError::ParseError(format!(
-                            "Operator'+'/'-' requires right side operand. {:?} {}",
-                            tok, i
-                        )));
-                    }
-                }
-                _ => {
-                    return Ok((lhs, i));
-                }
-            }
-        },
-        Err(e) => Err(e),
+        }
     }
 }
 
@@ -325,17 +319,12 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError
 // TODO: user define var
 // TODO: user devine function
 // TODO: multiple expression
-// TODO: use '?' syntax
 pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, MyError> {
-    match expr(env, &tok, 0) {
-        Ok((node, i)) => {
-            if i < tok.len() {
-                Err(MyError::ParseError(format!("token left: {:?} {}", tok, i)))
-            } else {
-                Ok(node)
-            }
-        }
-        Err(e) => Err(e),
+    let (node, i) = expr(env, &tok, 0)?;
+    if i < tok.len() {
+        Err(MyError::ParseError(format!("token left: {:?} {}", tok, i)))
+    } else {
+        Ok(node)
     }
 }
 

@@ -18,11 +18,18 @@ pub use script::{run_rc, run_script};
 #[derive(Error, Debug)]
 pub enum MyError {
     #[error("lexer error: {1} {0}")]
-    LexerIntError(String, #[source] std::num::ParseIntError),
+    LexerIntError(String, std::num::ParseIntError),
+
+    // #[error(transparent)]
+    // LexerFloatError(#[from] std::num::ParseFloatError),
     #[error("lexer error: {1} {0}")]
-    LexerFloatError(String, #[source] std::num::ParseFloatError),
+    LexerFloatError(String, std::num::ParseFloatError),
+
     #[error("parser error: {0}")]
     ParseError(String),
+
+    #[error("eval error: {0}")]
+    EvalError(String),
 }
 
 pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
@@ -188,7 +195,7 @@ pub fn eval(env: &mut Env, n: &Node) -> Node {
         Node::BinOp(_tok, _lhs, _rhs) => eval_binop(env, n),
         Node::Var(_tok) => eval_const(env, n),
         Node::Func(_tok, _params) => eval_func(env, n),
-        _ => n.clone(),
+        Node::None => Node::None,
     }
 }
 

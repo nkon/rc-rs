@@ -51,7 +51,7 @@ Parserが返したASTを再帰的にevalすることで計算結果を得る。
 
 ## MyError
 
-Rustではエラー処理に、Result<T,E>を使う。エラー処理のためにEdition2018では`?`構文が導入されているが、それを有効に使うためには`String`でエラーを返すのではなく、独自エラー型を導入して置くほうが便利だ。2020年現在、Rustのエラー処理の状況は混沌としている。現時点でもっとも有力な方法は「MyErrorを定義してthiserrorで実装を付ける、それ以外はanyhowでエラーを返す」のようだ。
+Rustではエラー処理に`Result<T,E>`を使う。エラー処理のためにEdition2018では`?`構文が導入されているが、それを有効に使うためには`String`でエラーを返すのではなく、独自エラー型を導入して置くほうが便利だ。2020年現在、Rustのエラー処理の状況は変化が進行中だ。現時点でもっとも有力な方法は「MyErrorを定義してthiserrorで実装を付ける、それ以外はanyhowでエラーを返す」のようだ。
 
 ### thiserror
 
@@ -79,7 +79,7 @@ pub enum MyError {
 }
 ```
 
-このように、自分で定義したエラー型に対して、`Display`トレイトを`#[error("...")]`で簡便に定義することができることが特徴。フォーマット書式は`fmt!`に準ずる。エラー型は`Enum`でも`Struct`でも良い。また、`From`トレイトも`#[from]`で自動生成できる。
+このように、自分で定義したエラー型に対して、`Display`トレイトを`#[error("...")]`で簡便に定義することができることが特徴。フォーマット書式は`fmt!`に準ずる。エラー型は`Enum`でも`Struct`でも良い。
 
 MyErrorを発生させるときは次のようになるだろう。
 
@@ -108,6 +108,30 @@ match tok[i] {
     }
 }
 ```
+
+もし、そのままエラーを転送したい場合は、次のように`From`トレイトも自動生成できる。
+今回の場合は自分でエラー情報を付加したいので、このようにはしていない。
+
+```rust
+#[derive(Error, Debug)]
+pub enum MyError {
+    #[error(transparent)]
+    LexerFloatError(#[from] std::num::ParseFloatError),
+}
+```
+
+```rust
+fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
+    let mut mantissa = String::new();
+
+    /// いろいろな処理
+
+    Ok((Token::FNum(mantissa.parse::<f64>()?), i))
+}
+```
+
+自前のエラー型を定義して、標準のエラー型からの`From`を定義することのメリットは、`?`によるショートカットリターンが使えること。つまり、対象とする関数も`Result<T,MyError>`を返すような関数でなければならない。
+
 
 ## Comand
 

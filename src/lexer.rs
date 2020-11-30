@@ -183,6 +183,7 @@ fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
         mantissa.push('e');
         mantissa.push_str(&exponent);
     }
+    // Ok((Token::FNum(mantissa.parse::<f64>()?), i))
     match mantissa.parse::<f64>() {
         Ok(float) => Ok((Token::FNum(float), i)),
         Err(e) => Err(MyError::LexerFloatError(mantissa, e)),
@@ -238,15 +239,9 @@ pub fn lexer(s: String) -> Result<Vec<Token>, MyError> {
         match chars[i] {
             '0'..='9' => {
                 // `Num` or `FNum` begin from '0'..='9'.
-                match tok_num(&chars, i) {
-                    Ok((tk, j)) => {
-                        i = j;
-                        ret.push(tk);
-                    }
-                    Err(e) => {
-                        return Err(e);
-                    }
-                }
+                let (tk, j) = tok_num(&chars, i)?;
+                i = j;
+                ret.push(tk);
             }
             '+' => {
                 ret.push(Token::Op(TokenOp::Plus));

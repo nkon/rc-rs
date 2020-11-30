@@ -4,6 +4,7 @@ use std::str;
 
 pub type TypeFn = fn(&mut Env, &[Node]) -> f64;
 pub type TypeCmd = fn(&mut Env, &[Token]);
+// FIXME: command should return the result.
 
 pub struct Env<'a> {
     pub constant: HashMap<&'a str, f64>,
