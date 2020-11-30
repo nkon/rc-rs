@@ -36,6 +36,7 @@ fn main() {
             let mut env = Env::new();
             env.built_in();
 
+            // overwritten by '-r' option
             if let Some(rc_file_str) = matches.opt_str("r") {
                 rc_file_path = path::Path::new(&rc_file_str).to_path_buf();
                 if !rc_file_path.exists() {
@@ -88,5 +89,6 @@ fn main() {
 }
 
 // TODO: load history, history command
+// TODO: load command
 // TODO: online help
 // TODO: complex number and functions

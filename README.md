@@ -1,5 +1,21 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+
+Table of Contents
+=================
+
+   * [rc - simple terminal calulator](#rc---simple-terminal-calulator)
+      * [Features](#features)
+      * [Screen capture](#screen-capture)
+      * [Install](#install)
+         * [Build from source](#build-from-source)
+            * [Build with musl(static linked binary)](#build-with-muslstatic-linked-binary)
+      * [Future](#future)
+      * [Design Notes](#design-notes)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+
+
 rc - simple terminal calulator
 ==============================
 

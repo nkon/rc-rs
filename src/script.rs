@@ -33,13 +33,14 @@ pub fn run_script(env: &mut Env, stream: &mut dyn BufRead) {
                     }
                     Err(e) => {
                         eprintln!("{}", e);
+                        std::process::exit(0);
                     }
                 }
                 line.clear();
             }
             Err(e) => {
                 eprintln!("{}", e);
-                break;
+                std::process::exit(0);
             }
         }
     }
