@@ -196,7 +196,10 @@ pub fn readline(env: &mut Env) {
                                         result_print(&mut stdout, format!("{}\r\n", f).as_str());
                                     }
                                     Node::Command(result) => {
-                                        error_print(&mut stdout, format!("{}\r\n", result).as_str());                                        
+                                        error_print(
+                                            &mut stdout,
+                                            format!("{}\r\n", result).as_str(),
+                                        );
                                     }
                                     Node::None => {}
                                     _ => {

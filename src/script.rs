@@ -14,7 +14,7 @@ fn do_script(env: &mut Env, line: &str) -> Result<String, MyError> {
     match eval(env, &node) {
         Node::Num(n) => Ok(output_format_num(env, n)),
         Node::FNum(f) => Ok(format!("{}", f)),
-//        Node::Command(result) => Ok(format!("{}", result)),
+        //        Node::Command(result) => Ok(format!("{}", result)),
         Node::Command(_result) => Ok("".to_owned()),
         Node::None => Ok("".to_owned()),
         _ => Err(MyError::EvalError("".to_owned())),
