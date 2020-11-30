@@ -15,6 +15,7 @@ pub enum Node {
     BinOp(Token, Box<Node>, Box<Node>),
     Var(Token),
     Func(Token, Vec<Node>),
+    Command(String),
 }
 
 fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
@@ -177,8 +178,8 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                                     tok, i
                                 )));
                             }
-                            cmd_tupple.0(env, &params);
-                            return Ok((Node::None, i + 1));
+                            let command_result = cmd_tupple.0(env, &params);
+                            return Ok((Node::Command(command_result), i + 1));
                         } else if tok[i] == Token::Op(TokenOp::Comma) {
                             i += 1;
                             continue;

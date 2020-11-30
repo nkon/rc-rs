@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::str;
 
 pub type TypeFn = fn(&mut Env, &[Node]) -> f64;
-pub type TypeCmd = fn(&mut Env, &[Token]);
+pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
 // FIXME: command should return the result.
 
 pub struct Env<'a> {
@@ -49,12 +49,12 @@ fn impl_ave(env: &mut Env, arg: &[Node]) -> f64 {
 }
 
 // Impliment of commands.
-fn impl_output_format(env: &mut Env, arg: &[Token]) {
+fn impl_output_format(env: &mut Env, arg: &[Token]) -> String{
     if env.is_debug() {
         eprintln!("impl_output_format {:?}\r", arg);
     }
     if arg.is_empty() {
-        return;
+        return format!("output_format(radix = {}, separate = {})", env.output_radix, env.separate_digit);
     }
     for a in arg {
         match a {
@@ -86,6 +86,7 @@ fn impl_output_format(env: &mut Env, arg: &[Token]) {
             _ => {}
         }
     }
+    format!("output_format(radix = {}, separate = {})", env.output_radix, env.separate_digit)
 }
 
 fn separate_digit(s: String, sep: &str, n: usize) -> String {
@@ -133,12 +134,12 @@ pub fn output_format_num(env: &mut Env, n: i128) -> String {
     num_string
 }
 
-fn impl_debug(env: &mut Env, arg: &[Token]) {
+fn impl_debug(env: &mut Env, arg: &[Token]) -> String{
     if env.is_debug() {
         eprintln!("impl_debug {:?}\r", arg);
     }
     if arg.is_empty() {
-        return;
+        return format!("debug({})", env.debug);
     }
     match &arg[0] {
         Token::Num(0) => {
@@ -156,6 +157,7 @@ fn impl_debug(env: &mut Env, arg: &[Token]) {
         }
         _ => {}
     }
+    format!("debug({})", env.debug)
 }
 
 impl<'a> Env<'a> {

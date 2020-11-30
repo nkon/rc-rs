@@ -196,6 +196,7 @@ pub fn eval(env: &mut Env, n: &Node) -> Node {
         Node::Var(_tok) => eval_const(env, n),
         Node::Func(_tok, _params) => eval_func(env, n),
         Node::None => Node::None,
+        _ => n.clone(),
     }
 }
 
