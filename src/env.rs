@@ -5,6 +5,7 @@ use std::str;
 pub type TypeFn = fn(&mut Env, &[Node]) -> f64;
 pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
 
+// TODO: Separete const and var
 pub struct Env<'a> {
     pub constant: HashMap<String, f64>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)

@@ -1,5 +1,6 @@
 use thiserror::Error;
 // use anyhow;
+// TODO: use anyhow for better error handling
 
 mod env;
 mod lexer;
@@ -167,6 +168,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
                 return Node::Num(0);
             }
             _ => {
+                eprintln!("Error: unknown binary operator: {:?}\r", n);
                 return Node::None;
             }
         }
