@@ -12,6 +12,7 @@ pub enum TokenOp {
     ParenRight, // )
     Hat,        // ^
     Comma,      // ,
+    Equal,      // =
     None,
 }
 
@@ -284,6 +285,10 @@ pub fn lexer(s: String) -> Result<Vec<Token>, MyError> {
                 ret.push(Token::Op(TokenOp::Comma));
                 i += 1;
             }
+            '=' => {
+                ret.push(Token::Op(TokenOp::Equal));
+                i += 1;
+            }
             'a'..='z' | 'A'..='Z' => {
                 let (tk, j) = tok_ident(&chars, i);
                 i = j;
@@ -464,6 +469,14 @@ mod tests {
         assert_eq!(
             lexer("123    #asdfasdfasfd".to_string()).unwrap(),
             [Token::Num(123)]
+        );
+        assert_eq!(
+            lexer("a=1".to_string()).unwrap(),
+            [
+                Token::Ident("a".to_string()),
+                Token::Op(TokenOp::Equal),
+                Token::Num(1),
+            ]
         );
     }
 }

@@ -88,11 +88,36 @@ fn eval_func(env: &mut Env, n: &Node) -> Node {
     Node::None
 }
 
+fn eval_assign(env: &mut Env, n: &Node) -> Node {
+    if env.is_debug() {
+        eprintln!("eval_assign {:?}\r", n);
+    }
+    if let Node::BinOp(tok, lhs, rhs) = n {
+        assert_eq!(*tok, Token::Op(TokenOp::Equal));
+        let rhs = eval_fvalue(env, rhs);
+        match &**lhs {
+            Node::Var(Token::Ident(id)) => {
+                env.set_variable(id.clone(), rhs);
+                return Node::None;
+            }
+            _ => {
+                eprintln!("Error: '='' operator: {:?}\r", n);
+                return Node::None;
+            }
+        }
+    }
+    eprintln!("Error: '='' operator: {:?}\r", n);
+    Node::None
+}
+
 fn eval_binop(env: &mut Env, n: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval_binop {:?}\r", n);
     }
     if let Node::BinOp(tok, lhs, rhs) = n {
+        if *tok == Token::Op(TokenOp::Equal) {
+            return eval_assign(env, n);
+        }
         let lhs = eval(env, lhs);
         let rhs = eval(env, rhs);
         match tok {
@@ -150,6 +175,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Node {
     Node::None
 }
 
+// TODO: use Result<T, MyError> for eval
 pub fn eval(env: &mut Env, n: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval {:?}\r", n);
@@ -275,5 +301,7 @@ mod tests {
             eval_as_string(&mut env, "max(1,2,3)"),
             "FNum(3.0)".to_string()
         );
+        eval_as_string(&mut env, "a=1");
+        assert_eq!(eval_as_string(&mut env, "a"), "FNum(1.0)".to_string());
     }
 }

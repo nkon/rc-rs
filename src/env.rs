@@ -6,7 +6,7 @@ pub type TypeFn = fn(&mut Env, &[Node]) -> f64;
 pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
 
 pub struct Env<'a> {
-    pub constant: HashMap<&'a str, f64>,
+    pub constant: HashMap<String, f64>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
     pub cmd: HashMap<&'a str, (TypeCmd, usize)>, // (function pointer, arg num: 0=variable)
     pub debug: bool,
@@ -178,9 +178,9 @@ impl<'a> Env<'a> {
     }
 
     pub fn built_in(&mut self) {
-        self.constant.insert("pi", std::f64::consts::PI);
-        self.constant.insert("e", std::f64::consts::E);
-        self.constant.insert("eps", std::f64::EPSILON);
+        self.constant.insert("pi".to_owned(), std::f64::consts::PI);
+        self.constant.insert("e".to_owned(), std::f64::consts::E);
+        self.constant.insert("eps".to_owned(), std::f64::EPSILON);
         self.func.insert("sin", (impl_sin as TypeFn, 1));
         self.func.insert("abs", (impl_abs as TypeFn, 1));
         self.func.insert("max", (impl_max as TypeFn, 0));
@@ -195,6 +195,14 @@ impl<'a> Env<'a> {
             Some(&f) => Some(f),
             None => None,
         }
+    }
+
+    pub fn new_variable(&mut self, key: String) {
+        self.constant.insert(key, 0.0);
+    }
+
+    pub fn set_variable(&mut self, key: String, value: f64) {
+        self.constant.insert(key, value);
     }
 
     pub fn is_func(&mut self, key: &str) -> Option<(TypeFn, usize)> {

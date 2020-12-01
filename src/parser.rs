@@ -1,5 +1,6 @@
 use super::*;
 
+// <assign>  ::= <var> '=' <expr>
 // <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
 // <mul>     ::= <unary> ( '*' <unary> | '/' <unary>)*
 // <unary>   ::= <primary> | '-' <primary> | '+' <primary>
@@ -201,6 +202,9 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                         tok, i
                     )));
                 }
+            } else {
+                env.new_variable(id.clone());
+                return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
             }
             Ok((Node::None, i))
         }
@@ -304,6 +308,37 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError
     }
 }
 
+fn assign(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
+    if env.is_debug() {
+        eprintln!("assign {:?} {}\r", tok, i);
+    }
+    if tok.len() <= i {
+        return Err(MyError::ParseError(format!(
+            "unexpected end of input: {} {}",
+            file!(),
+            line!()
+        )));
+    }
+    let (lhs, mut i) = expr(env, tok, i)?;
+    if i < tok.len() && tok[i] == Token::Op(TokenOp::Equal) {
+        i += 1;
+        if i < tok.len() {
+            let (rhs, i) = expr(env, tok, i)?;
+            Ok((
+                Node::BinOp(Token::Op(TokenOp::Equal), Box::new(lhs), Box::new(rhs)),
+                i,
+            ))
+        } else {
+            Err(MyError::ParseError(format!(
+                "'=' required lhs. {:?} {}",
+                tok, i
+            )))
+        }
+    } else {
+        Ok((lhs, i))
+    }
+}
+
 /// Input: `&Vec<Token>`   output of `lexer()`
 /// Output: `Node()`       AST as the paser result
 ///
@@ -321,7 +356,7 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError
 // TODO: user devine function
 // TODO: multiple expression
 pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, MyError> {
-    let (node, i) = expr(env, &tok, 0)?;
+    let (node, i) = assign(env, &tok, 0)?;
     if i < tok.len() {
         Err(MyError::ParseError(format!("token left: {:?} {}", tok, i)))
     } else {
@@ -407,6 +442,10 @@ mod tests {
             parse_as_string(&mut env, "2*sin(0.5*pi)"),
             "BinOp(Op(Mul), Num(2), Func(Ident(\"sin\"), [BinOp(Op(Mul), FNum(0.5), Var(Ident(\"pi\")))]))"
         );
+        assert_eq!(
+            parse_as_string(&mut env, "a=1"),
+            "BinOp(Op(Equal), Var(Ident(\"a\")), Num(1))"
+        );
     }
 
     #[test]
@@ -420,20 +459,13 @@ mod tests {
         if let Ok(_) = parse(&mut env, &(lexer("sin(".to_string())).unwrap()) {
             assert!(false);
         }
-
         if let Ok(_) = parse(&mut env, &(lexer("sin()".to_string())).unwrap()) {
             assert!(false);
         }
-
         if let Ok(_) = parse(&mut env, &(lexer("1+2+".to_string())).unwrap()) {
             assert!(false);
         }
-
         if let Ok(_) = parse(&mut env, &(lexer("sin".to_string())).unwrap()) {
-            assert!(false);
-        }
-
-        if let Ok(_) = parse(&mut env, &(lexer("ssss".to_string())).unwrap()) {
             assert!(false);
         }
     }
