@@ -210,8 +210,22 @@ VS Codeの環境がGitと密に結合していることも、テスト＆修正�
 
 Windows版の開発とVS-Code remoteを使ったWSL2上の開発が、ほぼ同じ環境で実施できるのも素晴らしい。
 
-## シングルバイナリ
+## Static link
 
-* static link
-* musl
+### Linux
+
+Linuxでは[MUSL](https://ja.wikipedia.org/wiki/Musl)がサポートされているので、外部ライブラリに依存していない場合は特に、スタティックリンク・バイナリを作るのは簡単だ。`-musl`ターゲットの場合、スタティックリンク用の外部ライブラリが有れば、それらもスタティックリンクしてくれる。
+
+```
+$ rustup target add x86_64-unknown-linux-musl     ## ターゲットを追加
+$ rustup show   ## インストール済のターゲットに x86_64-unknown-linux-musl があることを確認
+$ cargo build --release --target=x86_64-unknown-linux-musl  ## ターゲットを指定してビルド
+$ ldd target/x86_64-unknown-linux-musl/release/rc
+    not a dynamic executable
+```
+
+ビルド済のバイナリが[download/rc-x86_64-linux-musl](download/rc-x86_64-linux-musl) からダウンロードできる。
+
+### Windows
+
 

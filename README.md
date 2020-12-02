@@ -78,6 +78,10 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
     not a dynamic executable
 ```
 
+## Download
+
+Static linked executables for some platforms are aviailable in [download/](download/) directory.
+
 ## Future
 
 * Hilight parlens
