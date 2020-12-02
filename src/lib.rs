@@ -172,6 +172,22 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                 }
                 return Ok(Node::Num(0));
             }
+            Token::Op(TokenOp::Hat) => {
+                if let Node::Num(nl) = lhs {
+                    if let Node::Num(nr) = rhs {
+                        return Ok(Node::Num(nl.pow(nr as u32)));
+                    } else if let Node::FNum(nr) = rhs {
+                        return Ok(Node::FNum((nl as f64).powf(nr)));
+                    }
+                } else if let Node::FNum(nl) = lhs {
+                    if let Node::Num(nr) = rhs {
+                        return Ok(Node::FNum(nl.powi(nr as i32)));
+                    } else if let Node::FNum(nr) = rhs {
+                        return Ok(Node::FNum(nl.powf(nr)));
+                    }
+                }
+                return Ok(Node::Num(0));
+            }
             _ => {
                 return Err(MyError::EvalError(format!(
                     "unknown binary operator: {:?}",
@@ -313,6 +329,15 @@ mod tests {
         );
         eval_as_string(&mut env, "a=1");
         assert_eq!(eval_as_string(&mut env, "a"), "FNum(1.0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "2^3"), "Num(8)".to_string());
+        assert_eq!(
+            eval_as_string(&mut env, "2^3^4"),
+            "Num(2417851639229258349412352)".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "2^-0.5"),
+            "FNum(0.7071067811865476)".to_string()
+        );
     }
 
     #[test]

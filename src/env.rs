@@ -15,9 +15,9 @@ pub struct Env<'a> {
     pub separate_digit: usize,
 }
 
-// TODO: implement power operator('^'), e(Euler constant), exp() function.
+// TODO: implement exp() function.
 
-// Impliment of functions.
+// Implement of functions.
 fn impl_sin(env: &mut Env, arg: &[Node]) -> f64 {
     eval_fvalue(env, &arg[0]).sin()
 }
@@ -50,7 +50,7 @@ fn impl_ave(env: &mut Env, arg: &[Node]) -> f64 {
     sum / arg.len() as f64
 }
 
-// Impliment of commands.
+// Implement of commands.
 fn impl_output_format(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
         eprintln!("impl_output_format {:?}\r", arg);

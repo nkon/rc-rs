@@ -2,7 +2,8 @@ use super::*;
 
 // <assign>  ::= <var> '=' <expr>
 // <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
-// <mul>     ::= <unary> ( '*' <unary> | '/' <unary>)*
+// <mul>     ::= <exp> ( '*' <exp> | '/' <exp>)*
+// <exp>     ::= <unary> '^' <exp> | <unary>
 // <unary>   ::= <primary> | '-' <primary> | '+' <primary>
 // <primary> ::= <num> | '(' <expr> ')' | <var> | <func> '(' <expr>* ',' ')'
 // <num>     ::= <num> | <num> <postfix>
@@ -235,6 +236,39 @@ fn unary(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErro
     }
 }
 
+fn exp(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
+    if env.is_debug() {
+        eprintln!("exp {:?} {}\r", tok, i);
+    }
+    if tok.len() <= i {
+        return Err(MyError::ParseError(format!(
+            "unexpected end of input: {} {}",
+            file!(),
+            line!()
+        )));
+    }
+    let (lhs, mut i) = unary(env, tok, i)?;
+    if tok.len() <= i {
+        return Ok((lhs, i));
+    }
+    if tok[i] == Token::Op(TokenOp::Hat) {
+        if (i + 1) >= tok.len() {
+            return Err(MyError::ParseError(format!(
+                "'^' requires rhs. {:?} {}",
+                tok, i
+            )));
+        }
+        let (rhs, j) = exp(env, tok, i + 1)?;
+        i = j;
+        Ok((
+            Node::BinOp(Token::Op(TokenOp::Hat), Box::new(lhs), Box::new(rhs)),
+            i,
+        ))
+    } else {
+        Ok((lhs, i))
+    }
+}
+
 fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
     if env.is_debug() {
         eprintln!("mul {:?} {}\r", tok, i);
@@ -246,7 +280,7 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
             line!()
         )));
     }
-    let (mut lhs, mut i) = unary(env, tok, i)?;
+    let (mut lhs, mut i) = exp(env, tok, i)?;
     loop {
         if tok.len() <= i {
             return Ok((lhs, i));
@@ -257,7 +291,7 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
             | Token::Op(TokenOp::Div)
             | Token::Op(TokenOp::Mod)
             | Token::Op(TokenOp::Para) => {
-                if let Ok((rhs, j)) = unary(env, tok, i + 1) {
+                if let Ok((rhs, j)) = exp(env, tok, i + 1) {
                     i = j;
                     lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
                 } else {
@@ -446,6 +480,14 @@ mod tests {
         assert_eq!(
             parse_as_string(&mut env, "a=1"),
             "BinOp(Op(Equal), Var(Ident(\"a\")), Num(1))"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "2^3"),
+            "BinOp(Op(Hat), Num(2), Num(3))"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "2^3^4"),
+            "BinOp(Op(Hat), Num(2), BinOp(Op(Hat), Num(3), Num(4)))"
         );
     }
 
