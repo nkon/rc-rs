@@ -11,13 +11,13 @@ fn do_script(env: &mut Env, line: &str) -> Result<String, MyError> {
         return Ok("".to_owned());
     }
     let node = parse(env, &tokens)?;
-    match eval(env, &node) {
+    match eval(env, &node)? {
         Node::Num(n) => Ok(output_format_num(env, n)),
         Node::FNum(f) => Ok(format!("{}", f)),
         //        Node::Command(result) => Ok(format!("{}", result)),
         Node::Command(_result) => Ok("".to_owned()),
-        Node::None => Ok("".to_owned()),
-        _ => Err(MyError::EvalError("".to_owned())),
+        Node::None => Err(MyError::EvalError("Node::None".to_owned())),
+        _ => Err(MyError::EvalError("_".to_owned())),
     }
 }
 

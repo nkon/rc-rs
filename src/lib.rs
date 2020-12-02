@@ -42,22 +42,21 @@ pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
     }
 }
 
-fn eval_const(env: &mut Env, n: &Node) -> Node {
+fn eval_const(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_const {:?}\r", n);
     }
     if let Node::Var(id) = n {
         if let Token::Ident(ident) = id {
             if let Some(constant) = env.is_const(ident.as_str()) {
-                return Node::FNum(constant);
+                return Ok(Node::FNum(constant));
             }
         }
     }
-    eprintln!("Error: unknown constant: {:?}\r", n);
-    Node::None
+    Err(MyError::EvalError(format!("unknown constant: {:?}", n)))
 }
 
-fn eval_func(env: &mut Env, n: &Node) -> Node {
+fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_func {:?}\r", n);
     }
@@ -66,7 +65,7 @@ fn eval_func(env: &mut Env, n: &Node) -> Node {
             if let Some(func_tupple) = env.is_func(ident.as_str()) {
                 let mut params: Vec<Node> = Vec::new();
                 for i in param {
-                    let param_value = eval(env, &i);
+                    let param_value = eval(env, &i)?;
                     let n_param: Node;
                     match param_value {
                         Node::Num(n) => {
@@ -81,15 +80,14 @@ fn eval_func(env: &mut Env, n: &Node) -> Node {
                     }
                     params.push(n_param.clone());
                 }
-                return Node::FNum(func_tupple.0(env, &params));
+                return Ok(Node::FNum(func_tupple.0(env, &params)));
             }
         }
     }
-    eprintln!("Error: unknown function: {:?}\r", n);
-    Node::None
+    Err(MyError::EvalError(format!("unknown function: {:?}", n)))
 }
 
-fn eval_assign(env: &mut Env, n: &Node) -> Node {
+fn eval_assign(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_assign {:?}\r", n);
     }
@@ -99,132 +97,133 @@ fn eval_assign(env: &mut Env, n: &Node) -> Node {
         match &**lhs {
             Node::Var(Token::Ident(id)) => {
                 env.set_variable(id.clone(), rhs);
-                return Node::None;
+                return Ok(Node::None);
             }
             _ => {
-                eprintln!("Error: '='' operator: {:?}\r", n);
-                return Node::None;
+                return Err(MyError::EvalError(format!("'=' operator: {:?}", n)));
             }
         }
     }
-    eprintln!("Error: '='' operator: {:?}\r", n);
-    Node::None
+    Err(MyError::EvalError(format!("'=' operator: {:?}", n)))
 }
 
-fn eval_binop(env: &mut Env, n: &Node) -> Node {
+fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_binop {:?}\r", n);
     }
     if let Node::BinOp(tok, lhs, rhs) = n {
         if *tok == Token::Op(TokenOp::Equal) {
-            return eval_assign(env, n);
+            return Ok(eval_assign(env, n)?);
         }
-        let lhs = eval(env, lhs);
-        let rhs = eval(env, rhs);
+        let lhs = eval(env, lhs)?;
+        let rhs = eval(env, rhs)?;
         match tok {
             Token::Op(TokenOp::Plus) => {
                 if let Node::Num(nl) = lhs {
                     if let Node::Num(nr) = rhs {
-                        return Node::Num(nl + nr);
+                        return Ok(Node::Num(nl + nr));
                     }
                 }
-                return Node::FNum(eval_fvalue(env, &lhs) + eval_fvalue(env, &rhs));
+                return Ok(Node::FNum(eval_fvalue(env, &lhs) + eval_fvalue(env, &rhs)));
             }
             Token::Op(TokenOp::Minus) => {
                 if let Node::Num(nl) = lhs {
                     if let Node::Num(nr) = rhs {
-                        return Node::Num(nl - nr);
+                        return Ok(Node::Num(nl - nr));
                     }
                 }
-                return Node::FNum(eval_fvalue(env, &lhs) - eval_fvalue(env, &rhs));
+                return Ok(Node::FNum(eval_fvalue(env, &lhs) - eval_fvalue(env, &rhs)));
             }
             Token::Op(TokenOp::Mul) => {
                 if let Node::Num(nl) = lhs {
                     if let Node::Num(nr) = rhs {
-                        return Node::Num(nl * nr);
+                        return Ok(Node::Num(nl * nr));
                     }
                 }
-                return Node::FNum(eval_fvalue(env, &lhs) * eval_fvalue(env, &rhs));
+                return Ok(Node::FNum(eval_fvalue(env, &lhs) * eval_fvalue(env, &rhs)));
             }
             Token::Op(TokenOp::Div) => {
                 if let Node::Num(nl) = lhs {
                     if let Node::Num(nr) = rhs {
-                        return Node::Num(nl / nr);
+                        return Ok(Node::Num(nl / nr));
                     }
                 }
-                return Node::FNum(eval_fvalue(env, &lhs) / eval_fvalue(env, &rhs));
+                return Ok(Node::FNum(eval_fvalue(env, &lhs) / eval_fvalue(env, &rhs)));
             }
             Token::Op(TokenOp::Para) => {
                 let lhs = eval_fvalue(env, &lhs);
                 let rhs = eval_fvalue(env, &rhs);
-                return Node::FNum((lhs * rhs) / (lhs + rhs));
+                return Ok(Node::FNum((lhs * rhs) / (lhs + rhs)));
             }
             Token::Op(TokenOp::Mod) => {
                 if let Node::Num(nl) = lhs {
                     if let Node::Num(nr) = rhs {
-                        return Node::Num(nl % nr);
+                        return Ok(Node::Num(nl % nr));
                     }
                 }
-                return Node::Num(0);
+                return Ok(Node::Num(0));
             }
             _ => {
-                eprintln!("Error: unknown binary operator: {:?}\r", n);
-                return Node::None;
+                return Err(MyError::EvalError(format!(
+                    "unknown binary operator: {:?}",
+                    n
+                )));
             }
         }
     }
-    eprintln!("Error: binary operator: {:?}\r", n);
-    Node::None
+    Err(MyError::EvalError(format!("binary operator: {:?}", n)))
 }
 
-// TODO: use Result<T, MyError> for eval
-pub fn eval(env: &mut Env, n: &Node) -> Node {
+pub fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval {:?}\r", n);
     }
     match &*n {
-        Node::Num(n) => Node::Num(*n),
-        Node::FNum(f) => Node::FNum(*f),
+        Node::Num(n) => Ok(Node::Num(*n)),
+        Node::FNum(f) => Ok(Node::FNum(*f)),
         Node::Unary(tok, para_boxed) => {
             let para: Node = *(*para_boxed).clone();
             match tok {
                 Token::Op(TokenOp::Minus) => {
                     if let Node::Num(n) = para {
-                        Node::Num(-n)
+                        Ok(Node::Num(-n))
                     } else if let Node::FNum(f) = para {
-                        Node::FNum(-f)
+                        Ok(Node::FNum(-f))
                     } else if let Node::BinOp(tok, lhs_box, rhs_box) = para {
-                        let n_result = eval_binop(env, &Node::BinOp(tok, lhs_box, rhs_box));
+                        let n_result = eval_binop(env, &Node::BinOp(tok, lhs_box, rhs_box))?;
                         if let Node::Num(n) = n_result {
-                            Node::Num(-n)
+                            Ok(Node::Num(-n))
                         } else if let Node::FNum(f) = n_result {
-                            Node::FNum(-f)
+                            Ok(Node::FNum(-f))
                         } else {
-                            Node::None
+                            Err(MyError::EvalError(format!(
+                                "invalid operand {:?}",
+                                n_result
+                            )))
                         }
                     } else {
-                        Node::None
+                        Err(MyError::EvalError(format!("invalid operand {:?}", tok)))
                     }
                 }
                 Token::Op(TokenOp::Plus) => {
                     if let Node::Num(n) = para {
-                        Node::Num(n)
+                        Ok(Node::Num(n))
                     } else if let Node::FNum(f) = para {
-                        Node::FNum(f)
+                        Ok(Node::FNum(f))
                     } else if let Node::BinOp(tok, lhs_box, rhs_box) = para {
                         eval_binop(env, &Node::BinOp(tok, lhs_box, rhs_box))
                     } else {
-                        Node::None
+                        Err(MyError::EvalError(format!("invalid operand {:?}", tok)))
                     }
                 }
-                _ => Node::None,
+                _ => Err(MyError::EvalError(format!("unknown token {:?}", tok))),
             }
         }
         Node::BinOp(_tok, _lhs, _rhs) => eval_binop(env, n),
         Node::Var(_tok) => eval_const(env, n),
         Node::Func(_tok, _params) => eval_func(env, n),
-        Node::None => Node::None,
-        _ => n.clone(),
+        Node::None => Err(MyError::EvalError(format!("invalid node {:?}", n))),
+        _ => Ok(n.clone()),
     }
 }
 
@@ -234,13 +233,13 @@ mod tests {
 
     fn eval_as_string(env: &mut Env, input: &str) -> String {
         let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
-        let n = eval(env, &n);
+        let n = eval(env, &n).unwrap();
         format!("{:?}", n)
     }
 
     fn eval_as_f64(env: &mut Env, input: &str) -> f64 {
         let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
-        if let Node::FNum(f) = eval(env, &n) {
+        if let Node::FNum(f) = eval(env, &n).unwrap() {
             return f;
         }
         assert!(false);

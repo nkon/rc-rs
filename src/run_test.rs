@@ -3,7 +3,7 @@ use super::*;
 fn eval_as_string(env: &mut Env, input: &str) -> String {
     match parse(env, &(lexer(input.to_string())).unwrap()) {
         Ok(n) => {
-            let n = eval(env, &n);
+            let n = eval(env, &n).unwrap();
             format!("{:?}", n)
         }
         Err(e) => {
@@ -51,69 +51,76 @@ pub fn run_test(env: &mut Env) {
             println!("{}", e);
         }
     }
+
     println!();
     println!("parser");
-    println!("1 -> {:?}", parse(env, &(lexer("1".to_string())).unwrap()));
-    println!("0 -> {:?}", parse(env, &(lexer("0".to_string())).unwrap()));
+    println!(
+        "1 -> {:?}",
+        parse(env, &(lexer("1".to_string())).unwrap()).unwrap()
+    );
+    println!(
+        "0 -> {:?}",
+        parse(env, &(lexer("0".to_string())).unwrap()).unwrap()
+    );
     println!(
         "-1 -> {:?}",
-        parse(env, &(lexer("-1".to_string())).unwrap())
+        parse(env, &(lexer("-1".to_string())).unwrap()).unwrap()
     );
     println!(
         "9223372036854775807 -> {:?}",
-        parse(env, &(lexer("9223372036854775807".to_string()).unwrap()))
+        parse(env, &(lexer("9223372036854775807".to_string()).unwrap())).unwrap()
     );
     println!(
         "-9223372036854775808 -> {:?}",
-        parse(env, &(lexer("-9223372036854775808".to_string()).unwrap()))
+        parse(env, &(lexer("-9223372036854775808".to_string()).unwrap())).unwrap()
     );
     println!(
         "1+2 -> {:?}",
-        parse(env, &(lexer("1+2".to_string())).unwrap())
+        parse(env, &(lexer("1+2".to_string())).unwrap()).unwrap()
     );
     println!(
         "1-2 -> {:?}",
-        parse(env, &(lexer("1-2".to_string())).unwrap())
+        parse(env, &(lexer("1-2".to_string())).unwrap()).unwrap()
     );
     println!(
         "1+-2 -> {:?}",
-        parse(env, &(lexer("1+-2".to_string())).unwrap())
+        parse(env, &(lexer("1+-2".to_string())).unwrap()).unwrap()
     );
     println!(
         "1*2 -> {:?}",
-        parse(env, &(lexer("1*2".to_string())).unwrap())
+        parse(env, &(lexer("1*2".to_string())).unwrap()).unwrap()
     );
     println!(
         "1*2+3 -> {:?}",
-        parse(env, &(lexer("1*2+3".to_string())).unwrap())
+        parse(env, &(lexer("1*2+3".to_string())).unwrap()).unwrap()
     );
     println!(
         "1+2*3 -> {:?}",
-        parse(env, &(lexer("1+2*3".to_string())).unwrap())
+        parse(env, &(lexer("1+2*3".to_string())).unwrap()).unwrap()
     );
     println!(
         "1*(2+3) -> {:?}",
-        parse(env, &(lexer("1*(2+3)".to_string())).unwrap())
+        parse(env, &(lexer("1*(2+3)".to_string())).unwrap()).unwrap()
     );
     println!(
         "(1+2)*3 -> {:?}",
-        parse(env, &(lexer("(1+2)*3".to_string())).unwrap())
+        parse(env, &(lexer("(1+2)*3".to_string())).unwrap()).unwrap()
     );
     println!(
         "1+2+3 -> {:?}",
-        parse(env, &(lexer("1+2+3".to_string())).unwrap())
+        parse(env, &(lexer("1+2+3".to_string())).unwrap()).unwrap()
     );
     println!(
         "1*2*3 -> {:?}",
-        parse(env, &(lexer("1*2*3".to_string())).unwrap())
+        parse(env, &(lexer("1*2*3".to_string())).unwrap()).unwrap()
     );
     println!(
         "-(1+2) -> {:?}",
-        parse(env, &(lexer("-(1+2)".to_string())).unwrap())
+        parse(env, &(lexer("-(1+2)".to_string())).unwrap()).unwrap()
     );
     println!(
         "1.2*3.4e5 -> {:?}",
-        parse(env, &(lexer("1.2*-3.4e5 ".to_string()).unwrap()))
+        parse(env, &(lexer("1.2*-3.4e5 ".to_string()).unwrap())).unwrap()
     );
     println!(
         "1/(2*3.14*270e-12*31.4e3) -> {:?}",
@@ -121,11 +128,13 @@ pub fn run_test(env: &mut Env) {
             env,
             &(lexer("1/(2*3.14*270e-12*31.4e3)".to_string()).unwrap())
         )
+        .unwrap()
     );
     println!(
         "1+2+ -> {:?}",
         parse(env, &(lexer("1+2+".to_string()).unwrap()))
     );
+
     println!();
     println!("eval");
     println!("1 -> {:?}", eval_as_string(env, "1"));

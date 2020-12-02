@@ -186,24 +186,33 @@ pub fn readline(env: &mut Env) {
                             }
                             match parse(env, &v) {
                                 Ok(node) => match eval(env, &node) {
-                                    Node::Num(n) => {
-                                        result_print(
-                                            &mut stdout,
-                                            format!("{}\r\n", output_format_num(env, n)).as_str(),
-                                        );
-                                    }
-                                    Node::FNum(f) => {
-                                        result_print(&mut stdout, format!("{}\r\n", f).as_str());
-                                    }
-                                    Node::Command(result) => {
-                                        error_print(
-                                            &mut stdout,
-                                            format!("{}\r\n", result).as_str(),
-                                        );
-                                    }
-                                    Node::None => {}
-                                    _ => {
-                                        error_print(&mut stdout, "eval error\r\n");
+                                    Ok(node) => match node {
+                                        Node::Num(n) => {
+                                            result_print(
+                                                &mut stdout,
+                                                format!("{}\r\n", output_format_num(env, n))
+                                                    .as_str(),
+                                            );
+                                        }
+                                        Node::FNum(f) => {
+                                            result_print(
+                                                &mut stdout,
+                                                format!("{}\r\n", f).as_str(),
+                                            );
+                                        }
+                                        Node::Command(result) => {
+                                            error_print(
+                                                &mut stdout,
+                                                format!("{}\r\n", result).as_str(),
+                                            );
+                                        }
+                                        Node::None => {}
+                                        _ => {
+                                            error_print(&mut stdout, "eval error\r\n");
+                                        }
+                                    },
+                                    Err(e) => {
+                                        error_print(&mut stdout, format!("{}\r\n", e).as_str());
                                     }
                                 },
                                 Err(e) => {
