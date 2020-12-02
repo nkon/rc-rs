@@ -50,10 +50,15 @@ fn eval_const(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         if let Token::Ident(ident) = id {
             if let Some(constant) = env.is_const(ident.as_str()) {
                 return Ok(Node::FNum(constant));
+            } else if let Some(variable) = env.is_variable(ident.as_str()) {
+                return Ok(Node::FNum(variable));
             }
         }
     }
-    Err(MyError::EvalError(format!("unknown constant: {:?}", n)))
+    Err(MyError::EvalError(format!(
+        "unknown constant/variable: {:?}",
+        n
+    )))
 }
 
 fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
@@ -96,8 +101,12 @@ fn eval_assign(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         let rhs = eval_fvalue(env, rhs);
         match &**lhs {
             Node::Var(Token::Ident(id)) => {
-                env.set_variable(id.clone(), rhs);
-                return Ok(Node::None);
+                if env.is_variable(id).is_some() {
+                    env.set_variable(id.clone(), rhs)?;
+                    return Ok(Node::None);
+                } else {
+                    return Err(MyError::EvalError(format!("Can not assign to {:?}", id)));
+                }
             }
             _ => {
                 return Err(MyError::EvalError(format!("'=' operator: {:?}", n)));
@@ -304,5 +313,16 @@ mod tests {
         );
         eval_as_string(&mut env, "a=1");
         assert_eq!(eval_as_string(&mut env, "a"), "FNum(1.0)".to_string());
+    }
+
+    #[test]
+    fn test_eva_error() {
+        let mut env = Env::new();
+        env.built_in();
+
+        let n = parse(&mut env, &(lexer("pi=3".to_string())).unwrap()).unwrap();
+        if let Ok(_) = eval(&mut env, &n) {
+            assert!(false);
+        }
     }
 }

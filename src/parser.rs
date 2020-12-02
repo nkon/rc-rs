@@ -202,6 +202,8 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                         tok, i
                     )));
                 }
+            } else if env.is_variable(id).is_some() {
+                return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
             } else {
                 env.new_variable(id.clone());
                 return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
@@ -352,8 +354,7 @@ fn assign(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErr
 /// env.built_in();
 /// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_string()).unwrap())).unwrap()),"BinOp(Op(Plus), Num(1), Num(2))");
 /// ```
-// TODO: user define var
-// TODO: user devine function
+// TODO: user define function
 // TODO: multiple expression
 pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, MyError> {
     let (node, i) = assign(env, &tok, 0)?;
