@@ -1,24 +1,22 @@
 Design Note of `rc`
 ===================
-
 Table of Contents
-=================
+-----------------
 
-   * [Design Note of rc](#design-note-of-rc)
-      * [Lexer](#lexer)
-      * [Parser](#parser)
-         * [Enum](#enum)
-      * [Eval](#eval)
-      * [MyError](#myerror)
-         * [thiserror](#thiserror)
-      * [Comand](#comand)
-      * [オブジェクト指向](#\xE3\x82\xAA\xE3\x83\x96\xE3\x82\xB8\xE3\x82\xA7\xE3\x82\xAF\xE3\x83\x88\xE6\x8C\x87\xE5\x90\x91)
-      * [ファイル分割](#\xE3\x83\x95\xE3\x82\xA1\xE3\x82\xA4\xE3\x83\xAB\xE5\x88\x86\xE5\x89\xB2)
-      * [端末制御](#\xE7\xAB\xAF\xE6\x9C\xAB\xE5\x88\xB6\xE5\xBE\xA1)
-      * [テスト](#\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88)
-      * [インクリメンタルな開発](#\xE3\x82\xA4\xE3\x83\xB3\xE3\x82\xAF\xE3\x83\xAA\xE3\x83\xA1\xE3\x83\xB3\xE3\x82\xBF\xE3\x83\xAB\xE3\x81\xAA\xE9\x96\x8B\xE7\x99\xBA)
-      * [開発環境](#\xE9\x96\x8B\xE7\x99\xBA\xE7\x92\xB0\xE5\xA2\x83)
-      * [シングルバイナリ](#\xE3\x82\xB7\xE3\x83\xB3\xE3\x82\xB0\xE3\x83\xAB\xE3\x83\x90\xE3\x82\xA4\xE3\x83\x8A\xE3\x83\xAA)
+    * [Lexer](#lexer)
+    * [Parser](#parser)
+        * [Enum](#enum)
+    * [Eval](#eval)
+    * [MyError](#myerror)
+        * [thiserror](#thiserror)
+    * [Comand](#comand)
+    * [オブジェクト指向](#オブジェクト指向)
+    * [ファイル分割](#ファイル分割)
+    * [端末制御](#端末制御)
+    * [テスト](#テスト)
+    * [インクリメンタルな開発](#インクリメンタルな開発)
+    * [開発環境](#開発環境)
+    * [シングルバイナリ](#シングルバイナリ)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
