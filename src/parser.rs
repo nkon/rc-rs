@@ -122,7 +122,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
         Token::Ident(id) => {
             if let Some(_constant) = env.is_const(id.as_str()) {
                 return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
-            } else if let Some(func_tupple) = env.is_func(id.as_str()) {
+            } else if let Some(func_tuple) = env.is_func(id.as_str()) {
                 let mut params = Vec::new();
                 if tok.len() <= (i + 1) {
                     return Err(MyError::ParseError(format!(
@@ -133,7 +133,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                     i += 2;
                     while i < tok.len() {
                         if tok[i] == Token::Op(TokenOp::ParenRight) {
-                            if func_tupple.1 != 0 && func_tupple.1 != params.len() {
+                            if func_tuple.1 != 0 && func_tuple.1 != params.len() {
                                 return Err(MyError::ParseError(format!(
                                     "function parameter number: {:?} {}",
                                     tok, i
@@ -165,7 +165,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                         tok, i
                     )));
                 }
-            } else if let Some(cmd_tupple) = env.is_cmd(id.as_str()) {
+            } else if let Some(cmd_tuple) = env.is_cmd(id.as_str()) {
                 let mut params = Vec::new();
                 if tok.len() <= (i + 1) {
                     return Err(MyError::ParseError(format!(
@@ -176,13 +176,13 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                     i += 2;
                     while i < tok.len() {
                         if tok[i] == Token::Op(TokenOp::ParenRight) {
-                            if cmd_tupple.1 != 0 && cmd_tupple.1 != params.len() {
+                            if cmd_tuple.1 != 0 && cmd_tuple.1 != params.len() {
                                 return Err(MyError::ParseError(format!(
                                     "command parameter number: {:?} {}",
                                     tok, i
                                 )));
                             }
-                            let command_result = cmd_tupple.0(env, &params);
+                            let command_result = cmd_tuple.0(env, &params);
                             return Ok((Node::Command(command_result), i + 1));
                         } else if tok[i] == Token::Op(TokenOp::Comma) {
                             i += 1;
@@ -327,7 +327,7 @@ fn assign(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErr
 }
 
 /// Input: `&Vec<Token>`   output of `lexer()`
-/// Output: `Node()`       AST as the paser result
+/// Output: `Node()`       AST as the parser result
 ///
 /// # Examples
 /// ```

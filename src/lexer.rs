@@ -24,8 +24,8 @@ pub enum Token {
     Ident(String),
 }
 
-/// Cut out sequense of num_char as `String` from input `chars: &[char]`.
-/// Increment index and return as a member of tupple.
+/// Cut out sequence of num_char as `String` from input `chars: &[char]`.
+/// Increment index and return as a member of tuple.
 fn tok_get_num(chars: &[char], index: usize) -> (String, usize) {
     let mut i = index;
     if i < chars.len() {
@@ -56,7 +56,7 @@ fn tok_get_num(chars: &[char], index: usize) -> (String, usize) {
 
 /// Eat integer numbers from input array.
 /// Return `Token::Num()` with `Result<,Err(String)>`.
-/// Increment index and return as a member of tupple.
+/// Increment index and return as a member of tuple.
 fn tok_num_int(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
     let mut i = index;
     let radix: u32;
@@ -109,9 +109,9 @@ fn tok_num_int(chars: &[char], index: usize) -> Result<(Token, usize), MyError> 
 }
 
 /// Eat numbers from input array.
-/// Forwared to `tok_num_int()` when interger, i.e. decimal, hexdecimal, octal or binary.
+/// Foreword to `tok_num_int()` when integer, i.e. decimal, hexadecimal, octal or binary.
 /// Return `Token::Num()` or `Token::FNum()` with `Result<,Err(String)>`.
-/// Increment index and return as a member of tupple.
+/// Increment index and return as a member of tuple.
 fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
     let mut i = index;
     let mut mantissa = String::new();

@@ -13,7 +13,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-rc - simple terminal calulator
+rc - simple terminal calculator
 ==============================
 
 ```
@@ -22,7 +22,7 @@ Ctrl-c to exit
 rc>     # prompt. '#': comment
 rc> 1+2*3
 7
-rc> 1/(2*pi*(3k//4.7k)*0.22u)    # cut off frequency of CR LPF. "//" means pararell. T/G/M/k/m/u/n/p: SI postfix.
+rc> 1/(2*pi*(3k//4.7k)*0.22u)    # cut off frequency of CR LPF. "//" means parallel. T/G/M/k/m/u/n/p: SI postfix.
 395.0654615756267
 rc> output_format(16, sep4)            # output_format
 output_format(radix = 16, separate = 4)
@@ -31,10 +31,10 @@ rc> 0xdead_beef - 0xcafe_babe
 rc> 
 ```
 
-* `rc` simmilar to `bc`, which is a famous command line caluclator.
-* `rc` is designed for schientific/engineering caluclation.
+* `rc` similar to `bc`, which is a famous command line calculator.
+* `rc` is designed for scientific/engineering calculation.
 * `rc` runs on terminal on Windows/Linux/Mac/Raspberry Pi.
-* `rc` is an example of imprementation of parser written by rust.
+* `rc` is an example of implementation of parser written by rust.
 
 ## Features
 
@@ -42,11 +42,11 @@ rc>
     + Arithmetic operations including multiple parentheses
     + support integer and float
     + k/M/G/T/m/u/n/p ... suffix
-    + binary(0b....), decimal, hexdecimal(0x....) format
+    + binary(0b....), decimal, hexadecimal(0x....) format
         - '_' ... separator, i.e., `123_000_000`
     + built-in functions
         - Arithmetic: sin/cos/abs/...
-        - Engineering: E12/pararell(`//`)/...
+        - Engineering: E12/parallel(`//`)/...
         - unit conversion: inch2mm/mm2inch/...
     + user defined variable/function  <- not yet
 * REPL
@@ -87,11 +87,11 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
 
 ## Download
 
-Static linked executables for some platforms are aviailable in [download/](download/) directory.
+Static linked executables for some platforms are available in [download/](download/) directory.
 
 ## Future
 
-* Hilight parlens
+* Highlight parentheses
 * Online help
 * Graph
 * L10N using gettext-rs

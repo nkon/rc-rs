@@ -1,0 +1,21 @@
+{
+    "cSpell.words": [
+        "Paren",
+        "Struct",
+        "binop",
+        "clippy",
+        "consts",
+        "eval",
+        "getopts",
+        "msvc",
+        "musl",
+        "optflag",
+        "optmulti",
+        "optopt",
+        "readline",
+        "rustup",
+        "strs",
+        "toolchain",
+        "usize"
+    ]
+}

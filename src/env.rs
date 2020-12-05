@@ -169,7 +169,6 @@ fn impl_debug(env: &mut Env, arg: &[Token]) -> String {
     format!("debug({})", env.debug)
 }
 
-
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
         Env {

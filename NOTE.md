@@ -9,7 +9,7 @@ Table of Contents
 * [Eval](#eval)
 * [MyError](#myerror)
     * [thiserror](#thiserror)
-* [Comand](#comand)
+* [Command](#command)
 * [オブジェクト指向](#オブジェクト指向)
 * [ファイル分割](#ファイル分割)
 * [端末制御](#端末制御)
@@ -41,7 +41,7 @@ pub enum Token {
 
 Lexerの特徴として、`-100`を、単項演算子`-`と整数リテラル（`100`）へ分解するようにしている。単項演算子として`-`を消費してしまうほうが簡単な実装になるからだ。デメリットとしては、たとえば`u8`で−128を表すことができなくなる。
 
-実装としては、いったん入力を`Vec<char>`に変換してインデックスでアクセスする。Iteratorを使わない。この方が型修飾を減らしてCっぽく実装できる。また、インデックスは`&mut`で受け取らず、コピー渡しの引数で受取、タプルによって更新値を返す。このスタイルはRust API Guidlineの[C-NO-OUT](https://sinkuu.github.io/api-guidelines/predictability.html#c-no-out)からも要請されている。
+実装としては、いったん入力を`Vec<char>`に変換してインデックスでアクセスする。Iteratorを使わない。この方が型修飾を減らしてCっぽく実装できる。また、インデックスは`&mut`で受け取らず、コピー渡しの引数で受取、タプルによって更新値を返す。このスタイルはRust API Guidelineの[C-NO-OUT](https://sinkuu.github.io/api-guidelines/predictability.html#c-no-out)からも要請されている。
 
 ## Parser
 
@@ -167,7 +167,7 @@ fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
 自前のエラー型を定義して、標準のエラー型からの`From`を定義することのメリットは`?`が使えること。つまり、エラー処理を呼び出し側に放り投げる形のショートカットリターンが使えること。つまり、関数を`Result<T,MyError>`を返すように定義しておけば、ライブラリがエラーを発生した場合はライブラリのエラーから`MyError`に`From`によって変換してリータンできる。もちろん、自前のエラーは`MyError`なので、それもリターンできる。いずれも、呼び出し側でエラー処理を行わなければならない。
 
 
-## Comand
+## Command
 
 計算の実行では無く、アプリの動作を変更したいときなどに「コマンド」が用意されている。たとえばデバッグ設定の変更や出力フォーマットの変更などだ。
 
@@ -224,7 +224,7 @@ Windows版の開発とVS-Code remoteを使ったWSL2上の開発が、ほぼ同�
 
 ### Linux
 
-Linuxでは[MUSL](https://ja.wikipedia.org/wiki/Musl)がサポートされているので、外部ライブラリに依存していない場合は特に、スタティックリンク・バイナリを作るのは簡単だ。`-musl`ターゲットの場合、スタティックリンク用の外部ライブラリが有れば、それらもスタティックリンクしてくれる。
+Linuxでは[MUSL](https://ja.wikipedia.org/wiki/Musl)がサポートされているので、外部ライブラリに依存していない場合はとくに、スタティックリンク・バイナリを作るのは簡単だ。`-musl`ターゲットの場合、スタティックリンク用の外部ライブラリが有れば、それらもスタティックリンクしてくれる。
 
 ```
 $ rustup target add x86_64-unknown-linux-musl     ## ターゲットを追加

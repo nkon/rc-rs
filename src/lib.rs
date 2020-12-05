@@ -67,7 +67,7 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     }
     if let Node::Func(tok, param) = n {
         if let Token::Ident(ident) = tok {
-            if let Some(func_tupple) = env.is_func(ident.as_str()) {
+            if let Some(func_tuple) = env.is_func(ident.as_str()) {
                 let mut params: Vec<Node> = Vec::new();
                 for i in param {
                     let param_value = eval(env, &i)?;
@@ -85,7 +85,7 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                     params.push(n_param.clone());
                 }
-                return Ok(Node::FNum(func_tupple.0(env, &params)));
+                return Ok(Node::FNum(func_tuple.0(env, &params)));
             }
         }
     }
