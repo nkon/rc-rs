@@ -99,6 +99,7 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
     }
 }
 
+// TODO: func, cmd, var -> separate function
 fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
     let mut i = index;
     if env.is_debug() {

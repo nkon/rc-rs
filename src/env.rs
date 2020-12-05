@@ -14,7 +14,8 @@ pub struct Env<'a> {
     pub output_radix: u8,
     pub separate_digit: usize,
 }
-
+// TODO: Output floating format: fix=12345.6, sci=1.23456e4, eng=12.3456e3
+// TODO: implement exit command. need to re-construct of command interpretation.
 // TODO: implement exp() function.
 
 // Implement of functions.
@@ -167,6 +168,7 @@ fn impl_debug(env: &mut Env, arg: &[Token]) -> String {
     }
     format!("debug({})", env.debug)
 }
+
 
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {

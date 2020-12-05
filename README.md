@@ -18,9 +18,16 @@ rc - simple terminal calulator
 
 ```
 $ rc
-rc>    # prompt.
+Ctrl-c to exit
+rc>     # prompt. '#': comment
 rc> 1+2*3
 7
+rc> 1/(2*pi*(3k//4.7k)*0.22u)    # cut off frequency of CR LPF. "//" means pararell. T/G/M/k/m/u/n/p: SI postfix.
+395.0654615756267
+rc> output_format(16, sep4)            # output_format
+output_format(radix = 16, separate = 4)
+rc> 0xdead_beef - 0xcafe_babe
+0x13af_0431
 rc> 
 ```
 
