@@ -3,20 +3,20 @@ Design Note of `rc`
 Table of Contents
 -----------------
 
-    * [Lexer](#lexer)
-    * [Parser](#parser)
-        * [Enum](#enum)
-    * [Eval](#eval)
-    * [MyError](#myerror)
-        * [thiserror](#thiserror)
-    * [Comand](#comand)
-    * [オブジェクト指向](#オブジェクト指向)
-    * [ファイル分割](#ファイル分割)
-    * [端末制御](#端末制御)
-    * [テスト](#テスト)
-    * [インクリメンタルな開発](#インクリメンタルな開発)
-    * [開発環境](#開発環境)
-    * [シングルバイナリ](#シングルバイナリ)
+* [Lexer](#lexer)
+* [Parser](#parser)
+    * [Enum](#enum)
+* [Eval](#eval)
+* [MyError](#myerror)
+    * [thiserror](#thiserror)
+* [Comand](#comand)
+* [オブジェクト指向](#オブジェクト指向)
+* [ファイル分割](#ファイル分割)
+* [端末制御](#端末制御)
+* [テスト](#テスト)
+* [インクリメンタルな開発](#インクリメンタルな開発)
+* [開発環境](#開発環境)
+* [シングルバイナリ](#シングルバイナリ)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
@@ -106,7 +106,7 @@ pub enum MyError {
 
 このように、自分で定義したエラー型に対して、`Display`トレイトを`#[error("...")]`で簡便に定義できることが特徴。フォーマット書式は`fmt!`に準ずる。エラー型は`Enum`でも`Struct`でも良い。
 
-MyErrorを発生させるときは次のようになるだろう。
+MyErrorを発生させるときは次のようになるだろう。上は、文字列→数値変換で、変換エラーが出た時に、独自の注釈が付いたエラーを返す場合。
 
 ```rust
 match i128::from_str_radix(&mantissa, radix) {
@@ -115,26 +115,36 @@ match i128::from_str_radix(&mantissa, radix) {
 }
 ```
 
+次は再帰降順パーサで下位呼び出しがエラーした場合の処置方法。最初の`mul()`呼び出しは左辺（LHS:left hand side）側をパーズ。ここは再帰的に呼ぶだけなので、エラーが起きた場合は`?`でそのまま帰る。ふたつ目の`mul()`呼び出しは右辺のどこかの再帰呼び出しでエラーが起きた場合。これも、このまま上に伝えて帰る。このとき、`i`の範囲が`tok`のインデックスをはみ出していないかをチェックせずに呼び出しているが、呼びだされている`mul`の先頭で（`expr()`の先頭の`tok_check_index!()`のように）チェックしているのでこれはこれで良い。
+
 ```rust
-match tok[i] {
-    Token::Op(TokenOp::Plus) | Token::Op(TokenOp::Minus) => {
-        if let Ok((rhs, j)) = mul(env, tok, i + 1) {
-            i = j;
-            lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
-        } else {
-            return Err(MyError::ParseError(format!(
-                "Operator'+'/'-' requires right side operand. {:?} {}",
-                tok, i
-            )));
-        }
+fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
+    if env.is_debug() {
+        eprintln!("expr {:?} {}\r", tok, i);
     }
-    _ => {
-        return Ok((lhs, i));
+    tok_check_index!(tok, i);
+
+    let (mut lhs, mut i) = mul(env, tok, i)?;
+    loop {
+        if tok.len() <= i {
+            return Ok((lhs, i));
+        }
+        let tok_orig = tok[i].clone();
+        match tok[i] {
+            Token::Op(TokenOp::Plus) | Token::Op(TokenOp::Minus) => {
+                let (rhs, j) = mul(env, tok, i + 1)?;
+                i = j;
+                lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs));
+            }
+            _ => {
+                return Ok((lhs, i));
+            }
+        }
     }
 }
 ```
 
-もし、ライブラリが発生するエラーをそのまま使う場合は、次のように`From`トレイトも自動生成できる。今回の場合は自分でエラー情報を付加したいので、このようにはしていない。
+もし、ライブラリが発生するエラーをそのまま使う場合は、最初の例とは異なり、次のように`From`トレイトも自動生成できる。今回の場合は自分でエラー情報を付加したいので、このようにはしていない。
 
 ```rust
 #[derive(Error, Debug)]

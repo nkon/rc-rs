@@ -212,16 +212,22 @@ pub fn readline(env: &mut Env) {
                                         }
                                     },
                                     Err(e) => {
-                                        error_print(&mut stdout, format!("{}\r\n", e).as_str());
+                                        error_print(
+                                            &mut stdout,
+                                            format!("eval error: {}\r\n", e).as_str(),
+                                        );
                                     }
                                 },
                                 Err(e) => {
-                                    error_print(&mut stdout, format!("{}\r\n", e).as_str());
+                                    error_print(
+                                        &mut stdout,
+                                        format!("parse error: {}\r\n", e).as_str(),
+                                    );
                                 }
                             }
                         }
                         Err(e) => {
-                            error_print(&mut stdout, format!("{}\r\n", e).as_str());
+                            error_print(&mut stdout, format!("token error:{}\r\n", e).as_str());
                         }
                     }
                     line.clear();

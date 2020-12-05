@@ -243,12 +243,6 @@ fn exp(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
         return Ok((lhs, i));
     }
     if tok[i] == Token::Op(TokenOp::Hat) {
-        if (i + 1) >= tok.len() {
-            return Err(MyError::ParseError(format!(
-                "'^' requires rhs. {:?} {}",
-                tok, i
-            )));
-        }
         let (rhs, j) = exp(env, tok, i + 1)?;
         i = j;
         Ok((
@@ -277,15 +271,9 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
             | Token::Op(TokenOp::Div)
             | Token::Op(TokenOp::Mod)
             | Token::Op(TokenOp::Para) => {
-                if let Ok((rhs, j)) = exp(env, tok, i + 1) {
-                    i = j;
-                    lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
-                } else {
-                    return Err(MyError::ParseError(format!(
-                        "Operator '*' '/' '%' requires right side operand. {:?} {}",
-                        tok, i
-                    )));
-                }
+                let (rhs, j) = exp(env, tok, i + 1)?;
+                i = j;
+                lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
             }
             _ => {
                 return Ok((lhs, i));
@@ -308,15 +296,9 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError
         let tok_orig = tok[i].clone();
         match tok[i] {
             Token::Op(TokenOp::Plus) | Token::Op(TokenOp::Minus) => {
-                if let Ok((rhs, j)) = mul(env, tok, i + 1) {
-                    i = j;
-                    lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs))
-                } else {
-                    return Err(MyError::ParseError(format!(
-                        "Operator'+'/'-' requires right side operand. {:?} {}",
-                        tok, i
-                    )));
-                }
+                let (rhs, j) = mul(env, tok, i + 1)?;
+                i = j;
+                lhs = Node::BinOp(tok_orig, Box::new(lhs), Box::new(rhs));
             }
             _ => {
                 return Ok((lhs, i));
@@ -331,21 +313,13 @@ fn assign(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErr
     }
     tok_check_index!(tok, i);
 
-    let (lhs, mut i) = expr(env, tok, i)?;
+    let (lhs, i) = expr(env, tok, i)?;
     if i < tok.len() && tok[i] == Token::Op(TokenOp::Equal) {
-        i += 1;
-        if i < tok.len() {
-            let (rhs, i) = expr(env, tok, i)?;
-            Ok((
-                Node::BinOp(Token::Op(TokenOp::Equal), Box::new(lhs), Box::new(rhs)),
-                i,
-            ))
-        } else {
-            Err(MyError::ParseError(format!(
-                "'=' required lhs. {:?} {}",
-                tok, i
-            )))
-        }
+        let (rhs, i) = expr(env, tok, i + 1)?;
+        Ok((
+            Node::BinOp(Token::Op(TokenOp::Equal), Box::new(lhs), Box::new(rhs)),
+            i,
+        ))
     } else {
         Ok((lhs, i))
     }

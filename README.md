@@ -3,13 +3,13 @@
 Table of Contents
 -----------------
 
-    * [Features](#features)
-    * [Screen capture](#screen-capture)
-    * [Install](#install)
-        * [Build from source](#build-from-source)
-        * [Build with musl(static linked binary)](#build-with-muslstatic-linked-binary)
-    * [Future](#future)
-    * [Design Notes](#design-notes)
+* [Features](#features)
+* [Screen capture](#screen-capture)
+* [Install](#install)
+    * [Build from source](#build-from-source)
+    * [Build with musl(static linked binary)](#build-with-muslstatic-linked-binary)
+* [Future](#future)
+* [Design Notes](#design-notes)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
