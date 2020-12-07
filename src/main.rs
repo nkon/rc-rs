@@ -10,6 +10,7 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
+// TODO: --version  https://matsu7874.hatenablog.com/entry/2019/12/24/080000
 fn main() {
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
