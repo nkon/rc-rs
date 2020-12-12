@@ -221,28 +221,32 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                 return Ok(Node::Num(0));
             }
             Token::Op(TokenOp::Hat) => {
-                if let Node::Num(nl) = lhs {
-                    if let Node::Num(nr) = rhs {
-                        return Ok(Node::Num(nl.pow(nr as u32)));
-                    } else if let Node::FNum(nr) = rhs {
-                        return Ok(Node::FNum((nl as f64).powf(nr)));
-                    } else if let Node::CNum(nr) = rhs {
-                        return Ok(Node::CNum(Complex64::new(nl as f64, 0.0).powc(nr)));
-                    }
-                } else if let Node::FNum(nl) = lhs {
-                    if let Node::Num(nr) = rhs {
+                if let Node::Num(nr) = rhs {
+                    if let Node::Num(nl) = lhs {
+                        if nr > 0 {
+                            return Ok(Node::Num(nl.pow(nr as u32)));
+                        } else {
+                            return Ok(Node::FNum((nl as f64).powi(nr as i32)));
+                        }
+                    } else if let Node::FNum(nl) = lhs {
                         return Ok(Node::FNum(nl.powi(nr as i32)));
-                    } else if let Node::FNum(nr) = rhs {
-                        return Ok(Node::FNum(nl.powf(nr)));
-                    } else if let Node::CNum(nr) = rhs {
-                        return Ok(Node::CNum(Complex64::new(nl, 0.0).powc(nr)));
-                    }
-                } else if let Node::CNum(nl) = lhs {
-                    if let Node::Num(nr) = rhs {
+                    } else if let Node::CNum(nl) = lhs {
                         return Ok(Node::CNum(nl.powi(nr as i32)));
-                    } else if let Node::FNum(nr) = rhs {
+                    }
+                } else if let Node::FNum(nr) = rhs {
+                    if let Node::Num(nl) = lhs {
+                        return Ok(Node::FNum((nl as f64).powf(nr)));
+                    } else if let Node::FNum(nl) = lhs {
+                        return Ok(Node::FNum(nl.powf(nr)));
+                    } else if let Node::CNum(nl) = lhs {
                         return Ok(Node::CNum(nl.powf(nr)));
-                    } else if let Node::CNum(nr) = rhs {
+                    }
+                } else if let Node::CNum(nr) = rhs {
+                    if let Node::Num(nl) = lhs {
+                        return Ok(Node::CNum(Complex64::new(nl as f64, 0.0).powc(nr)));
+                    } else if let Node::FNum(nl) = lhs {
+                        return Ok(Node::CNum(Complex64::new(nl, 0.0).powc(nr)));
+                    } else if let Node::CNum(nl) = lhs {
                         return Ok(Node::CNum(nl.powc(nr)));
                     }
                 }
