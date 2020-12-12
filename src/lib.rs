@@ -97,7 +97,7 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                     params.push(n_param.clone());
                 }
-                return Ok(Node::FNum(func_tuple.0(env, &params)));
+                return Ok(func_tuple.0(env, &params));
             }
         }
     }

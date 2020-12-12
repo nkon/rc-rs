@@ -2,7 +2,7 @@ use super::*;
 use std::collections::HashMap;
 use std::str;
 
-pub type TypeFn = fn(&mut Env, &[Node]) -> f64;
+pub type TypeFn = fn(&mut Env, &[Node]) -> Node;
 pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
 
 pub struct Env<'a> {
@@ -18,17 +18,17 @@ pub struct Env<'a> {
 // TODO: implement exp() function.
 
 // Implement of functions.
-fn impl_sin(env: &mut Env, arg: &[Node]) -> f64 {
-    eval_fvalue(env, &arg[0]).sin()
+fn impl_sin(env: &mut Env, arg: &[Node]) -> Node {
+    Node::FNum(eval_fvalue(env, &arg[0]).sin())
 }
 
-fn impl_abs(env: &mut Env, arg: &[Node]) -> f64 {
-    eval_fvalue(env, &arg[0]).abs()
+fn impl_abs(env: &mut Env, arg: &[Node]) -> Node {
+    Node::FNum(eval_fvalue(env, &arg[0]).abs())
 }
 
-fn impl_max(env: &mut Env, arg: &[Node]) -> f64 {
+fn impl_max(env: &mut Env, arg: &[Node]) -> Node {
     if arg.is_empty() {
-        return 0.0;
+        return Node::FNum(0.0);
     }
     let mut max = eval_fvalue(env, &arg[0]);
     for i in arg {
@@ -36,18 +36,18 @@ fn impl_max(env: &mut Env, arg: &[Node]) -> f64 {
             max = eval_fvalue(env, &i);
         }
     }
-    max
+    Node::FNum(max)
 }
 
-fn impl_ave(env: &mut Env, arg: &[Node]) -> f64 {
+fn impl_ave(env: &mut Env, arg: &[Node]) -> Node {
     if arg.is_empty() {
-        return 0.0;
+        return Node::FNum(0.0);
     }
     let mut sum: f64 = 0.0;
     for i in arg {
         sum += eval_fvalue(env, &i);
     }
-    sum / arg.len() as f64
+    Node::FNum(sum / arg.len() as f64)
 }
 
 // Implement of commands.
