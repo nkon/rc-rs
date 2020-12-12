@@ -61,7 +61,7 @@ fn eval_const(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if let Node::Var(id) = n {
         if let Token::Ident(ident) = id {
             if let Some(constant) = env.is_const(ident.as_str()) {
-                return Ok(Node::FNum(constant));
+                return Ok(constant);
             } else if let Some(variable) = env.is_variable(ident.as_str()) {
                 return Ok(Node::FNum(variable));
             }

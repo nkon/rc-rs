@@ -6,7 +6,7 @@ pub type TypeFn = fn(&mut Env, &[Node]) -> f64;
 pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
 
 pub struct Env<'a> {
-    pub constant: HashMap<&'a str, f64>,
+    pub constant: HashMap<&'a str, Node>,
     pub variable: HashMap<String, f64>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
     pub cmd: HashMap<&'a str, (TypeCmd, usize)>, // (function pointer, arg num: 0=variable)
@@ -189,9 +189,13 @@ impl<'a> Env<'a> {
     }
 
     pub fn built_in(&mut self) {
-        self.constant.insert("pi", std::f64::consts::PI);
-        self.constant.insert("e", std::f64::consts::E);
-        self.constant.insert("eps", std::f64::EPSILON);
+        self.constant.insert("pi", Node::FNum(std::f64::consts::PI));
+        self.constant.insert("e", Node::FNum(std::f64::consts::E));
+        self.constant.insert("eps", Node::FNum(std::f64::EPSILON));
+        self.constant
+            .insert("i", Node::CNum(Complex64::new(0.0, 1.0)));
+        self.constant
+            .insert("j", Node::CNum(Complex64::new(0.0, 1.0)));
         self.func.insert("sin", (impl_sin as TypeFn, 1));
         self.func.insert("abs", (impl_abs as TypeFn, 1));
         self.func.insert("max", (impl_max as TypeFn, 0));
@@ -202,9 +206,9 @@ impl<'a> Env<'a> {
         self.cmd.insert("exit", (impl_exit as TypeCmd, 0));
     }
 
-    pub fn is_const(&mut self, key: &str) -> Option<f64> {
+    pub fn is_const(&mut self, key: &str) -> Option<Node> {
         match self.constant.get(key) {
-            Some(&f) => Some(f),
+            Some(f) => Some(f.clone()),
             None => None,
         }
     }
