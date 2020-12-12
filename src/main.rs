@@ -21,6 +21,7 @@ fn main() {
     opts.optflag("", "test", "run built-in test");
     opts.optopt("r", "init_file", "rc file path", "rc_file");
     opts.optmulti("s", "script", "run script", "FILE");
+    opts.optflag("v", "version", "version");
 
     let mut rc_file_path = path::PathBuf::new();
     if let Some(mut home_dir) = dirs::home_dir() {
@@ -34,6 +35,14 @@ fn main() {
                 print_usage(&program, opts);
                 std::process::exit(0);
             }
+
+            if matches.opt_present("v") {
+                let version = env!("CARGO_PKG_VERSION");
+                let git_commit_hash = include!("git_commit_hash.txt");
+                println!("{} {}-{}", program, version, git_commit_hash);
+                std::process::exit(0);
+            }
+
             let mut env = Env::new();
             env.built_in();
 
