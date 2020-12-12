@@ -212,28 +212,21 @@ pub fn readline(env: &mut Env) {
                                                 format!("{}\r\n", result).as_str(),
                                             );
                                         }
-                                        Node::None => {}
                                         _ => {
-                                            error_print(&mut stdout, "eval error\r\n");
+                                            error_print(&mut stdout, format!("eval error: Unexpected eval result {:?}\r\n", node).as_str());
                                         }
                                     },
                                     Err(e) => {
-                                        error_print(
-                                            &mut stdout,
-                                            format!("eval error: {}\r\n", e).as_str(),
-                                        );
+                                        error_print(&mut stdout, format!("{}\r\n", e).as_str());
                                     }
                                 },
                                 Err(e) => {
-                                    error_print(
-                                        &mut stdout,
-                                        format!("parse error: {}\r\n", e).as_str(),
-                                    );
+                                    error_print(&mut stdout, format!("{}\r\n", e).as_str());
                                 }
                             }
                         }
                         Err(e) => {
-                            error_print(&mut stdout, format!("token error:{}\r\n", e).as_str());
+                            error_print(&mut stdout, format!("{}\r\n", e).as_str());
                         }
                     }
                     line.clear();
