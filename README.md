@@ -28,6 +28,11 @@ rc> output_format(16, sep4)            # output_format
 output_format(radix = 16, separate = 4)
 rc> 0xdead_beef - 0xcafe_babe
 0x13af_0431
+rc > output_format(10, sep3)
+rc> i^i
+0.20787957635076193+0i
+rc> exp(i*pi)
+-1+0.00000000000000012246467991473532i
 rc> 
 ```
 

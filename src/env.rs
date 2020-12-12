@@ -15,11 +15,18 @@ pub struct Env<'a> {
     pub separate_digit: usize,
 }
 // TODO: Output floating format: fix=12345.6, sci=1.23456e4, eng=12.3456e3
-// TODO: implement exp() function.
 
 // Implement of functions.
 fn impl_sin(env: &mut Env, arg: &[Node]) -> Node {
     Node::FNum(eval_fvalue(env, &arg[0]).sin())
+}
+
+fn impl_exp(_env: &mut Env, arg: &[Node]) -> Node {
+    Node::BinOp(
+        Token::Op(TokenOp::Hat),
+        Box::new(Node::FNum(std::f64::consts::E)),
+        Box::new(arg[0].clone()),
+    )
 }
 
 fn impl_abs(env: &mut Env, arg: &[Node]) -> Node {
@@ -197,6 +204,7 @@ impl<'a> Env<'a> {
         self.constant
             .insert("j", Node::CNum(Complex64::new(0.0, 1.0)));
         self.func.insert("sin", (impl_sin as TypeFn, 1));
+        self.func.insert("exp", (impl_exp as TypeFn, 1));
         self.func.insert("abs", (impl_abs as TypeFn, 1));
         self.func.insert("max", (impl_max as TypeFn, 0));
         self.func.insert("ave", (impl_ave as TypeFn, 0));

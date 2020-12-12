@@ -4,3 +4,6 @@
 output_format(16)            # output_format
 output_format(sep4)
 0xdead_beef - 0xcafe_babe
+output_format(10, sep3)
+i^i
+exp(i*pi)
