@@ -14,3 +14,4 @@ output_format(sep3)
 123456
 output_format(sep0)
 987654
+1+2i

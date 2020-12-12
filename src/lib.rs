@@ -1,4 +1,6 @@
+use num_complex::Complex64;
 use thiserror::Error;
+
 // use anyhow;
 // TODO: use anyhow for better error handling
 
@@ -37,6 +39,16 @@ pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
     match n {
         Node::Num(n) => *n as f64,
         Node::FNum(f) => *f,
+        Node::None => unreachable!(),
+        _ => unreachable!(),
+    }
+}
+
+pub fn eval_cvalue(_env: &mut Env, n: &Node) -> Complex64 {
+    match n {
+        Node::Num(n) => Complex64::new(*n as f64, 0.0),
+        Node::FNum(f) => Complex64::new(*f, 0.0),
+        Node::CNum(c) => *c,
         Node::None => unreachable!(),
         _ => unreachable!(),
     }
@@ -133,6 +145,12 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                         return Ok(Node::Num(nl + nr));
                     }
                 }
+                if let Node::CNum(_) = lhs {
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs) + eval_cvalue(env, &rhs)));
+                }
+                if let Node::CNum(_) = rhs {
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs) + eval_cvalue(env, &rhs)));
+                }
                 return Ok(Node::FNum(eval_fvalue(env, &lhs) + eval_fvalue(env, &rhs)));
             }
             Token::Op(TokenOp::Minus) => {
@@ -206,6 +224,7 @@ pub fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     match &*n {
         Node::Num(n) => Ok(Node::Num(*n)),
         Node::FNum(f) => Ok(Node::FNum(*f)),
+        Node::CNum(c) => Ok(Node::CNum(*c)),
         Node::Unary(tok, para_boxed) => {
             let para: Node = *(*para_boxed).clone();
             match tok {
@@ -337,6 +356,10 @@ mod tests {
         assert_eq!(
             eval_as_string(&mut env, "2^-0.5"),
             "FNum(0.7071067811865476)".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1+2i"),
+            "CNum(Complex { re: 1.0, im: 2.0 })".to_string()
         );
     }
 

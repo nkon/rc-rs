@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Write;
 use std::process::Command;
 
-fn main(){
+fn main() {
     let commit_hash = Command::new("git")
         .args(&["rev-parse", "HEAD"])
         .output()

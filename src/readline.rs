@@ -200,6 +200,12 @@ pub fn readline(env: &mut Env) {
                                                 format!("{}\r\n", f).as_str(),
                                             );
                                         }
+                                        Node::CNum(c) => {
+                                            result_print(
+                                                &mut stdout,
+                                                format!("{}\r\n", c).as_str(),
+                                            );
+                                        }
                                         Node::Command(result) => {
                                             error_print(
                                                 &mut stdout,
