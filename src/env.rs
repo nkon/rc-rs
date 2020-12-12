@@ -7,7 +7,7 @@ pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
 
 pub struct Env<'a> {
     pub constant: HashMap<&'a str, Node>,
-    pub variable: HashMap<String, f64>,
+    pub variable: HashMap<String, Node>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
     pub cmd: HashMap<&'a str, (TypeCmd, usize)>, // (function pointer, arg num: 0=variable)
     pub debug: bool,
@@ -213,18 +213,18 @@ impl<'a> Env<'a> {
         }
     }
 
-    pub fn is_variable(&mut self, key: &str) -> Option<f64> {
+    pub fn is_variable(&mut self, key: &str) -> Option<Node> {
         match self.variable.get(key) {
-            Some(&f) => Some(f),
+            Some(f) => Some(f.clone()),
             None => None,
         }
     }
 
     pub fn new_variable(&mut self, key: String) {
-        self.variable.insert(key, 0.0);
+        self.variable.insert(key, Node::None);
     }
 
-    pub fn set_variable(&mut self, key: String, value: f64) -> Result<(), MyError> {
+    pub fn set_variable(&mut self, key: String, value: Node) -> Result<(), MyError> {
         if self.is_variable(&key).is_some() {
             self.variable.insert(key, value);
         } else {

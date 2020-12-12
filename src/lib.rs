@@ -63,7 +63,7 @@ fn eval_const(env: &mut Env, n: &Node) -> Result<Node, MyError> {
             if let Some(constant) = env.is_const(ident.as_str()) {
                 return Ok(constant);
             } else if let Some(variable) = env.is_variable(ident.as_str()) {
-                return Ok(Node::FNum(variable));
+                return Ok(variable);
             }
         }
     }
@@ -125,11 +125,10 @@ fn eval_assign(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     }
     if let Node::BinOp(tok, lhs, rhs) = n {
         assert_eq!(*tok, Token::Op(TokenOp::Equal));
-        let rhs = eval_fvalue(env, rhs);
         match &**lhs {
             Node::Var(Token::Ident(id)) => {
                 if env.is_variable(id).is_some() {
-                    env.set_variable(id.clone(), rhs)?;
+                    env.set_variable(id.clone(), (**rhs).clone())?;
                     return Ok(Node::None);
                 } else {
                     return Err(MyError::EvalError(format!("Can not assign to {:?}", id)));
@@ -390,7 +389,7 @@ mod tests {
             "FNum(3.0)".to_string()
         );
         eval_as_string(&mut env, "a=1");
-        assert_eq!(eval_as_string(&mut env, "a"), "FNum(1.0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "a"), "Num(1)".to_string());
         assert_eq!(eval_as_string(&mut env, "2^3"), "Num(8)".to_string());
         assert_eq!(
             eval_as_string(&mut env, "2^3^4"),
