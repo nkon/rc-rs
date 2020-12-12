@@ -185,41 +185,43 @@ pub fn readline(env: &mut Env) {
                                 continue;
                             }
                             match parse(env, &v) {
-                                Ok(node) => match eval(env, &node) {
-                                    Ok(node) => match node {
-                                        Node::Num(n) => {
-                                            result_print(
-                                                &mut stdout,
-                                                format!("{}\r\n", output_format_num(env, n))
-                                                    .as_str(),
-                                            );
+                                Ok(node) => {
+                                    match eval(env, &node) {
+                                        Ok(node) => match node {
+                                            Node::Num(n) => {
+                                                result_print(
+                                                    &mut stdout,
+                                                    format!("{}\r\n", output_format_num(env, n))
+                                                        .as_str(),
+                                                );
+                                            }
+                                            Node::FNum(f) => {
+                                                result_print(
+                                                    &mut stdout,
+                                                    format!("{}\r\n", f).as_str(),
+                                                );
+                                            }
+                                            Node::CNum(c) => {
+                                                result_print(
+                                                    &mut stdout,
+                                                    format!("{}\r\n", c).as_str(),
+                                                );
+                                            }
+                                            Node::Command(_cmd, _params, result) => {
+                                                error_print(
+                                                    &mut stdout,
+                                                    format!("{}\r\n", result).as_str(),
+                                                );
+                                            }
+                                            _ => {
+                                                error_print(&mut stdout, format!("eval error: Unexpected eval result {:?}\r\n", node).as_str());
+                                            }
+                                        },
+                                        Err(e) => {
+                                            error_print(&mut stdout, format!("{}\r\n", e).as_str());
                                         }
-                                        Node::FNum(f) => {
-                                            result_print(
-                                                &mut stdout,
-                                                format!("{}\r\n", f).as_str(),
-                                            );
-                                        }
-                                        Node::CNum(c) => {
-                                            result_print(
-                                                &mut stdout,
-                                                format!("{}\r\n", c).as_str(),
-                                            );
-                                        }
-                                        Node::Command(_cmd, _params, result) => {
-                                            error_print(
-                                                &mut stdout,
-                                                format!("{}\r\n", result).as_str(),
-                                            );
-                                        }
-                                        _ => {
-                                            error_print(&mut stdout, format!("eval error: Unexpected eval result {:?}\r\n", node).as_str());
-                                        }
-                                    },
-                                    Err(e) => {
-                                        error_print(&mut stdout, format!("{}\r\n", e).as_str());
                                     }
-                                },
+                                }
                                 Err(e) => {
                                     error_print(&mut stdout, format!("{}\r\n", e).as_str());
                                 }
