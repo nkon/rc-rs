@@ -139,6 +139,8 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
         Token::Ident(id) => {
             if let Some(_constant) = env.is_const(id.as_str()) {
                 return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
+            } else if id == "i" || id == "j" {
+                return Ok((Node::CNum(Complex64::new(0.0, 1.0)), i + 1));
             } else if let Some(func_tuple) = env.is_func(id.as_str()) {
                 let mut params = Vec::new();
                 if tok.len() <= (i + 1) {
@@ -460,6 +462,10 @@ mod tests {
         assert_eq!(
             parse_as_string(&mut env, "1+2i"),
             "BinOp(Op(Plus), Num(1), CNum(Complex { re: 0.0, im: 2.0 }))"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "i"),
+            "CNum(Complex { re: 0.0, im: 1.0 })"
         );
     }
 

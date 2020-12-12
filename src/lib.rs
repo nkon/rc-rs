@@ -159,6 +159,12 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                         return Ok(Node::Num(nl - nr));
                     }
                 }
+                if let Node::CNum(_) = lhs {
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs) - eval_cvalue(env, &rhs)));
+                }
+                if let Node::CNum(_) = rhs {
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs) - eval_cvalue(env, &rhs)));
+                }
                 return Ok(Node::FNum(eval_fvalue(env, &lhs) - eval_fvalue(env, &rhs)));
             }
             Token::Op(TokenOp::Mul) => {
@@ -166,6 +172,12 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     if let Node::Num(nr) = rhs {
                         return Ok(Node::Num(nl * nr));
                     }
+                }
+                if let Node::CNum(_) = lhs {
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs) * eval_cvalue(env, &rhs)));
+                }
+                if let Node::CNum(_) = rhs {
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs) * eval_cvalue(env, &rhs)));
                 }
                 return Ok(Node::FNum(eval_fvalue(env, &lhs) * eval_fvalue(env, &rhs)));
             }
@@ -175,9 +187,25 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                         return Ok(Node::Num(nl / nr));
                     }
                 }
+                if let Node::CNum(_) = lhs {
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs) / eval_cvalue(env, &rhs)));
+                }
+                if let Node::CNum(_) = rhs {
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs) / eval_cvalue(env, &rhs)));
+                }
                 return Ok(Node::FNum(eval_fvalue(env, &lhs) / eval_fvalue(env, &rhs)));
             }
             Token::Op(TokenOp::Para) => {
+                if let Node::CNum(_) = lhs {
+                    let lhs = eval_cvalue(env, &lhs);
+                    let rhs = eval_cvalue(env, &rhs);
+                    return Ok(Node::CNum((lhs * rhs) / (lhs + rhs)));
+                }
+                if let Node::CNum(_) = rhs {
+                    let lhs = eval_cvalue(env, &lhs);
+                    let rhs = eval_cvalue(env, &rhs);
+                    return Ok(Node::CNum((lhs * rhs) / (lhs + rhs)));
+                }
                 let lhs = eval_fvalue(env, &lhs);
                 let rhs = eval_fvalue(env, &rhs);
                 return Ok(Node::FNum((lhs * rhs) / (lhs + rhs)));
@@ -360,6 +388,22 @@ mod tests {
         assert_eq!(
             eval_as_string(&mut env, "1+2i"),
             "CNum(Complex { re: 1.0, im: 2.0 })".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "(1+2i) - (3-5i)"),
+            "CNum(Complex { re: -2.0, im: 7.0 })".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "(1+2i) * (3-5i)"),
+            "CNum(Complex { re: 13.0, im: 1.0 })".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "(1+2i) / (1-1.0i)"),
+            "CNum(Complex { re: -0.5, im: 1.5 })".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "2 // 2i"),
+            "CNum(Complex { re: 1.0, im: 1.0 })".to_string()
         );
     }
 

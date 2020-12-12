@@ -37,7 +37,7 @@ parser
 -(1+2) -> Unary(Op(Minus), BinOp(Op(Plus), Num(1), Num(2)))
 1.2*3.4e5 -> BinOp(Op(Mul), FNum(1.2), Unary(Op(Minus), FNum(340000.0)))
 1/(2*3.14*270e-12*31.4e3) -> BinOp(Op(Div), Num(1), BinOp(Op(Mul), BinOp(Op(Mul), BinOp(Op(Mul), Num(2), FNum(3.14)), FNum(0.00000000027)), FNum(31400.0)))
-1+2+ -> Err(ParseError("unexpected end of input: src/parser.rs 279: [Num(1), Op(Plus), Num(2), Op(Plus)]"))
+1+2+ -> Err(ParseError("unexpected end of input: src/parser.rs 281: [Num(1), Op(Plus), Num(2), Op(Plus)]"))
 
 eval
 1 -> "Num(1)"
@@ -62,5 +62,5 @@ eval
 1/(2*pi*10k*4.7u) -> "FNum(3.3862753849339433)"
 sin(pi/2) -> "FNum(1.0)"
 abs(-2) -> "FNum(2.0)"
-1+2+ -> "parser error: unexpected end of input: src/parser.rs 279: [Num(1), Op(Plus), Num(2), Op(Plus)]"
+1+2+ -> "parser error: unexpected end of input: src/parser.rs 281: [Num(1), Op(Plus), Num(2), Op(Plus)]"
 1+2(3+4) -> "parser error: token left: [Num(1), Op(Plus), Num(2), Op(ParenLeft), Num(3), Op(Plus), Num(4), Op(ParenRight)] 3"
