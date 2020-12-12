@@ -15,7 +15,6 @@ pub struct Env<'a> {
     pub separate_digit: usize,
 }
 // TODO: Output floating format: fix=12345.6, sci=1.23456e4, eng=12.3456e3
-// TODO: implement exit command. need to re-construct of command interpretation.
 // TODO: implement exp() function.
 
 // Implement of functions.
@@ -169,6 +168,13 @@ fn impl_debug(env: &mut Env, arg: &[Token]) -> String {
     format!("debug({})", env.debug)
 }
 
+fn impl_exit(env: &mut Env, arg: &[Token]) -> String {
+    if env.is_debug() {
+        eprintln!("impl_exit {:?}\r", arg);
+    }
+    std::process::exit(0);
+}
+
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
         Env {
@@ -193,6 +199,7 @@ impl<'a> Env<'a> {
         self.cmd
             .insert("output_format", (impl_output_format as TypeCmd, 0));
         self.cmd.insert("debug", (impl_debug as TypeCmd, 1));
+        self.cmd.insert("exit", (impl_exit as TypeCmd, 0));
     }
 
     pub fn is_const(&mut self, key: &str) -> Option<f64> {

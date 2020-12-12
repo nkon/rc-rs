@@ -104,6 +104,21 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     Err(MyError::EvalError(format!("unknown function: {:?}", n)))
 }
 
+fn eval_command(env: &mut Env, n: &Node) -> Result<Node, MyError> {
+    if env.is_debug() {
+        eprintln!("eval_command {:?}\r", n);
+    }
+    if let Node::Command(tok, params, _result) = n {
+        if let Token::Ident(ident) = tok {
+            if let Some(cmd_tuple) = env.is_cmd(ident.as_str()) {
+                let result = cmd_tuple.0(env, params);
+                return Ok(Node::Command(tok.clone(), params.clone(), result));
+            }
+        }
+    }
+    Err(MyError::EvalError(format!("unknown command: {:?}", n)))
+}
+
 fn eval_assign(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_assign {:?}\r", n);
@@ -294,8 +309,8 @@ pub fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         Node::BinOp(_tok, _lhs, _rhs) => eval_binop(env, n),
         Node::Var(_tok) => eval_const(env, n),
         Node::Func(_tok, _params) => eval_func(env, n),
+        Node::Command(_tok, _params, _result) => eval_command(env, n),
         Node::None => Err(MyError::EvalError(format!("invalid node {:?}", n))),
-        _ => Ok(n.clone()),
     }
 }
 

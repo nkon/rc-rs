@@ -114,7 +114,7 @@ pub fn readline(env: &mut Env) {
     let mut stdout = stdout();
 
     // goto raw mode
-    write!(stdout, "Ctrl-c to exit\r\n").unwrap();
+    write!(stdout, "Ctrl-c or \"exit()\" to exit\r\n").unwrap();
     write!(stdout, "rc> ").unwrap();
     stdout.flush().unwrap();
 
@@ -206,7 +206,7 @@ pub fn readline(env: &mut Env) {
                                                 format!("{}\r\n", c).as_str(),
                                             );
                                         }
-                                        Node::Command(result) => {
+                                        Node::Command(_cmd, _params, result) => {
                                             error_print(
                                                 &mut stdout,
                                                 format!("{}\r\n", result).as_str(),
