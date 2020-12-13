@@ -31,9 +31,14 @@ rc> 0xdead_beef - 0xcafe_babe
 rc > format(10, sep3)
 rc> i^i
 0.20787957635076193+0i
-rc> exp(i*pi)
+rc> exp(i*pi)                   # Euler`s equation
 -1+0.00000000000000012246467991473532i
-rc> 
+rc> a=2                         # user defined variable
+rc> a*3
+6
+rc> defun(add, _1 + _2)         # user define function, _1,_2,...,_9 are parameters
+rc> add(10,add(2,a))            # recursive user defined function call
+14
 ```
 
 * `rc` similar to `bc`, which is a famous command line calculator.

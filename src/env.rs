@@ -16,6 +16,7 @@ pub struct Env<'a> {
     pub constant: HashMap<&'a str, Node>,
     pub variable: HashMap<String, Node>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
+    pub user_func: HashMap<String, Vec<Token>>,  // user defined function
     pub cmd: HashMap<&'a str, (TypeCmd, usize)>, // (function pointer, arg num: 0=variable)
     pub debug: bool,
     pub output_radix: u8,
@@ -24,13 +25,13 @@ pub struct Env<'a> {
 }
 
 // Implement of functions.
-fn impl_sin(env: &mut Env, arg: &[Node]) -> Node {
-    if let Node::Num(_) = arg[0] {
-        Node::FNum(eval_fvalue(env, &arg[0]).sin())
-    } else if let Node::FNum(_) = arg[0] {
-        Node::FNum(eval_fvalue(env, &arg[0]).sin())
-    } else if let Node::CNum(_) = arg[0] {
-        Node::CNum(eval_cvalue(env, &arg[0]).sin())
+fn impl_sin(_env: &mut Env, arg: &[Node]) -> Node {
+    if let Node::Num(n) = arg[0] {
+        Node::FNum((n as f64).sin())
+    } else if let Node::FNum(f) = arg[0] {
+        Node::FNum(f.sin())
+    } else if let Node::CNum(c) = arg[0] {
+        Node::CNum(c.sin())
     } else {
         Node::None
     }
@@ -257,12 +258,28 @@ fn impl_exit(env: &mut Env, arg: &[Token]) -> String {
     std::process::exit(0);
 }
 
+fn impl_defun(env: &mut Env, arg: &[Token]) -> String {
+    if env.is_debug() {
+        eprintln!("impl_defun {:?}\r", arg);
+    }
+    if let Token::Ident(id) = &arg[0] {
+        let mut implement = Vec::new();
+        for i in arg {
+            implement.push((*i).clone());
+        }
+        implement.remove(0);
+        env.new_user_func((*id).to_string(), &implement);
+    }
+    String::from("")
+}
+
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
         Env {
             constant: HashMap::new(),
             variable: HashMap::new(),
             func: HashMap::new(),
+            user_func: HashMap::new(),
             cmd: HashMap::new(),
             debug: false,
             output_radix: 10,
@@ -288,6 +305,7 @@ impl<'a> Env<'a> {
             .insert("format", (impl_output_format as TypeCmd, 0));
         self.cmd.insert("debug", (impl_debug as TypeCmd, 1));
         self.cmd.insert("exit", (impl_exit as TypeCmd, 0));
+        self.cmd.insert("defun", (impl_defun as TypeCmd, 0));
     }
 
     pub fn is_const(&mut self, key: &str) -> Option<Node> {
@@ -327,6 +345,17 @@ impl<'a> Env<'a> {
     pub fn is_cmd(&mut self, key: &str) -> Option<(TypeCmd, usize)> {
         match self.cmd.get(key) {
             Some(&f) => Some(f),
+            None => None,
+        }
+    }
+
+    fn new_user_func(&mut self, key: String, arg: &[Token]) {
+        self.user_func.insert(key, arg.to_vec());
+    }
+
+    pub fn is_user_func(&mut self, key: String) -> Option<Vec<Token>> {
+        match self.user_func.get(&key) {
+            Some(v) => Some(v.clone()),
             None => None,
         }
     }

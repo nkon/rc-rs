@@ -73,6 +73,23 @@ fn eval_const(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     )))
 }
 
+fn node_to_token(n: Node) -> Vec<Token> {
+    match n {
+        Node::Num(n) => vec![Token::Num(n)],
+        Node::FNum(f) => vec![Token::FNum(f)],
+        Node::CNum(c) => vec![
+            Token::Op(TokenOp::ParenLeft),
+            Token::FNum(c.re),
+            Token::Op(TokenOp::Plus),
+            Token::FNum(c.im),
+            Token::Op(TokenOp::Mul),
+            Token::Ident("i".to_owned()),
+            Token::Op(TokenOp::ParenRight),
+        ],
+        _ => Vec::new(),
+    }
+}
+
 fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_func {:?}\r", n);
@@ -86,6 +103,101 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     params.push(param_value);
                 }
                 return Ok(func_tuple.0(env, &params));
+            }
+            if let Some(tokens) = env.is_user_func((*ident).clone()) {
+                let mut params: Vec<Node> = Vec::new();
+                for i in param {
+                    let param_value = eval(env, &i)?;
+                    params.push(param_value);
+                }
+                let mut new_tokens: Vec<Token> = Vec::new();
+                for t in tokens {
+                    match t {
+                        Token::Ident(id) => {
+                            if id == "_1" {
+                                if params.is_empty() {
+                                    return Err(MyError::EvalError(format!(
+                                        "no parameter {:?}",
+                                        new_tokens
+                                    )));
+                                }
+                                new_tokens.append(&mut node_to_token(params[0].clone()));
+                            } else if id == "_2" {
+                                if params.len() < 2 {
+                                    return Err(MyError::EvalError(format!(
+                                        "no parameter {:?}",
+                                        new_tokens
+                                    )));
+                                }
+                                new_tokens.append(&mut node_to_token(params[1].clone()));
+                            } else if id == "_3" {
+                                if params.len() < 3 {
+                                    return Err(MyError::EvalError(format!(
+                                        "no parameter {:?}",
+                                        new_tokens
+                                    )));
+                                }
+                                new_tokens.append(&mut node_to_token(params[2].clone()));
+                            } else if id == "_4" {
+                                if params.len() < 4 {
+                                    return Err(MyError::EvalError(format!(
+                                        "no parameter {:?}",
+                                        new_tokens
+                                    )));
+                                }
+                                new_tokens.append(&mut node_to_token(params[3].clone()));
+                            } else if id == "_5" {
+                                if params.len() < 5 {
+                                    return Err(MyError::EvalError(format!(
+                                        "no parameter {:?}",
+                                        new_tokens
+                                    )));
+                                }
+                                new_tokens.append(&mut node_to_token(params[4].clone()));
+                            } else if id == "_6" {
+                                if params.len() < 6 {
+                                    return Err(MyError::EvalError(format!(
+                                        "no parameter {:?}",
+                                        new_tokens
+                                    )));
+                                }
+                                new_tokens.append(&mut node_to_token(params[5].clone()));
+                            } else if id == "_7" {
+                                if params.len() < 7 {
+                                    return Err(MyError::EvalError(format!(
+                                        "no parameter {:?}",
+                                        new_tokens
+                                    )));
+                                }
+                                new_tokens.append(&mut node_to_token(params[6].clone()));
+                            } else if id == "_8" {
+                                if params.len() < 8 {
+                                    return Err(MyError::EvalError(format!(
+                                        "no parameter {:?}",
+                                        new_tokens
+                                    )));
+                                }
+                                new_tokens.append(&mut node_to_token(params[7].clone()));
+                            } else if id == "_9" {
+                                if params.len() < 9 {
+                                    return Err(MyError::EvalError(format!(
+                                        "no parameter {:?}",
+                                        new_tokens
+                                    )));
+                                }
+                                new_tokens.append(&mut node_to_token(params[8].clone()));
+                            }
+                        }
+                        _ => {
+                            new_tokens.push(t);
+                        }
+                    }
+                }
+                if env.is_debug() {
+                    eprintln!("eval_func re-wrote tokens: {:?}\r", new_tokens);
+                }
+                let func_node = parse(env, &new_tokens)?;
+                return eval(env, &func_node);
             }
         }
     }
@@ -444,6 +556,15 @@ mod tests {
             eval_as_string(&mut env, "-pi"),
             "FNum(-3.141592653589793)".to_string()
         );
+        eval_as_string(&mut env, "defun(double, 2*_1)");
+        assert_eq!(eval_as_string(&mut env, "double(2)"), "Num(4)".to_string());
+        assert_eq!(
+            eval_as_string(&mut env, "double(double(2))"),
+            "Num(8)".to_string()
+        );
+        eval_as_string(&mut env, "defun(add, _1+_2)");
+        assert_eq!(eval_as_string(&mut env, "add(2,3)"), "Num(5)".to_string());
+        assert_eq!(eval_as_string(&mut env, "add(2,a)"), "Num(3)".to_string());
     }
 
     #[test]

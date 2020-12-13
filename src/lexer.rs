@@ -288,7 +288,7 @@ pub fn lexer(s: String) -> Result<Vec<Token>, MyError> {
                 ret.push(Token::Op(TokenOp::Equal));
                 i += 1;
             }
-            'a'..='z' | 'A'..='Z' => {
+            'a'..='z' | 'A'..='Z' | '_' => {
                 let (tk, j) = tok_ident(&chars, i);
                 i = j;
                 ret.push(tk);

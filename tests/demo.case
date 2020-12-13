@@ -7,3 +7,7 @@ format(sep4)
 format(10, sep3)
 i^i
 exp(i*pi)
+a=2
+a*3
+defun(add, _1 + _2)
+add(10,add(2,a))

@@ -182,6 +182,43 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                         tok, i
                     )));
                 }
+            } else if let Some(_tokens) = env.is_user_func((*id).clone()) {
+                let mut params = Vec::new();
+                if tok.len() <= (i + 1) {
+                    return Err(MyError::ParseError(format!(
+                        "function has no parameter: {:?} {}",
+                        tok, i
+                    )));
+                } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
+                    i += 2;
+                    while i < tok.len() {
+                        if tok[i] == Token::Op(TokenOp::ParenRight) {
+                            return Ok((Node::Func(Token::Ident(id.clone()), params), i + 1));
+                        } else if tok[i] == Token::Op(TokenOp::Comma) {
+                            i += 1;
+                            continue;
+                        } else if let Ok((t, j)) = expr(env, tok, i) {
+                            i = j;
+                            params.push(t);
+                        } else {
+                            return Err(MyError::ParseError(format!(
+                                "function parameter: {:?} {}",
+                                tok, i
+                            )));
+                        }
+                    }
+                    if tok.len() <= i {
+                        return Err(MyError::ParseError(format!(
+                            "function has no ')': {:?} {}",
+                            tok, i
+                        )));
+                    }
+                } else {
+                    return Err(MyError::ParseError(format!(
+                        "function has no '(': {:?} {}",
+                        tok, i
+                    )));
+                }
             } else if let Some(cmd_tuple) = env.is_cmd(id.as_str()) {
                 let mut params = Vec::new();
                 if tok.len() <= (i + 1) {
@@ -358,7 +395,6 @@ fn assign(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErr
 /// env.built_in();
 /// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_string()).unwrap())).unwrap()),"BinOp(Op(Plus), Num(1), Num(2))");
 /// ```
-// TODO: user define function
 // TODO: multiple expression
 pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, MyError> {
     let (node, i) = assign(env, &tok, 0)?;
