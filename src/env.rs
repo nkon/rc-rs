@@ -163,10 +163,9 @@ pub fn output_format_num(env: &mut Env, n: i128) -> String {
 }
 
 pub fn output_format_float(env: &mut Env, f: f64) -> String {
-    let float_string: String;
     match env.float_format {
         FloatFormat::Fix => {
-            float_string = format!("{}", f);
+            format!("{}", f)
         }
         FloatFormat::Sci => {
             let mut exponent = 0;
@@ -179,7 +178,7 @@ pub fn output_format_float(env: &mut Env, f: f64) -> String {
                 mantissa *= 10.0;
                 exponent -= 1;
             }
-            float_string = format!("{}e{}", mantissa, exponent);
+            format!("{}e{}", mantissa, exponent)
         }
         FloatFormat::Eng => {
             let mut exponent = 0;
@@ -193,29 +192,28 @@ pub fn output_format_float(env: &mut Env, f: f64) -> String {
                 exponent -= 3;
             }
             if exponent == 0 {
-                float_string = format!("{}", mantissa);
+                format!("{}", mantissa)
             } else if exponent == 3 {
-                float_string = format!("{}k", mantissa);
+                format!("{}k", mantissa)
             } else if exponent == 6 {
-                float_string = format!("{}M", mantissa);
+                format!("{}M", mantissa)
             } else if exponent == 9 {
-                float_string = format!("{}G", mantissa);
+                format!("{}G", mantissa)
             } else if exponent == 12 {
-                float_string = format!("{}T", mantissa);
+                format!("{}T", mantissa)
             } else if exponent == -3 {
-                float_string = format!("{}m", mantissa);
+                format!("{}m", mantissa)
             } else if exponent == -6 {
-                float_string = format!("{}u", mantissa);
+                format!("{}u", mantissa)
             } else if exponent == -9 {
-                float_string = format!("{}n", mantissa);
+                format!("{}n", mantissa)
             } else if exponent == -12 {
-                float_string = format!("{}p", mantissa);
+                format!("{}p", mantissa)
             } else {
-                float_string = format!("{}e{}", mantissa, exponent);
+                format!("{}e{}", mantissa, exponent)
             }
         }
     }
-    float_string
 }
 
 fn impl_debug(env: &mut Env, arg: &[Token]) -> String {
