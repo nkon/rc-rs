@@ -192,7 +192,9 @@ pub fn output_format_float(env: &mut Env, f: f64) -> String {
                 mantissa *= 1000.0;
                 exponent -= 3;
             }
-            if exponent == 3 {
+            if exponent == 0 {
+                float_string = format!("{}", mantissa);
+            } else if exponent == 3 {
                 float_string = format!("{}k", mantissa);
             } else if exponent == 6 {
                 float_string = format!("{}M", mantissa);
