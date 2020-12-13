@@ -25,7 +25,15 @@ pub struct Env<'a> {
 
 // Implement of functions.
 fn impl_sin(env: &mut Env, arg: &[Node]) -> Node {
-    Node::FNum(eval_fvalue(env, &arg[0]).sin())
+    if let Node::Num(_) = arg[0] {
+        Node::FNum(eval_fvalue(env, &arg[0]).sin())
+    } else if let Node::FNum(_) = arg[0] {
+        Node::FNum(eval_fvalue(env, &arg[0]).sin())
+    } else if let Node::CNum(_) = arg[0] {
+        Node::CNum(eval_cvalue(env, &arg[0]).sin())
+    } else {
+        Node::None
+    }
 }
 
 fn impl_exp(_env: &mut Env, arg: &[Node]) -> Node {
