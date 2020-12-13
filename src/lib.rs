@@ -113,7 +113,7 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                 let mut new_tokens: Vec<Token> = Vec::new();
                 for t in tokens {
                     match t {
-                        Token::Ident(id) => {
+                        Token::Ident(ref id) => {
                             if id == "_1" {
                                 if params.is_empty() {
                                     return Err(MyError::EvalError(format!(
@@ -186,6 +186,8 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                                     )));
                                 }
                                 new_tokens.append(&mut node_to_token(params[8].clone()));
+                            } else {
+                                new_tokens.push(t);
                             }
                         }
                         _ => {
@@ -565,6 +567,9 @@ mod tests {
         eval_as_string(&mut env, "defun(add, _1+_2)");
         assert_eq!(eval_as_string(&mut env, "add(2,3)"), "Num(5)".to_string());
         assert_eq!(eval_as_string(&mut env, "add(2,a)"), "Num(3)".to_string());
+        eval_as_string(&mut env, "defun(plus_a, a+_1)");
+        eval_as_string(&mut env, "a=5");
+        assert_eq!(eval_as_string(&mut env, "plus_a(8)"), "Num(13)".to_string());
     }
 
     #[test]
