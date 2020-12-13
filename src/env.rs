@@ -5,6 +5,13 @@ use std::str;
 pub type TypeFn = fn(&mut Env, &[Node]) -> Node;
 pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
 
+#[derive(Debug)]
+pub enum FloatFormat {
+    Fix,
+    Sci,
+    Eng,
+}
+
 pub struct Env<'a> {
     pub constant: HashMap<&'a str, Node>,
     pub variable: HashMap<String, Node>,
@@ -13,8 +20,8 @@ pub struct Env<'a> {
     pub debug: bool,
     pub output_radix: u8,
     pub separate_digit: usize,
+    pub float_format: FloatFormat,
 }
-// TODO: Output floating format: fix=12345.6, sci=1.23456e4, eng=12.3456e3
 
 // Implement of functions.
 fn impl_sin(env: &mut Env, arg: &[Node]) -> Node {
@@ -64,7 +71,7 @@ fn impl_output_format(env: &mut Env, arg: &[Token]) -> String {
     }
     if arg.is_empty() {
         return format!(
-            "output_format(radix = {}, separate = {})",
+            "format(radix = {}, separate = {})",
             env.output_radix, env.separate_digit
         );
     }
@@ -92,6 +99,12 @@ fn impl_output_format(env: &mut Env, arg: &[Token]) -> String {
                     env.separate_digit = 4;
                 } else if id == "sep0" {
                     env.separate_digit = 0;
+                } else if id == "sci" {
+                    env.float_format = FloatFormat::Sci;
+                } else if id == "eng" {
+                    env.float_format = FloatFormat::Eng;
+                } else if id == "fix" {
+                    env.float_format = FloatFormat::Fix;
                 } else {
                 }
             }
@@ -99,8 +112,8 @@ fn impl_output_format(env: &mut Env, arg: &[Token]) -> String {
         }
     }
     format!(
-        "output_format(radix = {}, separate = {})",
-        env.output_radix, env.separate_digit
+        "format(radix = {}, separate = {}, float = {:?})",
+        env.output_radix, env.separate_digit, env.float_format,
     )
 }
 
@@ -149,6 +162,60 @@ pub fn output_format_num(env: &mut Env, n: i128) -> String {
     num_string
 }
 
+pub fn output_format_float(env: &mut Env, f: f64) -> String {
+    let float_string: String;
+    match env.float_format {
+        FloatFormat::Fix => {
+            float_string = format!("{}", f);
+        }
+        FloatFormat::Sci => {
+            let mut exponent = 0;
+            let mut mantissa = f;
+            while mantissa >= 10.0 {
+                mantissa /= 10.0;
+                exponent += 1;
+            }
+            while mantissa < 1.0 {
+                mantissa *= 10.0;
+                exponent -= 1;
+            }
+            float_string = format!("{}e{}", mantissa, exponent);
+        }
+        FloatFormat::Eng => {
+            let mut exponent = 0;
+            let mut mantissa = f;
+            while mantissa >= 1000.0 {
+                mantissa /= 1000.0;
+                exponent += 3;
+            }
+            while mantissa < 1.0 {
+                mantissa *= 1000.0;
+                exponent -= 3;
+            }
+            if exponent == 3 {
+                float_string = format!("{}k", mantissa);
+            } else if exponent == 6 {
+                float_string = format!("{}M", mantissa);
+            } else if exponent == 9 {
+                float_string = format!("{}G", mantissa);
+            } else if exponent == 12 {
+                float_string = format!("{}T", mantissa);
+            } else if exponent == -3 {
+                float_string = format!("{}m", mantissa);
+            } else if exponent == -6 {
+                float_string = format!("{}u", mantissa);
+            } else if exponent == -9 {
+                float_string = format!("{}n", mantissa);
+            } else if exponent == -12 {
+                float_string = format!("{}p", mantissa);
+            } else {
+                float_string = format!("{}e{}", mantissa, exponent);
+            }
+        }
+    }
+    float_string
+}
+
 fn impl_debug(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
         eprintln!("impl_debug {:?}\r", arg);
@@ -166,7 +233,7 @@ fn impl_debug(env: &mut Env, arg: &[Token]) -> String {
         Token::Ident(id) => {
             if id == "on" || id == "true" {
                 env.debug = true;
-            } else if id == "off" || id == "faluse" {
+            } else if id == "off" || id == "false" {
                 env.debug = false;
             }
         }
@@ -192,6 +259,7 @@ impl<'a> Env<'a> {
             debug: false,
             output_radix: 10,
             separate_digit: 0,
+            float_format: FloatFormat::Fix,
         }
     }
 
@@ -209,7 +277,7 @@ impl<'a> Env<'a> {
         self.func.insert("max", (impl_max as TypeFn, 0));
         self.func.insert("ave", (impl_ave as TypeFn, 0));
         self.cmd
-            .insert("output_format", (impl_output_format as TypeCmd, 0));
+            .insert("format", (impl_output_format as TypeCmd, 0));
         self.cmd.insert("debug", (impl_debug as TypeCmd, 1));
         self.cmd.insert("exit", (impl_exit as TypeCmd, 0));
     }
@@ -267,5 +335,30 @@ impl<'a> Env<'a> {
 impl Default for Env<'_> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_num() {
+        let mut env = Env::new();
+        assert_eq!(output_format_num(&mut env, 1), "1".to_string());
+        env.separate_digit = 4;
+        assert_eq!(
+            output_format_num(&mut env, 12345678),
+            "1234_5678".to_string()
+        );
+    }
+    #[test]
+    fn test_format_float() {
+        let mut env = Env::new();
+        assert_eq!(output_format_float(&mut env, 1.23), "1.23".to_string());
+        env.float_format = FloatFormat::Sci;
+        assert_eq!(output_format_float(&mut env, 1e10), "1e10".to_string());
+        env.float_format = FloatFormat::Eng;
+        assert_eq!(output_format_float(&mut env, 1e10), "10G".to_string());
     }
 }

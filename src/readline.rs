@@ -198,7 +198,8 @@ pub fn readline(env: &mut Env) {
                                             Node::FNum(f) => {
                                                 result_print(
                                                     &mut stdout,
-                                                    format!("{}\r\n", f).as_str(),
+                                                    format!("{}\r\n", output_format_float(env, f))
+                                                        .as_str(),
                                                 );
                                             }
                                             Node::CNum(c) => {

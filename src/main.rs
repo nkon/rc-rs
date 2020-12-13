@@ -101,4 +101,3 @@ fn main() {
 // TODO: load command
 // TODO: online help
 // TODO: complex functions
-// TODO: improve num handling(Num, FNum, CNum)
