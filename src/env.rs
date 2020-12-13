@@ -307,6 +307,7 @@ impl<'a> Env<'a> {
         self.cmd.insert("exit", (impl_exit as TypeCmd, 0));
         self.cmd.insert("defun", (impl_defun as TypeCmd, 0));
     }
+    // TODO: "ans" variable
 
     pub fn is_const(&mut self, key: &str) -> Option<Node> {
         match self.constant.get(key) {
