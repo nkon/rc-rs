@@ -100,3 +100,4 @@ fn main() {
 // TODO: load history, history command
 // TODO: load command
 // TODO: online help
+// TODO: map
