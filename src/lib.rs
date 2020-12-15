@@ -90,6 +90,8 @@ fn node_to_token(n: Node) -> Vec<Token> {
     }
 }
 
+// TODO: command does not use '(', ')'.
+// TODO: refactor to separate functions.
 fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_func {:?}\r", n);

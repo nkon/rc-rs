@@ -18,7 +18,7 @@ fn main() {
     opts.optflag("h", "help", "print this help");
     opts.optflag("d", "debug", "debug mode");
     opts.optflag("", "test", "run built-in test");
-    opts.optopt("r", "init_file", "rc file path", "rc_file");
+    opts.optopt("r", "init", "rc file path", "rc_file");
     opts.optmulti("s", "script", "run script", "FILE");
     opts.optflag("v", "version", "version");
 
@@ -99,5 +99,6 @@ fn main() {
 
 // TODO: load history, history command
 // TODO: load command
-// TODO: online help
-// TODO: map
+// TODO: online help, refer `HELP.md`.
+// TODO: `func`, `const`, `var`, `defun`, `command` command. list current defined identifiers.
+// TODO: map -> graph

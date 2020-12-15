@@ -1,7 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-![README-j.md](README-j.md)
-
 Table of Contents
 -----------------
 
@@ -41,8 +39,6 @@ rc> a*3
 rc> defun(add, _1 + _2)         # user define function, _1,_2,...,_9 are parameters
 rc> add(10,add(2,a))            # recursive user defined function call
 14
-rc> exit()                      # exit REPL, Ctrl-c to exit as well.
-$
 ```
 
 * `rc` similar to `bc`, which is a famous command line calculator.

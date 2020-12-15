@@ -45,6 +45,7 @@ fn impl_exp(_env: &mut Env, arg: &[Node]) -> Node {
     )
 }
 
+// TODO: abs supports complex number.
 fn impl_abs(env: &mut Env, arg: &[Node]) -> Node {
     Node::FNum(eval_fvalue(env, &arg[0]).abs())
 }
