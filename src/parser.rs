@@ -21,6 +21,7 @@ pub enum Node {
     Command(Token, Vec<Token>, String),
 }
 
+// TODO: macro -> function. normal error message does not need `file!()` and `line!()`.
 macro_rules! tok_check_index {
     ($tok:expr, $i:expr) => {
         if $tok.len() <= $i {

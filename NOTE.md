@@ -21,7 +21,15 @@ Table of Contents
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 
-## Lexer
+## 目的___
+
+
+自分の用途のため
+
+解説。テーマごとに分けたほうが良いが。
+
+
+## Lexer___
 
 1行入力として`String`を受け取り、それをトークン列に分解し`Result<Vec<Token>, String>`を返す。
 
@@ -43,7 +51,7 @@ Lexerの特徴として、`-100`を、単項演算子`-`と整数リテラル（
 
 実装としては、いったん入力を`Vec<char>`に変換してインデックスでアクセスする。Iteratorを使わない。この方が型修飾を減らしてCっぽく実装できる。また、インデックスは`&mut`で受け取らず、コピー渡しの引数で受取、タプルによって更新値を返す。このスタイルはRust API Guidelineの[C-NO-OUT](https://sinkuu.github.io/api-guidelines/predictability.html#c-no-out)からも要請されている。
 
-## Parser
+## Parser___
 
 パーサと評価系は再帰がすべて。手書きの再帰降順パーサを用いてトークン列をASTに変換し、ASTを再帰的に辿って値を決定する。文法と評価ツリーのトラバースがしっかりと設計できていれば、自分の予想外のことまでうまくいく。単純な再帰ではなく、複数の関数の間を循環するような再帰になっているので、どこに再帰させるかを間違えないようにだけ注意が必要。
 
@@ -61,13 +69,88 @@ pub enum Node {
 }
 ```
 
-### Enum
+### 整数・浮動小数点数・複素数___
+
+
+
+
+### Enum___
 
 当初、Cでの類似の実装経験から、Node構造体などをStructで表し、Node.Typeといったメンバー変数で処理を分岐するように書いていた。Rustらしく、そういったタグでの分岐をEnumの型タグによる分岐にまとめてみた。処理漏れもなくなるし、余計な初期化や分岐も無くなった。短くて情報量が多い、なんというか「力強い」コードになる。Enumの威力を実感した。しかし、最初の実装を慣れているStructで行い、ロジックのバグを潰しておいたから、Enumのコードがスムーズに導入できたようにも思う。Enumに慣れていなかったら、パーサのバグとEnumの使いこなしの両方を同時にするのは大変だっただろう。
 
-## Eval
+## Eval___
 
 Parserが返したASTを再帰的にevalすることで計算結果を得る。
+
+### 複素数演算
+
+複素演算を実装するには、プログラミングだけでなく、複素演算自体の知識も必要となる。ただし、今回の実装では精度を追い求めることはせず、ライブラリ関数を全面的に信用してそれを利用することにする。
+
+rustでは`use num_complex::Complex64;`とすれば、`(re: f64, im: f64)`と言う形の複素数、およびそれらを引数にとる複素関数を使うことができる。
+
+複素数演算の基本はべき乗関数（`power()`）である。これはライブラリにあるので、引数の型（正整数、整数、浮動小数点数、複素数）に会わせて呼んでやるだけで良い。`TokenOp::Hat`がべき乗演算子（`^`）なので、次のようになる。場合分けが煩雑だが仕方がない。
+
+```rust
+    if let Node::BinOp(tok, lhs, rhs) = n {
+        let lhs = eval(env, lhs)?;
+        let rhs = eval(env, rhs)?;
+        match tok {
+// .....................中略.......................
+            Token::Op(TokenOp::Hat) => {
+                if let Node::Num(nr) = rhs {
+                    if let Node::Num(nl) = lhs {
+                        if nr > 0 {
+                            return Ok(Node::Num(nl.pow(nr as u32)));
+                        } else {
+                            return Ok(Node::FNum((nl as f64).powi(nr as i32)));
+                        }
+                    } else if let Node::FNum(nl) = lhs {
+                        return Ok(Node::FNum(nl.powi(nr as i32)));
+                    } else if let Node::CNum(nl) = lhs {
+                        return Ok(Node::CNum(nl.powi(nr as i32)));
+                    }
+                } else if let Node::FNum(nr) = rhs {
+                    if let Node::Num(nl) = lhs {
+                        return Ok(Node::FNum((nl as f64).powf(nr)));
+                    } else if let Node::FNum(nl) = lhs {
+                        return Ok(Node::FNum(nl.powf(nr)));
+                    } else if let Node::CNum(nl) = lhs {
+                        return Ok(Node::CNum(nl.powf(nr)));
+                    }
+                } else if let Node::CNum(nr) = rhs {
+                    if let Node::Num(nl) = lhs {
+                        return Ok(Node::CNum(Complex64::new(nl as f64, 0.0).powc(nr)));
+                    } else if let Node::FNum(nl) = lhs {
+                        return Ok(Node::CNum(Complex64::new(nl, 0.0).powc(nr)));
+                    } else if let Node::CNum(nl) = lhs {
+                        return Ok(Node::CNum(nl.powc(nr)));
+                    }
+                }
+                return Ok(Node::Num(0));
+            }
+        }
+    }
+```
+
+
+浮動小数点のべき乗が計算できるようになれば、世界でもっとも美しいと言われているオイラーの等式（Euler's Identity）を計算してみたくなるだろう。
+
+```
+rc> exp(i * pi)
+-1+0.00000000000000012246467991473532i
+```
+
+虚数部に多少の計算誤差はあるが、`-1`という結果を得られた。
+
+もうひとつ計算してみたいものが、`i^i`だ。虚数単位の`i`を、虚数単位乗したもの。一目見たところ複雑に見えるが、答えは実数になる。`exp(log(z)) = z`と定義することができるので、`a^b = exp(b * log(a))` と定義することができる。`log(i)`の主値が`(1/2) * pi * i`なので`i * log(i)`の値の1つは`-(1/2) * pi`。よって`i^i = exp(-pi/2)`が解の1つである。これは実数。実際に計算してみた。
+
+```
+rc> i^i
+0.20787957635076193+0i
+```
+
+虚数の虚数乗が実数というだけでなく、字面としても`i^i`は顔文字見たいでおもしろいし、高校数学の知識で計算することができる。読み方も「あいのあいじょう」となかなか良い。
+
 
 ## MyError
 
@@ -167,15 +250,36 @@ fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
 自前のエラー型を定義して、標準のエラー型からの`From`を定義することのメリットは`?`が使えること。つまり、エラー処理を呼び出し側に放り投げる形のショートカットリターンが使えること。つまり、関数を`Result<T,MyError>`を返すように定義しておけば、ライブラリがエラーを発生した場合はライブラリのエラーから`MyError`に`From`によって変換してリータンできる。もちろん、自前のエラーは`MyError`なので、それもリターンできる。いずれも、呼び出し側でエラー処理を行わなければならない。
 
 
-## Command
+## Command___
 
 計算の実行では無く、アプリの動作を変更したいときなどに「コマンド」が用意されている。たとえばデバッグ設定の変更や出力フォーマットの変更などだ。
 
-実装上の都合だが、CommandはFunctionと同じ構文をとるが、パーサの段階で（Evalを通ることなく）実行されるようにした。
+## システム定義定数___
 
-## オブジェクト指向
+
+
+## ユーザ定義変数___
+
+
+
+## システム定義関数___
+
+
+### `exp()`___
+
+マクロとしての実装
+
+## ユーザ定義関数___
+
+引数をマクロ的に展開。
+スタック不要で再帰呼出しが可能。引数の数が限られる。
+
+
+## オブジェクト指向___
 
 今回は、インタプリタ全体の動作を決定する情報を `struct Env`にまとめ、`&mut env`として必要な関数には引数として渡すようにした。これを、`&mut self`として渡すとオブジェクト指向になる。やってることは同じだが、見た目と書く手間のバランスだ。
+
+### ライフタイム___
 
 ## ファイル分割
 
@@ -184,7 +288,94 @@ fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
 
 ## 端末制御
 
-別のプロジェクトでは `termion`を使っていたが、`rc`では、Windowsとのクロスプラットフォーム性を重視して`crossterm`を用いるようにした。依存するクレートは増えるがLinuxでもWindowsでも動作するし、こちらのほうがより多機能だ。書き方は異なるが使い方は似ている。当然であるが、内部のデータ構造の編集操作と、表示部分やイベントハンドリングを分けておくのがコツ。移植性のためだけでなく、編集操作を分けておくとユニットテストもやりやすい。
+別のプロジェクトでは [`termion`](https://docs.rs/termion/1.5.5/termion/)を使っていた。しかしLinuxとmacOSだけでWindowsのサポートはない。`rc`では、Windowsとのクロスプラットフォーム性を重視して[`crossterm`](https://github.com/crossterm-rs/crossterm)を用いるようにした。依存するクレートは増えるがLinuxでもWindowsでも動作する。さらに、こちらのほうがより多機能だ。書き方は異なるが使い方は似ている。
+
+当然であるが、内部のデータ構造の編集操作と、表示部分やイベントハンドリングを分けておくのがコツ。移植性のためだけでなく、編集操作を分けておくとユニットテストもやりやすい。
+
+
+RAWモードに入る。
+
+```rust
+    enable_raw_mode().unwrap();
+```
+
+エスケープシーケンスの出力。outputというストリーム（Write Traitを持つ）に対して`queue!`でエスケープ文字をバッファー出力し、最終的に`flush()`する。
+
+```rust
+fn result_print<W>(output: &mut W, s: &str)
+where
+    W: Write,
+{
+    queue!(
+        output,
+        style::SetAttribute(style::Attribute::Bold),
+        style::SetForegroundColor(style::Color::Yellow),
+        style::Print(s),
+        style::SetAttribute(style::Attribute::Reset),
+    )
+    .unwrap();
+    output.flush().unwrap();
+}
+```
+
+キー入力は`read()`で読み取り、`Event::Key(keyev)`で`match`させる。マウス入力もキャッチできる。
+
+```rust
+    loop {
+        let event = read().unwrap();
+        // println!("Event::{:?}\r", event);
+
+        if let Event::Key(keyev) = event {
+```
+
+## コマンドラインオプション
+
+コマンドラインオプションを処理するために使われるライブラリとして[`getopts`](https://docs.rs/getopts/0.2.21/getopts/)と[`clap`](https://docs.rs/clap/2.33.3/clap/)が広く知られている。今回はそれほど複雑でないので[`getopts`](https://docs.rs/getopts/0.2.21/getopts/)を用いた。
+
+`let mut opts = Options::new();`でオプションオブジェクトを作り、`opts.optflag()`などのメソッドでオプションを定義していく。その後、`opts.parse(&args[1..])`で引数を解析させ、`match`でオプションが指定されていた時の処理を実装していく。
+
+通常`--version`などのオプションでプログラムのバージョンを表示できるようにする。それらを自動的に手際よく処理する方法がある。`cargo`ではビルド時にいろいろな環境変数が設定されるが、`Cargo.toml`の中で定義した`semver`が`CARGO_PKG_VERSION`という環境変数にセットされる。それを用いれば、コード中にバージョンを手動で定義しなくても`Cargo.toml`のバージョンを引っ張ってくることができる。ただし、`Cargo.toml`の`semver`も手動定義だ。gitのHash値をバージョン名に含めれば、それは自動的に一意となる。`build.rs`で`git rev-parse`などのコマンドを実行し、`git_commit_hash.txt`というファイルに保存しておく。コード中では`include!()`でそれを取り込めば、自動的に一意なバージョン識別子が得られる。
+
+`build.rs`
+```rust
+use std::fs::File;
+use std::io::Write;
+use std::process::Command;
+
+fn main() {
+    let commit_hash = Command::new("git")
+        .args(&["rev-parse", "HEAD"])
+        .output()
+        .expect("failed to execute command \"git rev-parse HEAD\"");
+    let dest_path = format!("{}/src/git_commit_hash.txt", env!("CARGO_MANIFEST_DIR"));
+    let mut f = File::create(&dest_path).unwrap();
+    f.write_all(
+        format!(
+            "\"{}\"",
+            String::from_utf8(commit_hash.stdout.to_vec())
+                .unwrap()
+                .replace("\n", "")
+        )
+        .as_bytes(),
+    )
+    .unwrap();
+}
+```
+
+```rust
+    if matches.opt_present("v") {
+        let version = env!("CARGO_PKG_VERSION");
+        let git_commit_hash = include!("git_commit_hash.txt");
+        println!("{} {}-{}", program, version, git_commit_hash);
+        std::process::exit(0);
+    }
+```
+
+参照: [https://matsu7874.hatenablog.com/entry/2019/12/24/080000](https://matsu7874.hatenablog.com/entry/2019/12/24/080000)
+
+[`git-version`](https://docs.rs/git-version/0.3.4/git_version/)というクレートも同様の目的のようだ。
+
+
 
 ## テスト
 
