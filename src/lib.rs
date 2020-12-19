@@ -590,6 +590,10 @@ mod tests {
             eval_as_string(&mut env, "sqrt(2i)"),
             "CNum(Complex { re: 1.0000000000000002, im: 1.0 })".to_string()
         );
+        assert_eq!(
+            eval_as_string(&mut env, "arg(1+i)"),
+            "FNum(0.7853981633974483)".to_string()
+        );
     }
 
     #[test]

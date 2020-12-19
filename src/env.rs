@@ -57,6 +57,18 @@ fn impl_abs(_env: &mut Env, arg: &[Node]) -> Node {
     }
 }
 
+fn impl_arg(_env: &mut Env, arg: &[Node]) -> Node {
+    if let Node::Num(_) = arg[0] {
+        Node::FNum(0.0)
+    } else if let Node::FNum(_) = arg[0] {
+        Node::FNum(0.0)
+    } else if let Node::CNum(c) = &arg[0] {
+        Node::FNum(c.arg())
+    } else {
+        Node::None
+    }
+}
+
 fn impl_sqrt(_env: &mut Env, arg: &[Node]) -> Node {
     Node::BinOp(
         Token::Op(TokenOp::Hat),
@@ -315,6 +327,7 @@ impl<'a> Env<'a> {
         self.func.insert("sin", (impl_sin as TypeFn, 1));
         self.func.insert("exp", (impl_exp as TypeFn, 1));
         self.func.insert("abs", (impl_abs as TypeFn, 1));
+        self.func.insert("arg", (impl_arg as TypeFn, 1));
         self.func.insert("max", (impl_max as TypeFn, 0));
         self.func.insert("ave", (impl_ave as TypeFn, 0));
         self.func.insert("sqrt", (impl_sqrt as TypeFn, 1));
