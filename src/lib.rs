@@ -35,6 +35,7 @@ pub enum MyError {
     EvalError(String),
 }
 
+// TODO: prevent panic when unexpected input.
 pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
     match n {
         Node::Num(n) => *n as f64,
@@ -572,6 +573,15 @@ mod tests {
         eval_as_string(&mut env, "defun(plus_a, a+_1)");
         eval_as_string(&mut env, "a=5");
         assert_eq!(eval_as_string(&mut env, "plus_a(8)"), "Num(13)".to_string());
+        assert_eq!(eval_as_string(&mut env, "abs(-2)"), "FNum(2.0)".to_string());
+        assert_eq!(
+            eval_as_string(&mut env, "abs(-2.5)"),
+            "FNum(2.5)".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "abs(1+i)"),
+            "FNum(1.4142135623730951)".to_string()
+        );
     }
 
     #[test]

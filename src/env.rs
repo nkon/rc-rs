@@ -45,9 +45,16 @@ fn impl_exp(_env: &mut Env, arg: &[Node]) -> Node {
     )
 }
 
-// TODO: abs supports complex number.
-fn impl_abs(env: &mut Env, arg: &[Node]) -> Node {
-    Node::FNum(eval_fvalue(env, &arg[0]).abs())
+fn impl_abs(_env: &mut Env, arg: &[Node]) -> Node {
+    if let Node::Num(n) = arg[0] {
+        Node::FNum((n as f64).abs())
+    } else if let Node::FNum(f) = arg[0] {
+        Node::FNum(f.abs())
+    } else if let Node::CNum(c) = &arg[0] {
+        Node::FNum(c.norm())
+    } else {
+        Node::None
+    }
 }
 
 fn impl_max(env: &mut Env, arg: &[Node]) -> Node {
