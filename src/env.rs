@@ -57,6 +57,27 @@ fn impl_abs(_env: &mut Env, arg: &[Node]) -> Node {
     }
 }
 
+fn impl_sqrt(_env: &mut Env, arg: &[Node]) -> Node {
+    match &arg[0] {
+        Node::Num(n) => Node::BinOp(
+            Token::Op(TokenOp::Hat),
+            Box::new(Node::Num(*n)),
+            Box::new(Node::FNum(0.5)),
+        ),
+        Node::FNum(f) => Node::BinOp(
+            Token::Op(TokenOp::Hat),
+            Box::new(Node::FNum(*f)),
+            Box::new(Node::FNum(0.5)),
+        ),
+        Node::CNum(c) => Node::BinOp(
+            Token::Op(TokenOp::Hat),
+            Box::new(Node::CNum(*c)),
+            Box::new(Node::FNum(0.5)),
+        ),
+        _ => Node::None,
+    }
+}
+
 fn impl_max(env: &mut Env, arg: &[Node]) -> Node {
     if arg.is_empty() {
         return Node::FNum(0.0);
@@ -309,6 +330,7 @@ impl<'a> Env<'a> {
         self.func.insert("abs", (impl_abs as TypeFn, 1));
         self.func.insert("max", (impl_max as TypeFn, 0));
         self.func.insert("ave", (impl_ave as TypeFn, 0));
+        self.func.insert("sqrt", (impl_sqrt as TypeFn, 1));
         self.cmd
             .insert("format", (impl_output_format as TypeCmd, 0));
         self.cmd.insert("debug", (impl_debug as TypeCmd, 1));
