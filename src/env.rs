@@ -58,24 +58,11 @@ fn impl_abs(_env: &mut Env, arg: &[Node]) -> Node {
 }
 
 fn impl_sqrt(_env: &mut Env, arg: &[Node]) -> Node {
-    match &arg[0] {
-        Node::Num(n) => Node::BinOp(
-            Token::Op(TokenOp::Hat),
-            Box::new(Node::Num(*n)),
-            Box::new(Node::FNum(0.5)),
-        ),
-        Node::FNum(f) => Node::BinOp(
-            Token::Op(TokenOp::Hat),
-            Box::new(Node::FNum(*f)),
-            Box::new(Node::FNum(0.5)),
-        ),
-        Node::CNum(c) => Node::BinOp(
-            Token::Op(TokenOp::Hat),
-            Box::new(Node::CNum(*c)),
-            Box::new(Node::FNum(0.5)),
-        ),
-        _ => Node::None,
-    }
+    Node::BinOp(
+        Token::Op(TokenOp::Hat),
+        Box::new(arg[0].clone()),
+        Box::new(Node::FNum(0.5)),
+    )
 }
 
 fn impl_max(env: &mut Env, arg: &[Node]) -> Node {
