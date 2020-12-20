@@ -101,6 +101,57 @@ fn impl_ave(env: &mut Env, arg: &[Node]) -> Node {
     Node::FNum(sum / arg.len() as f64)
 }
 
+fn impl_e12(_env: &mut Env, arg: &[Node]) -> Node {
+    let input;
+    if let Node::Num(n) = arg[0] {
+        input = n as f64;
+    } else if let Node::FNum(f) = arg[0] {
+        input = f;
+    } else {
+        return Node::None;
+    }
+    // 1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2
+    let mut mantissa = input;
+    let mut exponent = 1.0;
+    let ret: f64;
+    while mantissa > 10.0 {
+        mantissa /= 10.0;
+        exponent *= 10.0;
+    }
+    while mantissa < 1.0 {
+        mantissa *= 10.0;
+        exponent /= 10.0;
+    }
+    if mantissa < (1.0 + 1.2) / 2.0 {
+        ret = 1.0 * exponent;
+    } else if mantissa < (1.2 + 1.5) / 2.0 {
+        ret = 1.2 * exponent;
+    } else if mantissa < (1.5 + 1.8) / 2.0 {
+        ret = 1.5 * exponent;
+    } else if mantissa < (1.8 + 2.2) / 2.0 {
+        ret = 1.8 * exponent;
+    } else if mantissa < (2.2 + 2.7) / 2.0 {
+        ret = 2.2 * exponent;
+    } else if mantissa < (2.7 + 3.3) / 2.0 {
+        ret = 2.7 * exponent;
+    } else if mantissa < (3.3 + 3.9) / 2.0 {
+        ret = 3.3 * exponent;
+    } else if mantissa < (3.9 + 4.7) / 2.0 {
+        ret = 3.9 * exponent;
+    } else if mantissa < (4.7 + 5.6) / 2.0 {
+        ret = 4.7 * exponent;
+    } else if mantissa < (5.6 + 6.8) / 2.0 {
+        ret = 5.6 * exponent;
+    } else if mantissa < (6.8 + 8.2) / 2.0 {
+        ret = 6.8 * exponent;
+    } else if mantissa < (8.2 + 10.0) / 2.0 {
+        ret = 8.2 * exponent;
+    } else {
+        ret = 10.0 * exponent;
+    }
+    return Node::FNum(ret);
+}
+
 // Implement of commands.
 fn impl_output_format(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
@@ -331,6 +382,7 @@ impl<'a> Env<'a> {
         self.func.insert("max", (impl_max as TypeFn, 0));
         self.func.insert("ave", (impl_ave as TypeFn, 0));
         self.func.insert("sqrt", (impl_sqrt as TypeFn, 1));
+        self.func.insert("E12", (impl_e12 as TypeFn, 1));
         self.cmd
             .insert("format", (impl_output_format as TypeCmd, 0));
         self.cmd.insert("debug", (impl_debug as TypeCmd, 1));
