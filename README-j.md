@@ -16,37 +16,44 @@ Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 rc - simple terminal calculator
 ==============================
 
+rcはターミナル上で動作する科学技術計算用の計算機です。
+コマンドプロンプトに`rc`とタイプすると起動して、rcのプロンプト`rc> `を表示します。
+
+使い方の例。
+
 ```
 $ rc
 Ctrl-c to exit
-rc>     # prompt. '#': comment
-rc> 1+2*3
+rc>                             # rc> はプロンプト。#から後はコメント
+rc> 1+2*3                       # 足し算より掛け算が優先される
 7
-rc> 1/(2*pi*(3k//4.7k)*0.22u)    # cut off frequency of CR LPF. "//" means parallel. T/G/M/k/m/u/n/p: SI postfix.
+rc> 1/(2*pi*(3k//4.7k)*0.22u)   # CR-LPFのカットオフ周波数の計算。
+                                # "//" は抵抗の並列を表す演算子。コンデンサなら直列。
+                                # T/G/M/k/m/u/n/p のSIポストフィックスが使える
 395.0654615756267
-rc> format(16, sep4)            # output_format
+rc> E12(1234)                   # E12シリーズに丸める
+1200
+rc> format(16, sep4)            # 出力フォーマットを16進、4桁区切りに変更
 format(radix = 16, separate = 4)
-rc> 0xdead_beef - 0xcafe_babe
+rc> 0xdead_beef - 0xcafe_babe   # 0x...は16進、0b....は2進
 0x13af_0431
 rc > format(10, sep3)
-rc> i^i
+rc> i^i                         # 複素数演算。i,j は虚数単位
 0.20787957635076193+0i
-rc> exp(i*pi)                   # Euler`s equation
+rc> exp(i*pi)                   # オイラーの等式
 -1+0.00000000000000012246467991473532i
-rc> a=2                         # user defined variable
+rc> a=2                         # ユーザ定義変数
 rc> a*3
 6
-rc> defun(add, _1 + _2)         # user define function, _1,_2,...,_9 are parameters
-rc> add(10,add(2,a))            # recursive user defined function call
+rc> defun(add, _1 + _2)         # ユーザ定義関数。_1,_2,...,_9 は引数
+rc> add(10,add(2,a))            # 再帰呼出しも可能
 14
 ```
 
-* `rc` similar to `bc`, which is a famous command line calculator.
-* `rc` is designed for scientific/engineering calculation.
-* `rc` runs on terminal on Windows/Linux/Mac/Raspberry Pi.
-* `rc` is an example of implementation of parser written by rust.
+`rc`はRustで作られていて、Windows, Linux(Raspberry Piを含む)の上で動作確認されています。
+ビルドすれば Macでもたぶん動きます。
 
-## Features
+## 機能
 
 * Calculator
     + Arithmetic operations including multiple parentheses
@@ -99,12 +106,13 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
 
 Static linked executables for some platforms are available in [download/](download/) directory.
 
-## Future
+## 将来の予定
 
 * Highlight parentheses
 * Online help
 * Graph
 * L10N using gettext-rs
+* Solver
 
 ## Design Notes
 

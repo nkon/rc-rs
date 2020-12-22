@@ -13,6 +13,9 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
+
+[README-j.md](README-j.md)
+
 rc - simple terminal calculator
 ==============================
 
@@ -22,8 +25,10 @@ Ctrl-c to exit
 rc>     # prompt. '#': comment
 rc> 1+2*3
 7
-rc> 1/(2*pi*(3k//4.7k)*0.22u)    # cut off frequency of CR LPF. "//" means parallel. T/G/M/k/m/u/n/p: SI postfix.
+rc> 1/(2*pi*(3k//4.7k)*0.22u)   # cut off frequency of CR LPF. "//" means parallel. T/G/M/k/m/u/n/p: SI postfix.
 395.0654615756267
+rc> E12(1234)                   # round to E12 series
+1200
 rc> format(16, sep4)            # output_format
 format(radix = 16, separate = 4)
 rc> 0xdead_beef - 0xcafe_babe
@@ -107,6 +112,7 @@ Static linked executables for some platforms are available in [download/](downlo
 * Online help
 * Graph
 * L10N using gettext-rs
+* Solver
 
 ## Design Notes
 
