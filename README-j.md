@@ -3,12 +3,13 @@
 Table of Contents
 -----------------
 
-* [Features](#features)
+* [機能](#機能)
 * [Screen capture](#screen-capture)
 * [Install](#install)
     * [Build from source](#build-from-source)
     * [Build with musl(static linked binary)](#build-with-muslstatic-linked-binary)
-* [Future](#future)
+* [Download](#download)
+* [将来の予定](#将来の予定)
 * [Design Notes](#design-notes)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)

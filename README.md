@@ -8,11 +8,11 @@ Table of Contents
 * [Install](#install)
     * [Build from source](#build-from-source)
     * [Build with musl(static linked binary)](#build-with-muslstatic-linked-binary)
+* [Download](#download)
 * [Future](#future)
 * [Design Notes](#design-notes)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
-
 
 [README-j.md](README-j.md)
 
