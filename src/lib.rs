@@ -35,23 +35,22 @@ pub enum MyError {
     EvalError(String),
 }
 
-// TODO: prevent panic when unexpected input.
-pub fn eval_fvalue(_env: &mut Env, n: &Node) -> f64 {
+pub fn eval_fvalue(_env: &mut Env, n: &Node) -> Result<f64, MyError> {
     match n {
-        Node::Num(n) => *n as f64,
-        Node::FNum(f) => *f,
-        Node::None => unreachable!(),
-        _ => unreachable!(),
+        Node::Num(n) => Ok(*n as f64),
+        Node::FNum(f) => Ok(*f),
+        Node::None => Err(MyError::EvalError("Node::None cannot convert to fvalue".to_owned())),
+        _ => Err(MyError::EvalError("Unexpected input: eval_fvalue".to_owned())),
     }
 }
 
-pub fn eval_cvalue(_env: &mut Env, n: &Node) -> Complex64 {
+pub fn eval_cvalue(_env: &mut Env, n: &Node) -> Result<Complex64, MyError> {
     match n {
-        Node::Num(n) => Complex64::new(*n as f64, 0.0),
-        Node::FNum(f) => Complex64::new(*f, 0.0),
-        Node::CNum(c) => *c,
-        Node::None => unreachable!(),
-        _ => unreachable!(),
+        Node::Num(n) => Ok(Complex64::new(*n as f64, 0.0)),
+        Node::FNum(f) => Ok(Complex64::new(*f, 0.0)),
+        Node::CNum(c) => Ok(*c),
+        Node::None => Err(MyError::EvalError("Node::None cannot convert to cvalue".to_owned())),
+        _ => Err(MyError::EvalError("Unexpected input: eval_fvalue".to_owned())),
     }
 }
 
@@ -265,12 +264,12 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                 }
                 if let Node::CNum(_) = lhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs) + eval_cvalue(env, &rhs)));
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?));
                 }
                 if let Node::CNum(_) = rhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs) + eval_cvalue(env, &rhs)));
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?));
                 }
-                return Ok(Node::FNum(eval_fvalue(env, &lhs) + eval_fvalue(env, &rhs)));
+                return Ok(Node::FNum(eval_fvalue(env, &lhs)? + eval_fvalue(env, &rhs)?));
             }
             Token::Op(TokenOp::Minus) => {
                 if let Node::Num(nl) = lhs {
@@ -279,12 +278,12 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                 }
                 if let Node::CNum(_) = lhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs) - eval_cvalue(env, &rhs)));
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?));
                 }
                 if let Node::CNum(_) = rhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs) - eval_cvalue(env, &rhs)));
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?));
                 }
-                return Ok(Node::FNum(eval_fvalue(env, &lhs) - eval_fvalue(env, &rhs)));
+                return Ok(Node::FNum(eval_fvalue(env, &lhs)? - eval_fvalue(env, &rhs)?));
             }
             Token::Op(TokenOp::Mul) => {
                 if let Node::Num(nl) = lhs {
@@ -293,12 +292,12 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                 }
                 if let Node::CNum(_) = lhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs) * eval_cvalue(env, &rhs)));
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?));
                 }
                 if let Node::CNum(_) = rhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs) * eval_cvalue(env, &rhs)));
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?));
                 }
-                return Ok(Node::FNum(eval_fvalue(env, &lhs) * eval_fvalue(env, &rhs)));
+                return Ok(Node::FNum(eval_fvalue(env, &lhs)? * eval_fvalue(env, &rhs)?));
             }
             Token::Op(TokenOp::Div) => {
                 if let Node::Num(nl) = lhs {
@@ -307,26 +306,26 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                 }
                 if let Node::CNum(_) = lhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs) / eval_cvalue(env, &rhs)));
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?));
                 }
                 if let Node::CNum(_) = rhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs) / eval_cvalue(env, &rhs)));
+                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?));
                 }
-                return Ok(Node::FNum(eval_fvalue(env, &lhs) / eval_fvalue(env, &rhs)));
+                return Ok(Node::FNum(eval_fvalue(env, &lhs)? / eval_fvalue(env, &rhs)?));
             }
             Token::Op(TokenOp::Para) => {
                 if let Node::CNum(_) = lhs {
-                    let lhs = eval_cvalue(env, &lhs);
-                    let rhs = eval_cvalue(env, &rhs);
+                    let lhs = eval_cvalue(env, &lhs)?;
+                    let rhs = eval_cvalue(env, &rhs)?;
                     return Ok(Node::CNum((lhs * rhs) / (lhs + rhs)));
                 }
                 if let Node::CNum(_) = rhs {
-                    let lhs = eval_cvalue(env, &lhs);
-                    let rhs = eval_cvalue(env, &rhs);
+                    let lhs = eval_cvalue(env, &lhs)?;
+                    let rhs = eval_cvalue(env, &rhs)?;
                     return Ok(Node::CNum((lhs * rhs) / (lhs + rhs)));
                 }
-                let lhs = eval_fvalue(env, &lhs);
-                let rhs = eval_fvalue(env, &rhs);
+                let lhs = eval_fvalue(env, &lhs)?;
+                let rhs = eval_fvalue(env, &rhs)?;
                 return Ok(Node::FNum((lhs * rhs) / (lhs + rhs)));
             }
             Token::Op(TokenOp::Mod) => {
@@ -602,6 +601,10 @@ mod tests {
         env.built_in();
 
         let n = parse(&mut env, &(lexer("pi=3".to_string())).unwrap()).unwrap();
+        if let Ok(_) = eval(&mut env, &n) {
+            assert!(false);
+        }
+        let n = parse(&mut env, &(lexer("abs(1-i+)".to_string())).unwrap()).unwrap();
         if let Ok(_) = eval(&mut env, &n) {
             assert!(false);
         }

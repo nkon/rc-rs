@@ -81,10 +81,14 @@ fn impl_max(env: &mut Env, arg: &[Node]) -> Node {
     if arg.is_empty() {
         return Node::FNum(0.0);
     }
-    let mut max = eval_fvalue(env, &arg[0]);
+    let mut max =  std::f64::MIN;
     for i in arg {
-        if max < eval_fvalue(env, &i) {
-            max = eval_fvalue(env, &i);
+        if let Ok(val) = eval_fvalue(env, &i){
+            if max < val {
+                max = val;
+            }
+        } else {
+            return Node::FNum(0.0);
         }
     }
     Node::FNum(max)
@@ -96,7 +100,9 @@ fn impl_ave(env: &mut Env, arg: &[Node]) -> Node {
     }
     let mut sum: f64 = 0.0;
     for i in arg {
-        sum += eval_fvalue(env, &i);
+        if let Ok(val) = eval_fvalue(env, &i){
+            sum += val;
+        }
     }
     Node::FNum(sum / arg.len() as f64)
 }
