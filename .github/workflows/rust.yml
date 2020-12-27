@@ -55,7 +55,7 @@ jobs:
 
       - run: |
         zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc{,.exe}
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v2
         with:
           name: build-${{ matrix.target }}
           path: rc-${{ matrix.target }}.zip
