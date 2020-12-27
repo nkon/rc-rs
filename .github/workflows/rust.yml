@@ -21,16 +21,12 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            suffix: 
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            suffix: 
-          - target: x86_64-pc-windows-gnu
-            os: ubuntu-latest
-            suffix: .exe
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
           - target: x86_64-apple-darwin
             os: macos-latest
-            suffix: 
 
     runs-on: ${{ matrix.os }}
 
@@ -57,8 +53,26 @@ jobs:
           command: build
           args: --release --target=${{ matrix.target }}
 
-      - run: |
-          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc${{ matrix.suffix }}
+      - name: Package for linux-gnu
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
+
+      - name: Package for linux-musl
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
+
+      - name: Package for windows
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        run: |
+          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc.exe
+
+      - name: Package for macOS
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: |
+          powershell Compress-Archive -Path target/${{ matrix.target }} -DestinationPath rc-${{ matrix.target }}.zip
+
       - uses: actions/upload-artifact@v2
         with:
           name: build-${{ matrix.target }}
