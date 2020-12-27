@@ -5,6 +5,8 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path;
 
+
+// TODO: input expression can be on command line 
 fn print_usage(program: &str, opts: Options) {
     let brief = format!("rc: CUI calculator\nUsage: {} [options]", program);
     print!("{}", opts.usage(&brief));
