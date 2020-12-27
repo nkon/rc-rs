@@ -66,12 +66,12 @@ jobs:
       - name: Package for windows
         if: matrix.target == 'x86_64-pc-windows-msvc'
         run: |
-          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc.exe
+          powershell Compress-Archive -Path target/${{ matrix.target }} -DestinationPath rc-${{ matrix.target }}.zip
 
       - name: Package for macOS
         if: matrix.target == 'x86_64-apple-darwin'
         run: |
-          powershell Compress-Archive -Path target/${{ matrix.target }} -DestinationPath rc-${{ matrix.target }}.zip
+          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc.exe
 
       - uses: actions/upload-artifact@v2
         with:
