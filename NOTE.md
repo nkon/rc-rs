@@ -534,6 +534,16 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
     not a dynamic executable
 ```
 
+### Raspberry Pi
+
+ビルドサーバの有無がよくわからなかったので、バイナリ配布はしていない。Raspberry Piでは
+
+* `apt install build-essntial`でビルド環境を構築
+* `rustup`でrustのビルド環境を構築
+
+が容易にできるのでソースからビルドしていただきたい。
+
+
 ### Windows
 
 `.cargo/config`に次のように書いておけば、`x86_64-pc-windows-msvc`環境でstatic linkオプションを隣家に対して渡してくれる。
