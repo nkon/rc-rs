@@ -534,8 +534,6 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
     not a dynamic executable
 ```
 
-ビルド済のバイナリが[download/](download/) からダウンロードできる。
-
 ### Windows
 
 `.cargo/config`に次のように書いておけば、`x86_64-pc-windows-msvc`環境でstatic linkオプションを隣家に対して渡してくれる。
