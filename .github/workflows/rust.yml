@@ -14,19 +14,19 @@ jobs:
     strategy:
       matrix:
         target:
-        - x86_64-unknown-linux-gnu
-        - x86_64-unknown-linux-musl
-        - x86_64-pc-windows-msvc
-        - x86_64-apple-darwin
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - x86_64-pc-windows-msvc
+          - x86_64-apple-darwin
         include:
-        - target: x86_64-unknown-linux-gnu
-          os: ubuntu-latest
-        - target: x86_64-unknown-linux-musl
-          os: ubuntu-latest
-        - target: x86_64-pc-windows-msvc
-          os: windows-latest
-        - target: x86_64-apple-darwin
-          os: macos-latest
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
 
     runs-on: ${{ matrix.os }}
 
@@ -54,7 +54,7 @@ jobs:
           args: --release --target=${{ matrix.target }}
 
       - run: |
-        zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc{,.exe}
+          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc{,.exe}
       - uses: actions/upload-artifact@v2
         with:
           name: build-${{ matrix.target }}
@@ -73,12 +73,12 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: true
-        - run: |
+      - run: |
           echo '${{ steps.create-release.outputs.upload_url }}' > release_upload_url.txt
-        - uses: actions/upload-artifact@v1
-          with:
-            name: create-release
-            path: release_upload_url.txt
+      - uses: actions/upload-artifact@v1
+        with:
+          name: create-release
+          path: release_upload_url.txt
     
   upload-release:
     strategy:
