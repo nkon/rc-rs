@@ -50,7 +50,7 @@ jobs:
 
       - name: Build
         uses: actions-rs/cargo@v1
-        wiwth:
+        with:
           command: build
           args: --release --target=${{ matrix.target }}
 
