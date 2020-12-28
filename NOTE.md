@@ -569,7 +569,7 @@ rustflags = ["-C", "target-feature=+crt-static"]
           zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
 ```
 
-これで、`v*`というタグを付けてpushすればGitHubのリリースページから、linux(MUSL), windows, macOS用のバイナリがダウンロードできる。しかし、macOS用は環境が無いので未テスト。どなたかテストレポートが欲しい。
+これで、`v*`というタグを付けてpushすればGitHub Actionsで各々の実行ファイルを作成し、リリースページから、linux(MUSL), windows, macOS用のバイナリがダウンロードできる。しかし、macOS用は環境が無いので未テスト。どなたかテストレポートが欲しい。
 
 
 ### Raspberry Pi
@@ -580,4 +580,8 @@ rustflags = ["-C", "target-feature=+crt-static"]
 * `rustup`でrustのビルド環境を構築
 
 が容易にできるのでソースからビルドしていただきたい。
+
+
+
+
 
