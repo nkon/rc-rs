@@ -465,6 +465,15 @@ mod tests {
         0.0
     }
 
+    fn eval_as_complex64(env: &mut Env, input: &str) -> Complex64 {
+        let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
+        if let Node::CNum(c) = eval(env, &n).unwrap() {
+            return c;
+        }
+        assert!(false);
+        Complex64::new(0.0, 0.0)
+    }
+
     #[test]
     fn test_eval() {
         let mut env = Env::new();
@@ -585,10 +594,8 @@ mod tests {
             eval_as_string(&mut env, "sqrt(2)"),
             "FNum(1.4142135623730951)".to_string()
         );
-        assert_eq!(
-            eval_as_string(&mut env, "sqrt(2i)"),
-            "CNum(Complex { re: 1.0000000000000002, im: 1.0 })".to_string()
-        );
+        assert!((eval_as_complex64(&mut env, "sqrt(2i)").re-1.0).abs() < 1e-10);
+        assert!((eval_as_complex64(&mut env, "sqrt(2i)").im-1.0).abs() < 1e-10);
         assert_eq!(
             eval_as_string(&mut env, "arg(1+i)"),
             "FNum(0.7853981633974483)".to_string()
@@ -596,7 +603,7 @@ mod tests {
     }
 
     #[test]
-    fn test_eva_error() {
+    fn test_eval_error() {
         let mut env = Env::new();
         env.built_in();
 
