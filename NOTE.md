@@ -534,6 +534,44 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
     not a dynamic executable
 ```
 
+### Windows
+
+`.cargo/config`に次のように書いておけば、`x86_64-pc-windows-msvc`環境でstatic linkオプションを隣家に対して渡してくれる。
+```
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+```
+
+## GitHub Actions
+
+`rc`はOSSプロジェクトなので、GitHub ActionsのCIでビルドサーバによる配布用バイナルの作成が可能だ。
+
+`.github/workflows`にアクションを書いておけば、pushをトリガとしてビルドが走る。
+
+ネットを調べてテンプレからコピーしたのだが、悩んだ所。
+
+`windows-latest`で`zip`コマンドが使えない。リリース成果物を作成するのに、`ubuntu`と`macos`では`zip`コマンドが使えるが`windows`では使えない。仕方がないので、条件分岐してPowerShellの内蔵コマンドを使うようにした。
+
+```yaml
+      - name: Package for linux-musl
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
+
+      - name: Package for windows
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        run: |
+          powershell Compress-Archive -Path target/${{ matrix.target }}/release/rc.exe -DestinationPath rc-${{ matrix.target }}.zip
+
+      - name: Package for macOS
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: |
+          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
+```
+
+これで、`v*`というタグを付けてpushすればGitHubのリリースページから、linux(MUSL), windows, macOS用のバイナリがダウンロードできる。しかし、macOS用は環境が無いので未テスト。どなたかテストレポートが欲しい。
+
+
 ### Raspberry Pi
 
 ビルドサーバの有無がよくわからなかったので、バイナリ配布はしていない。Raspberry Piでは
@@ -542,14 +580,4 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
 * `rustup`でrustのビルド環境を構築
 
 が容易にできるのでソースからビルドしていただきたい。
-
-
-### Windows
-
-`.cargo/config`に次のように書いておけば、`x86_64-pc-windows-msvc`環境でstatic linkオプションを隣家に対して渡してくれる。
-```
-[target.x86_64-pc-windows-msvc]
-rustflags = ["-C", "target-feature=+crt-static"]
-```
-ビルド済のバイナリが[download/](download/) からダウンロードできる。
 
