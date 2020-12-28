@@ -548,6 +548,8 @@ rustflags = ["-C", "target-feature=+crt-static"]
 
 `.github/workflows`にアクションを書いておけば、pushをトリガとしてビルドが走る。Rust自体はクロスビルドが可能な仕組みを持っているが、今回は linux, windows, macOS それぞれの build-os を利用してセルフビルドする形にした。
 
+Build(matrix)→create-release→upload-releaseという3ステップを踏む。
+
 ネットを調べてテンプレからコピーしたのだが、悩んだ所。
 
 `windows-latest`で`zip`コマンドが使えない。リリース成果物を作成するのに、`ubuntu`と`macos`では`zip`コマンドが使えるが`windows`では使えない。仕方がないので、条件分岐してPowerShellの内蔵コマンドを使うようにした。
