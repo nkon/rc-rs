@@ -7,7 +7,6 @@ Table of Contents
 * [Screen capture](#screen-capture)
 * [Install](#install)
     * [Build from source](#build-from-source)
-    * [Build with musl(static linked binary)](#build-with-muslstatic-linked-binary)
 * [Download](#download)
 * [将来の予定](#将来の予定)
 * [Design Notes](#design-notes)
@@ -51,8 +50,8 @@ rc> add(10,add(2,a))            # 再帰呼出しも可能
 14
 ```
 
-`rc`はRustで作られていて、Windows, Linux(Raspberry Piを含む)の上で動作確認されています。
-ビルドすれば Macでもたぶん動きます。
+`rc`はRustで作られていて、Windows, Linux（Raspberry Piを含む）の上で動作確認されています。
+ビルドすればMacでもたぶん動きます。
 
 ## 機能
 
@@ -91,21 +90,11 @@ $ git clone https://github.com/nkon/rc-rs.git
 $ cargo install --path .                       ## installed to ~/.cargo/bin/rc
 ```
 
-#### Build with musl(static linked binary)
-
-In case of x86_64-linux.
-
-```
-$ rustup target add x86_64-unknown-linux-musl
-$ rustup show   ## list of installed toolchain -> check: x86_64-unknown-linux-musl is exist.
-$ cargo build --release --target=x86_64-unknown-linux-musl
-$ ldd target/x86_64-unknown-linux-musl/release/rc
-    not a dynamic executable
-```
 
 ## Download
 
-Static linked executables for some platforms are available in [download/](download/) directory.
+Windows, Linux, macOS binaries are available from [Release](https://github.com/nkon/rc-rs/releases) page.
+
 
 ## 将来の予定
 

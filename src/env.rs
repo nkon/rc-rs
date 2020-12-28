@@ -25,6 +25,7 @@ pub struct Env<'a> {
 }
 
 // Implement of functions.
+
 fn impl_sin(_env: &mut Env, arg: &[Node]) -> Node {
     if let Node::Num(n) = arg[0] {
         Node::FNum((n as f64).sin())
@@ -32,6 +33,18 @@ fn impl_sin(_env: &mut Env, arg: &[Node]) -> Node {
         Node::FNum(f.sin())
     } else if let Node::CNum(c) = arg[0] {
         Node::CNum(c.sin())
+    } else {
+        Node::None
+    }
+}
+
+fn impl_cos(_env: &mut Env, arg: &[Node]) -> Node {
+    if let Node::Num(n) = arg[0] {
+        Node::FNum((n as f64).cos())
+    } else if let Node::FNum(f) = arg[0] {
+        Node::FNum(f.cos())
+    } else if let Node::CNum(c) = arg[0] {
+        Node::CNum(c.cos())
     } else {
         Node::None
     }
@@ -81,9 +94,9 @@ fn impl_max(env: &mut Env, arg: &[Node]) -> Node {
     if arg.is_empty() {
         return Node::FNum(0.0);
     }
-    let mut max =  std::f64::MIN;
+    let mut max = std::f64::MIN;
     for i in arg {
-        if let Ok(val) = eval_fvalue(env, &i){
+        if let Ok(val) = eval_fvalue(env, &i) {
             if max < val {
                 max = val;
             }
@@ -100,7 +113,7 @@ fn impl_ave(env: &mut Env, arg: &[Node]) -> Node {
     }
     let mut sum: f64 = 0.0;
     for i in arg {
-        if let Ok(val) = eval_fvalue(env, &i){
+        if let Ok(val) = eval_fvalue(env, &i) {
             sum += val;
         }
     }
@@ -155,7 +168,7 @@ fn impl_e12(_env: &mut Env, arg: &[Node]) -> Node {
     } else {
         ret = 10.0 * exponent;
     }
-    return Node::FNum(ret);
+    Node::FNum(ret)
 }
 
 // Implement of commands.
@@ -382,6 +395,7 @@ impl<'a> Env<'a> {
         self.constant
             .insert("j", Node::CNum(Complex64::new(0.0, 1.0)));
         self.func.insert("sin", (impl_sin as TypeFn, 1));
+        self.func.insert("cos", (impl_cos as TypeFn, 1));
         self.func.insert("exp", (impl_exp as TypeFn, 1));
         self.func.insert("abs", (impl_abs as TypeFn, 1));
         self.func.insert("arg", (impl_arg as TypeFn, 1));

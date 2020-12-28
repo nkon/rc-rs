@@ -28,6 +28,8 @@ Table of Contents
 * [Static link](#static-link)
     * [Linux](#linux)
     * [Windows](#windows)
+* [GitHub Actions](#github-actions)
+    * [Raspberry Pi](#raspberry-pi)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
@@ -306,7 +308,7 @@ fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
 
 変数や定数は識別子をキーとした`HashMap`で管理する。ただし、定数はプログラムの初期化時に固定文字列で定義されるので、キーが`&'a str`となっている。`'a`は環境を定義する構造体`struct Env<'a>`のライフタイムだ。
 
-しかし、変数はインタプリタの動作中に識別子が定義されるので、キーは`String`となっている。`String`の場合は文字列の実体はヒープ中に確保される。入力中の識別子が`String`として確保され、`variable`に登録される時に`clone()`される。
+しかし、変数はインタプリタの動作中に識別子が定義されるので、キーは`String`となっている。`String`の場合は文字列の実体はヒープ中に確保される。入力中の識別子が`String`として確保され、`variable`へ登録される時に`clone()`される。
 
 ```rust
 pub struct Env<'a> {
@@ -322,7 +324,7 @@ pub struct Env<'a> {
 
 ### `exp()`
 
-組込みで、べき乗演算子(`^`)を、整数、浮動小数点数、複素数に対して定義してある。指数関数`exp()`はそれを用いて実装することにした。`exp(a) = e^a`なので、次のノードを返す。最終的に、このノードは再帰的に評価され、べき乗演算子の評価系によって値が得られる。この仕組みを「マクロ関数」と呼ぶことにした。
+`rc`では、組込みのべき乗演算子（`^`）を、整数、浮動小数点数、複素数に対して定義してある。指数関数`exp()`はそれを用いて実装することにした。`exp(a) = e^a`なので、次のノードを返す。最終的に、このノードは再帰的に評価され、べき乗演算子の評価系によって値が得られる。この仕組みを「マクロ関数」と呼ぶことにした。
 
 ```rust
     Node::BinOp(
@@ -518,13 +520,13 @@ VS Codeの環境がGitと密に結合していることも、テスト＆修正�
 
 Windows版の開発とVS-Code remoteを使ったWSL2上の開発が、ほぼ同じ環境で実施できるのも素晴らしい。
 
-個人開発なので、GitHub issueなどは使わずに、VS-CodeのTODOコメント拡張を使っている。`TODO`コメントをソースツリー中に書いておくと、それを抜き出してエクスプローラビューから一覧できるのだ。一つの作業をしている時に、思いついた機能や発見したバグは、手短にTODOコメント化しておき、作業が完了した後に別タスクとしてピックアップして取り組む。
+個人開発なので、GitHub issueなどは使わずに、VS-CodeのTODOコメント拡張を使っている。`TODO`コメントをソースツリー中に書いておくと、それを抜き出してエクスプローラビューから一覧できるのだ。ある作業をしている時に、思いついた機能や発見したバグは、手短にTODOコメント化しておき、作業が完了した後に別タスクとしてピックアップして取り組む。
 
 ## Static link
 
 ### Linux
 
-Linuxでは[MUSL](https://ja.wikipedia.org/wiki/Musl)がサポートされているので、外部ライブラリに依存していない場合はとくに、スタティックリンク・バイナリを作るのは簡単だ。`-musl`ターゲットの場合、スタティックリンク用の外部ライブラリが有れば、それらもスタティックリンクしてくれる。
+Linuxでは[MUSL](https://ja.wikipedia.org/wiki/Musl)ターゲットがサポートされているので、外部ライブラリに依存していない場合はとくに、スタティックリンク・バイナリを作るのは簡単だ。`-musl`ターゲットの場合、スタティックリンク用の外部ライブラリが有れば、それらもスタティックリンクしてくれる。
 
 ```
 $ rustup target add x86_64-unknown-linux-musl     ## ターゲットを追加
@@ -536,7 +538,7 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
 
 ### Windows
 
-`.cargo/config`に次のように書いておけば、`x86_64-pc-windows-msvc`環境でstatic linkオプションを隣家に対して渡してくれる。
+`.cargo/config`に次のように書いておけば、`x86_64-pc-windows-msvc`環境でstatic linkオプションをリンカに対して渡してくれる。
 ```
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
@@ -546,7 +548,7 @@ rustflags = ["-C", "target-feature=+crt-static"]
 
 `rc`はOSSプロジェクトなので、GitHub ActionsのCIでビルドサーバによる配布用バイナルの作成が可能だ。
 
-`.github/workflows`にアクションを書いておけば、pushをトリガとしてビルドが走る。Rust自体はクロスビルドが可能な仕組みを持っているが、今回は linux, windows, macOS それぞれの build-os を利用してセルフビルドする形にした。
+`.github/workflows/rust.yaml`にアクションを書いておけば、pushをトリガとしてビルドが走る。Rust自体はクロスビルドが可能な仕組みを持っている。しかし今回はlinux、windows、macOSそれぞれのOSイメージを利用してセルフビルドする。また、ローカルでテストは済んでいるはずだが、ビルド環境でもテストを走らせる。
 
 Build(matrix)→create-release→upload-releaseという3ステップを踏む。
 
@@ -555,26 +557,26 @@ Build(matrix)→create-release→upload-releaseという3ステップを踏む�
 `windows-latest`で`zip`コマンドが使えない。リリース成果物を作成するのに、`ubuntu`と`macos`では`zip`コマンドが使えるが`windows`では使えない。仕方がないので、条件分岐してPowerShellの内蔵コマンドを使うようにした。
 
 ```yaml
-      - name: Package for linux-musl
-        if: matrix.target == 'x86_64-unknown-linux-musl'
-        run: |
-          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
+  - name: Package for linux-musl
+    if: matrix.target == 'x86_64-unknown-linux-musl'
+    run: |
+      zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
 
-      - name: Package for windows
-        if: matrix.target == 'x86_64-pc-windows-msvc'
-        run: |
-          powershell Compress-Archive -Path target/${{ matrix.target }}/release/rc.exe -DestinationPath rc-${{ matrix.target }}.zip
+  - name: Package for windows
+    if: matrix.target == 'x86_64-pc-windows-msvc'
+    run: |
+      powershell Compress-Archive -Path target/${{ matrix.target }}/release/rc.exe -DestinationPath rc-${{ matrix.target }}.zip
 
-      - name: Package for macOS
-        if: matrix.target == 'x86_64-apple-darwin'
-        run: |
-          zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
+  - name: Package for macOS
+    if: matrix.target == 'x86_64-apple-darwin'
+    run: |
+      zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
 ```
 
-これで、`v*`というタグを付けてpushすればGitHub Actionsで各々の実行ファイルを作成し、リリースページから、linux(MUSL), windows, macOS用のバイナリがダウンロードできる。VS-Codeのgit統合にはタグをプッシュする機能は無い(見当たらない)ので、このアクションを起動したい時はコマンドラインでタグをプッシュする必要がある(`git push origin --tag`)。
+これで、`v*`というタグを付けてpushすればGitHub Actionsで各々の実行ファイルを作成し、リリースページから、linux(MUSL), windows, macOS用のバイナリがダウンロードできる。VS-Codeのgit統合にはタグをプッシュするボタンはない（コマンドパレットから`git push`とタイプすると`Git: Push Tags`が補完される）ので、このアクションを起動したい時はコマンドラインでタグをプッシュする必要がある（`git push --tag`）。
 
 
-しかし、macOS用は環境が無いので未テスト。どなたかテストレポートが欲しい。
+しかし、macOS用は環境がないので未テスト。どなたかテストレポートが欲しい。
 
 
 ### Raspberry Pi

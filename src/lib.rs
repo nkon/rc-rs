@@ -39,8 +39,12 @@ pub fn eval_fvalue(_env: &mut Env, n: &Node) -> Result<f64, MyError> {
     match n {
         Node::Num(n) => Ok(*n as f64),
         Node::FNum(f) => Ok(*f),
-        Node::None => Err(MyError::EvalError("Node::None cannot convert to fvalue".to_owned())),
-        _ => Err(MyError::EvalError("Unexpected input: eval_fvalue".to_owned())),
+        Node::None => Err(MyError::EvalError(
+            "Node::None cannot convert to fvalue".to_owned(),
+        )),
+        _ => Err(MyError::EvalError(
+            "Unexpected input: eval_fvalue".to_owned(),
+        )),
     }
 }
 
@@ -49,8 +53,12 @@ pub fn eval_cvalue(_env: &mut Env, n: &Node) -> Result<Complex64, MyError> {
         Node::Num(n) => Ok(Complex64::new(*n as f64, 0.0)),
         Node::FNum(f) => Ok(Complex64::new(*f, 0.0)),
         Node::CNum(c) => Ok(*c),
-        Node::None => Err(MyError::EvalError("Node::None cannot convert to cvalue".to_owned())),
-        _ => Err(MyError::EvalError("Unexpected input: eval_fvalue".to_owned())),
+        Node::None => Err(MyError::EvalError(
+            "Node::None cannot convert to cvalue".to_owned(),
+        )),
+        _ => Err(MyError::EvalError(
+            "Unexpected input: eval_fvalue".to_owned(),
+        )),
     }
 }
 
@@ -91,7 +99,6 @@ fn node_to_token(n: Node) -> Vec<Token> {
 }
 
 // TODO: command does not use '(', ')'.
-// TODO: refactor to separate functions.
 fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_func {:?}\r", n);
@@ -264,12 +271,18 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                 }
                 if let Node::CNum(_) = lhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?));
+                    return Ok(Node::CNum(
+                        eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?,
+                    ));
                 }
                 if let Node::CNum(_) = rhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?));
+                    return Ok(Node::CNum(
+                        eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?,
+                    ));
                 }
-                return Ok(Node::FNum(eval_fvalue(env, &lhs)? + eval_fvalue(env, &rhs)?));
+                return Ok(Node::FNum(
+                    eval_fvalue(env, &lhs)? + eval_fvalue(env, &rhs)?,
+                ));
             }
             Token::Op(TokenOp::Minus) => {
                 if let Node::Num(nl) = lhs {
@@ -278,12 +291,18 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                 }
                 if let Node::CNum(_) = lhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?));
+                    return Ok(Node::CNum(
+                        eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?,
+                    ));
                 }
                 if let Node::CNum(_) = rhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?));
+                    return Ok(Node::CNum(
+                        eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?,
+                    ));
                 }
-                return Ok(Node::FNum(eval_fvalue(env, &lhs)? - eval_fvalue(env, &rhs)?));
+                return Ok(Node::FNum(
+                    eval_fvalue(env, &lhs)? - eval_fvalue(env, &rhs)?,
+                ));
             }
             Token::Op(TokenOp::Mul) => {
                 if let Node::Num(nl) = lhs {
@@ -292,12 +311,18 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                 }
                 if let Node::CNum(_) = lhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?));
+                    return Ok(Node::CNum(
+                        eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?,
+                    ));
                 }
                 if let Node::CNum(_) = rhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?));
+                    return Ok(Node::CNum(
+                        eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?,
+                    ));
                 }
-                return Ok(Node::FNum(eval_fvalue(env, &lhs)? * eval_fvalue(env, &rhs)?));
+                return Ok(Node::FNum(
+                    eval_fvalue(env, &lhs)? * eval_fvalue(env, &rhs)?,
+                ));
             }
             Token::Op(TokenOp::Div) => {
                 if let Node::Num(nl) = lhs {
@@ -306,12 +331,18 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     }
                 }
                 if let Node::CNum(_) = lhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?));
+                    return Ok(Node::CNum(
+                        eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?,
+                    ));
                 }
                 if let Node::CNum(_) = rhs {
-                    return Ok(Node::CNum(eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?));
+                    return Ok(Node::CNum(
+                        eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?,
+                    ));
                 }
-                return Ok(Node::FNum(eval_fvalue(env, &lhs)? / eval_fvalue(env, &rhs)?));
+                return Ok(Node::FNum(
+                    eval_fvalue(env, &lhs)? / eval_fvalue(env, &rhs)?,
+                ));
             }
             Token::Op(TokenOp::Para) => {
                 if let Node::CNum(_) = lhs {
@@ -506,10 +537,8 @@ mod tests {
 
         assert_eq!(eval_as_string(&mut env, "5//5"), "FNum(2.5)".to_string());
 
-        assert_eq!(
-            eval_as_string(&mut env, "sin(0.0)"),
-            "FNum(0.0)".to_string()
-        );
+        assert!((eval_as_f64(&mut env, "sin(0.0)")).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "cos(pi/2)")).abs() < 1e-10);
         assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0)".to_string());
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
@@ -561,10 +590,8 @@ mod tests {
             eval_as_string(&mut env, "2 // 2i"),
             "CNum(Complex { re: 1.0, im: 1.0 })".to_string()
         );
-        assert_eq!(
-            eval_as_string(&mut env, "i^i"),
-            "CNum(Complex { re: 0.20787957635076193, im: 0.0 })".to_string()
-        );
+        assert!((eval_as_complex64(&mut env, "i^i").re - 0.20787957635076193).abs() < 1e-10);
+        assert!((eval_as_complex64(&mut env, "i^i").im).abs() < 1e-10);
         assert_eq!(
             eval_as_string(&mut env, "-pi"),
             "FNum(-3.141592653589793)".to_string()
@@ -582,24 +609,12 @@ mod tests {
         eval_as_string(&mut env, "a=5");
         assert_eq!(eval_as_string(&mut env, "plus_a(8)"), "Num(13)".to_string());
         assert_eq!(eval_as_string(&mut env, "abs(-2)"), "FNum(2.0)".to_string());
-        assert_eq!(
-            eval_as_string(&mut env, "abs(-2.5)"),
-            "FNum(2.5)".to_string()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "abs(1+i)"),
-            "FNum(1.4142135623730951)".to_string()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "sqrt(2)"),
-            "FNum(1.4142135623730951)".to_string()
-        );
-        assert!((eval_as_complex64(&mut env, "sqrt(2i)").re-1.0).abs() < 1e-10);
-        assert!((eval_as_complex64(&mut env, "sqrt(2i)").im-1.0).abs() < 1e-10);
-        assert_eq!(
-            eval_as_string(&mut env, "arg(1+i)"),
-            "FNum(0.7853981633974483)".to_string()
-        );
+        assert!((eval_as_f64(&mut env, "abs(-2.5)") - 2.5).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "abs(1+i)") - 1.4142135623730951).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "sqrt(2)") - 1.4142135623730951).abs() < 1e-10);
+        assert!((eval_as_complex64(&mut env, "sqrt(2i)").re - 1.0).abs() < 1e-10);
+        assert!((eval_as_complex64(&mut env, "sqrt(2i)").im - 1.0).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "arg(1+i)") - 0.7853981633974483).abs() < 1e-10);
     }
 
     #[test]

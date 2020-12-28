@@ -14,11 +14,11 @@ pub enum Node {
     Num(i128),
     FNum(f64),
     CNum(Complex64),
-    Unary(Token, Box<Node>),                 // TokenOp, Operand
-    BinOp(Token, Box<Node>, Box<Node>),      // TokenOp, LHS, RHS
-    Var(Token),                              // Token::Ident
-    Func(Token, Vec<Node>),                  // Token::Ident, args...
-    Command(Token, Vec<Token>, String),      // Token::Ident, args..., result-holder
+    Unary(Token, Box<Node>),            // TokenOp, Operand
+    BinOp(Token, Box<Node>, Box<Node>), // TokenOp, LHS, RHS
+    Var(Token),                         // Token::Ident
+    Func(Token, Vec<Node>),             // Token::Ident, args...
+    Command(Token, Vec<Token>, String), // Token::Ident, args..., result-holder
 }
 
 // TODO: macro -> function. normal error message does not need `file!()` and `line!()`.
