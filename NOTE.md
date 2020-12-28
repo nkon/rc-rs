@@ -546,7 +546,7 @@ rustflags = ["-C", "target-feature=+crt-static"]
 
 `rc`はOSSプロジェクトなので、GitHub ActionsのCIでビルドサーバによる配布用バイナルの作成が可能だ。
 
-`.github/workflows`にアクションを書いておけば、pushをトリガとしてビルドが走る。
+`.github/workflows`にアクションを書いておけば、pushをトリガとしてビルドが走る。Rust自体はクロスビルドが可能な仕組みを持っているが、今回は linux, windows, macOS それぞれの build-os を利用してセルフビルドする形にした。
 
 ネットを調べてテンプレからコピーしたのだが、悩んだ所。
 
