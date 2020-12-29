@@ -21,25 +21,22 @@ pub enum Node {
     Command(Token, Vec<Token>, String), // Token::Ident, args..., result-holder
 }
 
-// TODO: macro -> function. normal error message does not need `file!()` and `line!()`.
-macro_rules! tok_check_index {
-    ($tok:expr, $i:expr) => {
-        if $tok.len() <= $i {
-            return Err(MyError::ParseError(format!(
-                "unexpected end of input: {} {}: {:?}",
-                file!(),
-                line!(),
-                $tok
-            )));
-        }
-    };
+fn tok_check_index(tok: &[Token], i: usize) -> Result<(), MyError> {
+    if tok.len() <= i {
+        Err(MyError::ParseError(format!(
+            "unexpected end of input: {:?}",
+            tok
+        )))
+    } else {
+        Ok(())
+    }
 }
 
 fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
     if env.is_debug() {
         eprintln!("num {:?} {}\r", tok, i);
     }
-    tok_check_index!(tok, i);
+    tok_check_index(tok, i)?;
 
     let mut f_postfix = 1.0;
     let mut is_complex = false;
@@ -123,7 +120,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
     if env.is_debug() {
         eprintln!("primary {:?} {}\r", tok, i);
     }
-    tok_check_index!(tok, i);
+    tok_check_index(tok, i)?;
 
     match &tok[i] {
         Token::Op(TokenOp::ParenLeft) => {
@@ -278,7 +275,7 @@ fn unary(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErro
     if env.is_debug() {
         eprintln!("unary {:?} {}\r", tok, i);
     }
-    tok_check_index!(tok, i);
+    tok_check_index(tok, i)?;
 
     let tok_orig = tok[i].clone();
     match tok[i] {
@@ -294,7 +291,7 @@ fn exp(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
     if env.is_debug() {
         eprintln!("exp {:?} {}\r", tok, i);
     }
-    tok_check_index!(tok, i);
+    tok_check_index(tok, i)?;
 
     let (lhs, mut i) = unary(env, tok, i)?;
     if tok.len() <= i {
@@ -316,7 +313,7 @@ fn mul(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
     if env.is_debug() {
         eprintln!("mul {:?} {}\r", tok, i);
     }
-    tok_check_index!(tok, i);
+    tok_check_index(tok, i)?;
 
     let (mut lhs, mut i) = exp(env, tok, i)?;
     loop {
@@ -344,7 +341,7 @@ fn expr(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError
     if env.is_debug() {
         eprintln!("expr {:?} {}\r", tok, i);
     }
-    tok_check_index!(tok, i);
+    tok_check_index(tok, i)?;
 
     let (mut lhs, mut i) = mul(env, tok, i)?;
     loop {
@@ -369,7 +366,7 @@ fn assign(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErr
     if env.is_debug() {
         eprintln!("assign {:?} {}\r", tok, i);
     }
-    tok_check_index!(tok, i);
+    tok_check_index(tok, i)?;
 
     let (lhs, i) = expr(env, tok, i)?;
     if i < tok.len() && tok[i] == Token::Op(TokenOp::Equal) {

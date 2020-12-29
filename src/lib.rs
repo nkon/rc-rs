@@ -590,6 +590,8 @@ mod tests {
             eval_as_string(&mut env, "2 // 2i"),
             "CNum(Complex { re: 1.0, im: 1.0 })".to_string()
         );
+        assert!((eval_as_complex64(&mut env, "exp(i*pi)").re + 1.0).abs() < 1e-10);
+        assert!((eval_as_complex64(&mut env, "exp(i*pi)").im).abs() < 1e-10);
         assert!((eval_as_complex64(&mut env, "i^i").re - 0.20787957635076193).abs() < 1e-10);
         assert!((eval_as_complex64(&mut env, "i^i").im).abs() < 1e-10);
         assert_eq!(
