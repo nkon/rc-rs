@@ -462,6 +462,7 @@ pub fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         let result = do_eval(env, n)?;
         match result {
             Node::Num(_) | Node::FNum(_) | Node::CNum(_) => {
+                env.set_variable("ans".to_string(), result.clone())?;
                 return Ok(result);
             }
             Node::Command(_, _, _) => {

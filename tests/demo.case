@@ -12,3 +12,7 @@ a=2
 a*3
 defun(add, _1 + _2)
 add(10,add(2,a))
+constant()            # list constants. cmd(), variable(), func(), user_func() also work.
+2+3
+ans*7                 # ans is the variable of last answer
+exit()

@@ -43,6 +43,16 @@ rc> a*3
 rc> defun(add, _1 + _2)         # user define function, _1,_2,...,_9 are parameters
 rc> add(10,add(2,a))            # recursive user defined function call
 14
+rc> constant()                      # list constants. cmd(), variable(), func(), user_func() also work.
+e = 2.718281828459045
+pi = 3.141592653589793
+eps = 0.0000000000000002220446049250313
+i = 0+1i
+j = 0+1i
+rc> 2+3
+5
+rc> ans*7                       # ans is the variable of last answer
+35
 rc> exit()                      # exit REPL, Ctrl-c to exit as well.
 $
 ```

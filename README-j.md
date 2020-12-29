@@ -48,6 +48,18 @@ rc> a*3
 rc> defun(add, _1 + _2)         # ユーザ定義関数。_1,_2,...,_9 は引数
 rc> add(10,add(2,a))            # 再帰呼出しも可能
 14
+rc> constant()                  # 定数. cmd(), variable(), func(), user_func() なども
+e = 2.718281828459045
+pi = 3.141592653589793
+eps = 0.0000000000000002220446049250313
+i = 0+1i
+j = 0+1i
+rc> 2+3
+5
+rc> ans*7                       # 最後の計算結果は ans に保存される
+35
+rc> exit()                      # 終了。Ctrl-c も終了
+$
 ```
 
 `rc`はRustで作られていて、Windows, Linux（Raspberry Piを含む）の上で動作確認されています。

@@ -101,5 +101,4 @@ fn main() {
 // TODO: load history, history command
 // TODO: load command
 // TODO: online help, refer `HELP.md`.
-// TODO: `func`, `defun`, `command` command. list current defined identifiers.
 // TODO: map -> graph

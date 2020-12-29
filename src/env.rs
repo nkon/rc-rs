@@ -494,8 +494,9 @@ impl<'a> Env<'a> {
         self.cmd.insert("func", (impl_func as TypeCmd, 0, "list functions"));
         self.cmd.insert("user_func", (impl_user_func as TypeCmd, 0, "list user defined functions"));
         self.cmd.insert("cmd", (impl_cmd as TypeCmd, 0, "list commands"));
+
+        self.new_variable("ans".to_string());
     }
-    // TODO: "ans" variable
 
     pub fn is_const(&self, key: &str) -> Option<Node> {
         match self.constant.get(key) {
