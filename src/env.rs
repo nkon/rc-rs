@@ -373,7 +373,7 @@ fn impl_defun(env: &mut Env, arg: &[Token]) -> String {
 }
 
 fn print_var(env: &mut Env, key: &str, n: &Node) -> String {
-    if let Ok(n) = eval(env, n){
+    if let Ok(n) = eval(env, n) {
         match n {
             Node::Num(_) => {
                 if let Ok(value) = eval_fvalue(env, &n) {
@@ -451,7 +451,6 @@ fn impl_cmd(env: &mut Env, arg: &[Token]) -> String {
     ret
 }
 
-
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
         Env {
@@ -484,16 +483,30 @@ impl<'a> Env<'a> {
         self.func.insert("ave", (impl_ave as TypeFn, 0));
         self.func.insert("sqrt", (impl_sqrt as TypeFn, 1));
         self.func.insert("E12", (impl_e12 as TypeFn, 1));
+        self.cmd.insert(
+            "format",
+            (impl_output_format as TypeCmd, 0, "set output format"),
+        );
         self.cmd
-            .insert("format", (impl_output_format as TypeCmd, 0, "set output format"));
-        self.cmd.insert("debug", (impl_debug as TypeCmd, 1, "set/reset debug mode"));
-        self.cmd.insert("exit", (impl_exit as TypeCmd, 0, "exit REPL"));
-        self.cmd.insert("defun", (impl_defun as TypeCmd, 0, "define user function"));
-        self.cmd.insert("constant", (impl_constant as TypeCmd, 0, "list constants"));
-        self.cmd.insert("variable", (impl_variable as TypeCmd, 0, "list user defined variables"));
-        self.cmd.insert("func", (impl_func as TypeCmd, 0, "list functions"));
-        self.cmd.insert("user_func", (impl_user_func as TypeCmd, 0, "list user defined functions"));
-        self.cmd.insert("cmd", (impl_cmd as TypeCmd, 0, "list commands"));
+            .insert("debug", (impl_debug as TypeCmd, 1, "set/reset debug mode"));
+        self.cmd
+            .insert("exit", (impl_exit as TypeCmd, 0, "exit REPL"));
+        self.cmd
+            .insert("defun", (impl_defun as TypeCmd, 0, "define user function"));
+        self.cmd
+            .insert("constant", (impl_constant as TypeCmd, 0, "list constants"));
+        self.cmd.insert(
+            "variable",
+            (impl_variable as TypeCmd, 0, "list user defined variables"),
+        );
+        self.cmd
+            .insert("func", (impl_func as TypeCmd, 0, "list functions"));
+        self.cmd.insert(
+            "user_func",
+            (impl_user_func as TypeCmd, 0, "list user defined functions"),
+        );
+        self.cmd
+            .insert("cmd", (impl_cmd as TypeCmd, 0, "list commands"));
 
         self.new_variable("ans".to_string());
     }
