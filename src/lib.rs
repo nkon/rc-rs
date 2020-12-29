@@ -453,28 +453,19 @@ fn do_eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     }
 }
 
-#[allow(clippy::never_loop)]
 pub fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval {:?}\r", n);
     }
-    loop {
-        let result = do_eval(env, n)?;
-        match result {
-            Node::Num(_) | Node::FNum(_) | Node::CNum(_) => {
-                env.set_variable("ans".to_string(), result.clone())?;
-                return Ok(result);
-            }
-            Node::Command(_, _, _) => {
-                return Ok(result);
-            }
-            Node::None => {
-                return Ok(result);
-            }
-            _ => {
-                return do_eval(env, &result);
-            }
+    let result = do_eval(env, n)?;
+    match result {
+        Node::Num(_) | Node::FNum(_) | Node::CNum(_) => {
+            env.set_variable("ans".to_string(), result.clone())?;
+            Ok(result)
         }
+        Node::Command(_, _, _) => Ok(result),
+        Node::None => Ok(result),
+        _ => do_eval(env, &result),
     }
 }
 
