@@ -297,11 +297,11 @@ fn exp(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
     if tok.len() <= i {
         return Ok((lhs, i));
     }
-    if tok[i] == Token::Op(TokenOp::Hat) {
+    if tok[i] == Token::Op(TokenOp::Caret) {
         let (rhs, j) = exp(env, tok, i + 1)?;
         i = j;
         Ok((
-            Node::BinOp(Token::Op(TokenOp::Hat), Box::new(lhs), Box::new(rhs)),
+            Node::BinOp(Token::Op(TokenOp::Caret), Box::new(lhs), Box::new(rhs)),
             i,
         ))
     } else {
@@ -487,11 +487,11 @@ mod tests {
         );
         assert_eq!(
             parse_as_string(&mut env, "2^3"),
-            "BinOp(Op(Hat), Num(2), Num(3))"
+            "BinOp(Op(Caret), Num(2), Num(3))"
         );
         assert_eq!(
             parse_as_string(&mut env, "2^3^4"),
-            "BinOp(Op(Hat), Num(2), BinOp(Op(Hat), Num(3), Num(4)))"
+            "BinOp(Op(Caret), Num(2), BinOp(Op(Caret), Num(3), Num(4)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "1+2i"),

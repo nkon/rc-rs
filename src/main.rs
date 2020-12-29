@@ -19,7 +19,7 @@ fn main() {
     opts.optflag("h", "help", "print this help");
     opts.optflag("d", "debug", "debug mode");
     opts.optflag("", "test", "run built-in test");
-    opts.optopt("r", "init", "rc file path", "rc_file");
+    opts.optopt("i", "init", "rc file path", "rc_file");
     opts.optmulti("s", "script", "run script", "FILE");
     opts.optflag("v", "version", "version");
 
@@ -47,7 +47,7 @@ fn main() {
             env.built_in();
 
             // overwritten by '-r' option
-            if let Some(rc_file_str) = matches.opt_str("r") {
+            if let Some(rc_file_str) = matches.opt_str("i") {
                 rc_file_path = path::Path::new(&rc_file_str).to_path_buf();
                 if !rc_file_path.exists() {
                     eprintln!("file not found {}", rc_file_path.to_str().unwrap());
@@ -101,5 +101,5 @@ fn main() {
 // TODO: load history, history command
 // TODO: load command
 // TODO: online help, refer `HELP.md`.
-// TODO: `func`, `const`, `var`, `defun`, `command` command. list current defined identifiers.
+// TODO: `func`, `defun`, `command` command. list current defined identifiers.
 // TODO: map -> graph

@@ -5,19 +5,20 @@ use std::str;
 pub type TypeFn = fn(&mut Env, &[Node]) -> Node;
 pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FloatFormat {
     Fix,
     Sci,
     Eng,
 }
 
+#[derive(Clone)]
 pub struct Env<'a> {
     pub constant: HashMap<&'a str, Node>,
     pub variable: HashMap<String, Node>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
     pub user_func: HashMap<String, Vec<Token>>,  // user defined function
-    pub cmd: HashMap<&'a str, (TypeCmd, usize)>, // (function pointer, arg num: 0=variable)
+    pub cmd: HashMap<&'a str, (TypeCmd, usize, &'a str)>, // (function pointer, arg num: 0=variable)
     pub debug: bool,
     pub output_radix: u8,
     pub separate_digit: usize,
@@ -52,7 +53,7 @@ fn impl_cos(_env: &mut Env, arg: &[Node]) -> Node {
 
 fn impl_exp(_env: &mut Env, arg: &[Node]) -> Node {
     Node::BinOp(
-        Token::Op(TokenOp::Hat),
+        Token::Op(TokenOp::Caret),
         Box::new(Node::FNum(std::f64::consts::E)),
         Box::new(arg[0].clone()),
     )
@@ -84,7 +85,7 @@ fn impl_arg(_env: &mut Env, arg: &[Node]) -> Node {
 
 fn impl_sqrt(_env: &mut Env, arg: &[Node]) -> Node {
     Node::BinOp(
-        Token::Op(TokenOp::Hat),
+        Token::Op(TokenOp::Caret),
         Box::new(arg[0].clone()),
         Box::new(Node::FNum(0.5)),
     )
@@ -371,6 +372,86 @@ fn impl_defun(env: &mut Env, arg: &[Token]) -> String {
     String::from("")
 }
 
+fn print_var(env: &mut Env, key: &str, n: &Node) -> String {
+    if let Ok(n) = eval(env, n){
+        match n {
+            Node::Num(_) => {
+                if let Ok(value) = eval_fvalue(env, &n) {
+                    return format!("{} = {}\r\n", key, value);
+                }
+            }
+            Node::FNum(_) => {
+                if let Ok(value) = eval_fvalue(env, &n) {
+                    return format!("{} = {}\r\n", key, value);
+                }
+            }
+            Node::CNum(_) => {
+                if let Ok(value) = eval_cvalue(env, &n) {
+                    return format!("{} = {}\r\n", key, value);
+                }
+            }
+            _ => {}
+        }
+    }
+    String::new()
+}
+
+fn impl_constant(env: &mut Env, arg: &[Token]) -> String {
+    if env.is_debug() {
+        eprintln!("impl_constant {:?}\r", arg);
+    }
+    let mut ret = String::new();
+    for (key, node) in env.clone().constant.iter() {
+        ret.push_str(print_var(env, key, node).as_str());
+    }
+    ret
+}
+
+fn impl_variable(env: &mut Env, arg: &[Token]) -> String {
+    if env.is_debug() {
+        eprintln!("impl_variable {:?}\r", arg);
+    }
+    let mut ret = String::new();
+    for (key, node) in env.clone().variable.iter() {
+        ret.push_str(print_var(env, key, node).as_str());
+    }
+    ret
+}
+
+fn impl_func(env: &mut Env, arg: &[Token]) -> String {
+    if env.is_debug() {
+        eprintln!("impl_func {:?}\r", arg);
+    }
+    let mut ret = String::new();
+    for key in env.func.keys() {
+        ret.push_str(format!("{}\r\n", key).as_str());
+    }
+    ret
+}
+
+fn impl_user_func(env: &mut Env, arg: &[Token]) -> String {
+    if env.is_debug() {
+        eprintln!("impl_user_func {:?}\r", arg);
+    }
+    let mut ret = String::new();
+    for key in env.user_func.keys() {
+        ret.push_str(format!("{}\r\n", key).as_str());
+    }
+    ret
+}
+
+fn impl_cmd(env: &mut Env, arg: &[Token]) -> String {
+    if env.is_debug() {
+        eprintln!("impl_cmd {:?}\r", arg);
+    }
+    let mut ret = String::new();
+    for (key, val) in env.cmd.iter() {
+        ret.push_str(format!("{} : {}\r\n", key, val.2).as_str());
+    }
+    ret
+}
+
+
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
         Env {
@@ -404,21 +485,26 @@ impl<'a> Env<'a> {
         self.func.insert("sqrt", (impl_sqrt as TypeFn, 1));
         self.func.insert("E12", (impl_e12 as TypeFn, 1));
         self.cmd
-            .insert("format", (impl_output_format as TypeCmd, 0));
-        self.cmd.insert("debug", (impl_debug as TypeCmd, 1));
-        self.cmd.insert("exit", (impl_exit as TypeCmd, 0));
-        self.cmd.insert("defun", (impl_defun as TypeCmd, 0));
+            .insert("format", (impl_output_format as TypeCmd, 0, "set output format"));
+        self.cmd.insert("debug", (impl_debug as TypeCmd, 1, "set/reset debug mode"));
+        self.cmd.insert("exit", (impl_exit as TypeCmd, 0, "exit REPL"));
+        self.cmd.insert("defun", (impl_defun as TypeCmd, 0, "define user function"));
+        self.cmd.insert("constant", (impl_constant as TypeCmd, 0, "list constants"));
+        self.cmd.insert("variable", (impl_variable as TypeCmd, 0, "list user defined variables"));
+        self.cmd.insert("func", (impl_func as TypeCmd, 0, "list functions"));
+        self.cmd.insert("user_func", (impl_user_func as TypeCmd, 0, "list user defined functions"));
+        self.cmd.insert("cmd", (impl_cmd as TypeCmd, 0, "list commands"));
     }
     // TODO: "ans" variable
 
-    pub fn is_const(&mut self, key: &str) -> Option<Node> {
+    pub fn is_const(&self, key: &str) -> Option<Node> {
         match self.constant.get(key) {
             Some(f) => Some(f.clone()),
             None => None,
         }
     }
 
-    pub fn is_variable(&mut self, key: &str) -> Option<Node> {
+    pub fn is_variable(&self, key: &str) -> Option<Node> {
         match self.variable.get(key) {
             Some(f) => Some(f.clone()),
             None => None,
@@ -438,14 +524,14 @@ impl<'a> Env<'a> {
         Ok(())
     }
 
-    pub fn is_func(&mut self, key: &str) -> Option<(TypeFn, usize)> {
+    pub fn is_func(&self, key: &str) -> Option<(TypeFn, usize)> {
         match self.func.get(key) {
             Some(&f) => Some(f),
             None => None,
         }
     }
 
-    pub fn is_cmd(&mut self, key: &str) -> Option<(TypeCmd, usize)> {
+    pub fn is_cmd(&self, key: &str) -> Option<(TypeCmd, usize, &str)> {
         match self.cmd.get(key) {
             Some(&f) => Some(f),
             None => None,
@@ -456,7 +542,7 @@ impl<'a> Env<'a> {
         self.user_func.insert(key, arg.to_vec());
     }
 
-    pub fn is_user_func(&mut self, key: String) -> Option<Vec<Token>> {
+    pub fn is_user_func(&self, key: String) -> Option<Vec<Token>> {
         match self.user_func.get(&key) {
             Some(v) => Some(v.clone()),
             None => None,

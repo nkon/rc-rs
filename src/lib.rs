@@ -35,7 +35,7 @@ pub enum MyError {
     EvalError(String),
 }
 
-pub fn eval_fvalue(_env: &mut Env, n: &Node) -> Result<f64, MyError> {
+pub fn eval_fvalue(_env: &Env, n: &Node) -> Result<f64, MyError> {
     match n {
         Node::Num(n) => Ok(*n as f64),
         Node::FNum(f) => Ok(*f),
@@ -48,7 +48,7 @@ pub fn eval_fvalue(_env: &mut Env, n: &Node) -> Result<f64, MyError> {
     }
 }
 
-pub fn eval_cvalue(_env: &mut Env, n: &Node) -> Result<Complex64, MyError> {
+pub fn eval_cvalue(_env: &Env, n: &Node) -> Result<Complex64, MyError> {
     match n {
         Node::Num(n) => Ok(Complex64::new(*n as f64, 0.0)),
         Node::FNum(f) => Ok(Complex64::new(*f, 0.0)),
@@ -62,7 +62,7 @@ pub fn eval_cvalue(_env: &mut Env, n: &Node) -> Result<Complex64, MyError> {
     }
 }
 
-fn eval_const(env: &mut Env, n: &Node) -> Result<Node, MyError> {
+fn eval_const(env: &Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_const {:?}\r", n);
     }
@@ -367,7 +367,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                 }
                 return Ok(Node::Num(0));
             }
-            Token::Op(TokenOp::Hat) => {
+            Token::Op(TokenOp::Caret) => {
                 if let Node::Num(nr) = rhs {
                     if let Node::Num(nl) = lhs {
                         if nr > 0 {
@@ -412,7 +412,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
 
 fn eval_unary(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
-        eprintln!("do_eval {:?}\r", n);
+        eprintln!("deval_unary {:?}\r", n);
     }
     if let Node::Unary(tok, param) = n {
         if *tok == Token::Op(TokenOp::Plus) {

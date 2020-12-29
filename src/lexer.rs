@@ -10,7 +10,7 @@ pub enum TokenOp {
     Para,       // //
     ParenLeft,  // (
     ParenRight, // )
-    Hat,        // ^
+    Caret,      // ^
     Comma,      // ,
     Equal,      // =
     None,
@@ -277,7 +277,7 @@ pub fn lexer(s: String) -> Result<Vec<Token>, MyError> {
                 i += 1;
             }
             '^' => {
-                ret.push(Token::Op(TokenOp::Hat));
+                ret.push(Token::Op(TokenOp::Caret));
                 i += 1;
             }
             ',' => {
@@ -442,7 +442,7 @@ mod tests {
                 Token::Op(TokenOp::ParenLeft),
                 Token::Op(TokenOp::ParenRight),
                 Token::Op(TokenOp::Minus),
-                Token::Op(TokenOp::Hat)
+                Token::Op(TokenOp::Caret)
             ]
         );
         assert_eq!(

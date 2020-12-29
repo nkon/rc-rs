@@ -12,6 +12,7 @@ Table of Contents
     * [複素数演算](#複素数演算)
 * [MyError](#myerror)
     * [thiserror](#thiserror)
+    * [anyhow](#anyhow)
 * [Command](#command)
 * [変数・定数](#変数定数)
 * [システム定義関数](#システム定義関数)
@@ -136,7 +137,7 @@ Parserが返したASTを再帰的にevalすることで計算結果を得る。
 
 rustでは`use num_complex::Complex64;`とすれば、`(re: f64, im: f64)`と言う形の複素数、およびそれらを引数にとる複素関数を使うことができる。
 
-複素数演算の基本はべき乗関数（`power()`）である。これはライブラリにあるので、引数の型（正整数、整数、浮動小数点数、複素数）に会わせて呼んでやるだけで良い。`TokenOp::Hat`がべき乗演算子（`^`）なので、次のようになる。場合分けが煩雑だが仕方がない。
+複素数演算の基本はべき乗関数（`power()`）である。これはライブラリにあるので、引数の型（正整数、整数、浮動小数点数、複素数）に会わせて呼んでやるだけで良い。`TokenOp::Caret`がべき乗演算子（`^`）なので、次のようになる。場合分けが煩雑だが、もともとのライブラリ関数が別々なので仕方がない。
 
 ```rust
     if let Node::BinOp(tok, lhs, rhs) = n {
@@ -144,7 +145,7 @@ rustでは`use num_complex::Complex64;`とすれば、`(re: f64, im: f64)`と言
         let rhs = eval(env, rhs)?;
         match tok {
 // .....................中略.......................
-            Token::Op(TokenOp::Hat) => {
+            Token::Op(TokenOp::Caret) => {
                 if let Node::Num(nr) = rhs {
                     if let Node::Num(nl) = lhs {
                         if nr > 0 {
@@ -208,9 +209,16 @@ Rustではエラー処理に`Result<T,E>`を使う。
 
 最初の実装では`Result<T, String>`が簡便でよいだろう。しかし、それではRustの力を十分に活用できていない。
 
-エラー処理のためにEdition2018では`?`構文が導入されている。それを有効に使うためには`String`でエラーを返すのではなく、独自エラー型を導入しておくほうが便利だ。2020年現在、Rustのエラー処理の状況は変化が進行中だ。現時点でもっとも有力な方法は「MyErrorを定義してthiserrorで実装を付ける、それ以外はanyhowでエラーを返す」のようだ。`try!`を使う方法は現在は推奨されていない。
+エラー処理のためにEdition2018では`?`構文が導入されている。2020年現在、Rustのエラー処理の状況は変化が進行中だ。`try!`を使う方法は現在は推奨されていない。
 
-独自エラーを`enum MyError`で定義して`Error`トレイトを継承しておく。下位ライブラリが返すエラーを`From`で変換して`MyError`の一種にする。そうすると、自分のコード内ではとにかく`Result<T,MyError>`を返すことができる。そのように返す型が統一されていれば、`?`でエラーチェックをして、ショートカットリターンが可能だ。
+[Rust エラー処理2020](https://cha-shu00.hatenablog.com/entry/2020/12/08/060000)が最新情報をわかりやすく解説している。
+
+雑な理解では、次のような感じだろう。
+
+* `thiserror`は独自エラー型を実装するための便利ツール
+* `anyhow`は`Result<T>`でどんなエラーでも投げられるようにするもの
+
+`rc`では、独自エラーを`enum MyError`で定義して`Error`トレイトを継承しておく。下位ライブラリが返すエラーを`From`で変換して`MyError`の一種にする。そうすると、自分のコード内ではとにかく`Result<T,MyError>`を返すことができる。そのように返す型が統一されていれば、`?`でエラーチェックをして、ショートカットリターンが可能だ。
 
 ### thiserror
 
@@ -299,6 +307,12 @@ fn tok_num(chars: &[char], index: usize) -> Result<(Token, usize), MyError> {
 
 自前のエラー型を定義して、標準のエラー型からの`From`を定義することのメリットは`?`が使えること。つまり、エラー処理を呼び出し側に放り投げる形のショートカットリターンが使えること。つまり、関数を`Result<T,MyError>`を返すように定義しておけば、ライブラリがエラーを発生した場合はライブラリのエラーから`MyError`に`From`によって変換してリータンできる。もちろん、自前のエラーは`MyError`なので、それもリターンできる。いずれも、呼び出し側でエラー処理を行わなければならない。
 
+### anyhow
+
+`anyhow`は、`anyhow::Error`というトレイトオブジェクト、および、`Result<T,anyhow::Error>`→`Result<T>`という型エイリアスを提供する。雑にいうと、anyhow::Errorはいろんなエラー型を扱えるので、関数の返り値を`Result<T>`としておけば、どんなエラーも投げられる。
+
+それほど多種のエラーがライブラリから投げられるような状況ではないので、まだ`rc`には導入していない。
+
 
 ## Command
 
@@ -320,7 +334,7 @@ pub struct Env<'a> {
 
 ## システム定義関数
 
-システム定義関数も同様に`HashMap`に関数ポインタを登録する。実際の関数の計算は標準ライブラリに用意されているものを呼ぶ。関数ポインタは、`pub type TypeFn = fn(&mut Env, &[Node]) -> Node;`のように型エイリアスを用いた方が取り扱いが楽だ。
+システム定義関数も同様に`HashMap`に関数ポインタを登録する。実際の関数の計算は標準ライブラリに用意されているものを呼ぶ。関数ポインタは、`pub type TypeFn = fn(&mut Env, &[Node]) -> Node;`のように型エイリアスを用いた方が楽に取り扱える。
 
 ### `exp()`
 
@@ -328,7 +342,7 @@ pub struct Env<'a> {
 
 ```rust
     Node::BinOp(
-        Token::Op(TokenOp::Hat),
+        Token::Op(TokenOp::Caret),
         Box::new(Node::FNum(std::f64::consts::E)),
         Box::new(arg[0].clone()),
     )
@@ -576,7 +590,7 @@ Build(matrix)→create-release→upload-releaseという3ステップを踏む�
 これで、`v*`というタグを付けてpushすればGitHub Actionsで各々の実行ファイルを作成し、リリースページから、linux(MUSL), windows, macOS用のバイナリがダウンロードできる。VS-Codeのgit統合にはタグをプッシュするボタンはない（コマンドパレットから`git push`とタイプすると`Git: Push Tags`が補完される）ので、このアクションを起動したい時はコマンドラインでタグをプッシュする必要がある（`git push --tag`）。
 
 
-しかし、macOS用は環境がないので未テスト。どなたかテストレポートが欲しい。
+しかし、macOS用は環境がないので未テスト。M1 macについてもなおさら。どなたかテストレポートが欲しい。
 
 
 ### Raspberry Pi

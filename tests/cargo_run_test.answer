@@ -10,7 +10,7 @@ lexer
 1+1 -> [Num(1), Op(Plus), Num(1)]
 1-1 -> [Num(1), Op(Minus), Num(1)]
 -1 -> [Op(Minus), Num(1)]
-+-*/%()^100 -> [Op(Plus), Op(Minus), Op(Mul), Op(Div), Op(Mod), Op(ParenLeft), Op(ParenRight), Op(Hat), Op(Minus), Num(100)]
++-*/%()^100 -> [Op(Plus), Op(Minus), Op(Mul), Op(Div), Op(Mod), Op(ParenLeft), Op(ParenRight), Op(Caret), Op(Minus), Num(100)]
 1.234 -> [FNum(1.234)]
 1.234e-56 -> [FNum(0.00000000000000000000000000000000000000000000000000000001234)]
 -1.234e-56-78 -> [Op(Minus), FNum(0.00000000000000000000000000000000000000000000000000000001234), Op(Minus), Num(78)]
