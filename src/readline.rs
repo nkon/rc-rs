@@ -226,7 +226,7 @@ pub fn readline(env: &mut Env) {
                     prev_cur_x = cur_x;
                     cur_x = do_left(&mut line, prev_cur_x);
                     if let Some(c) = find_match_paren(&line, cur_x as usize) {
-                        //                        eprintln!("highlight {}\r", c);
+                        // eprintln!("highlight {}\r", c);
                         redraw_highlight(&mut stdout, "rc> ", &line, prev_cur_x, cur_x, c as u16);
                     } else {
                         redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
@@ -236,7 +236,7 @@ pub fn readline(env: &mut Env) {
                     prev_cur_x = cur_x;
                     cur_x = do_right(&mut line, prev_cur_x);
                     if let Some(c) = find_match_paren(&line, cur_x as usize) {
-                        //                        eprintln!("highlight {}\r", c);
+                        // eprintln!("highlight {}\r", c);
                         redraw_highlight(&mut stdout, "rc> ", &line, prev_cur_x, cur_x, c as u16);
                     } else {
                         redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);

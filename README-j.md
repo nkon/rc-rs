@@ -68,35 +68,34 @@ $
 
 $ rc 1+2+3                      # コマンド引数に式を書いてもOK
 6
+$
 ```
 
 `rc`はRustで作られていて、Windows, Linux（Raspberry Piを含む）の上で動作確認されています。
 ビルドすればMacでもたぶん動きます。
 
-## 機能
+## 主な機能と特徴
 
-* Calculator
-    + Arithmetic operations including multiple parentheses
-    + support integer and float
-    + k/M/G/T/m/u/n/p ... suffix
-    + binary(0b....), decimal, hexadecimal(0x....) format
-        - '_' ... separator, i.e., `123_000_000`
-    + built-in functions
-        - Arithmetic: sin/cos/abs/...
-        - Engineering: E12/parallel(`//`)/...
-        - unit conversion: inch2mm/feet2mm/oz2g/...
-    + user defined variable/function  <- not yet
-* REPL
+* 計算機
+    + 演算子の優先順位、括弧()
+    + 整数、浮動小数点数、複素数
+    + k/M/G/T/m/u/n/p ... SI suffix
+    + 2進(0b....), 10進, 16進む(0x....)
+        - '_' を桁区切りとして使える `123_000_000`
+    + 組込み関数
+        - 算術関数: sin/cos/abs/...今後拡充予定
+        - エンジニアリング関数: E12/並列抵抗演算子(`//`)/...
+        - 単位変換定数: inch2mm/feet2mm/oz2g/...
+    + ユーザ定義変数・関数
+* ユーザインターフェイス
     + Line Edit/History
-    + Script mode(input from stdin, output to stdout)
+    + Script mode(input from stdin/command line argument, output to stdout)
     + Initialize file (`~/.rc_rc`)
     + Comment `#...`
-    + input format(separator: 123_456, radix: 0x55aa)
-    + format sep4 radix16 -> 0x200_1fee
-    + Highlight parentheses
-* Install
-    + Statically linked single binary
-    + Support Linux/Windows/Mac
+    + 出力フォーマット format sep4 radix16 -> 0x200_1fee
+    + 対応する括弧のハイライト
+* インストール
+    + Linux/Windows/Mac のバイナリがダウンロード可能
 
 
 ## Screen capture
@@ -108,6 +107,7 @@ $ rc 1+2+3                      # コマンド引数に式を書いてもOK
 
 ```
 $ git clone https://github.com/nkon/rc-rs.git
+$ cd rc-rs
 $ cargo install --path .                       ## installed to ~/.cargo/bin/rc
 ```
 

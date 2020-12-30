@@ -61,6 +61,7 @@ $
 
 $ rc 1+2+3                      # command line expression
 6
+$
 ```
 
 * `rc` similar to `bc`, which is a famous command line calculator.
@@ -80,19 +81,16 @@ $ rc 1+2+3                      # command line expression
         - Arithmetic: sin/cos/abs/...
         - Engineering: E12/parallel(`//`)/...
         - unit conversion: inch2mm/feet2mm/oz2g/...
-    + user defined variable/function  <- not yet
+    + user defined variable/function
 * REPL
     + Line Edit/History
-    + Script mode(input from stdin, output to stdout)
+    + Script mode(input from stdin/command line argument, output to stdout)
     + Initialize file (`~/.rc_rc`)
     + Comment `#...`
-    + input format(separator: 123_456, radix: 0x55aa)
     + format sep4 radix16 -> 0x200_1fee
     + Highlight parentheses
 * Install
-    + Statically linked single binary
-    + Support Linux/Windows/Mac
-
+    + Download binary for Linux/Windows/Mac
 
 ## Screen capture
 
@@ -103,6 +101,7 @@ $ rc 1+2+3                      # command line expression
 
 ```
 $ git clone https://github.com/nkon/rc-rs.git
+$ cd rc-rs
 $ cargo install --path .                       ## installed to ~/.cargo/bin/rc
 ```
 
