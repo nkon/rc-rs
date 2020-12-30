@@ -114,7 +114,13 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
     }
 }
 
-fn func(env: &mut Env, id: &str, param_num: usize, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
+fn func(
+    env: &mut Env,
+    id: &str,
+    param_num: usize,
+    tok: &[Token],
+    index: usize,
+) -> Result<(Node, usize), MyError> {
     let mut i = index;
     let mut params = Vec::new();
     if tok.len() <= (i + 1) {
@@ -160,9 +166,59 @@ fn func(env: &mut Env, id: &str, param_num: usize, tok: &[Token], index: usize) 
     )))
 }
 
-// TODO: cmd, var -> separate function
-fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
+fn cmd(
+    _env: &Env,
+    id: &str,
+    param_num: usize,
+    tok: &[Token],
+    index: usize,
+) -> Result<(Node, usize), MyError> {
     let mut i = index;
+    let mut params = Vec::new();
+    if tok.len() <= (i + 1) {
+        return Err(MyError::ParseError(format!(
+            "command has no parameter: {:?} {}",
+            tok, i
+        )));
+    }
+    if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
+        i += 2;
+        while i < tok.len() {
+            if tok[i] == Token::Op(TokenOp::ParenRight) {
+                if param_num != 0 && param_num != params.len() {
+                    return Err(MyError::ParseError(format!(
+                        "command parameter number: {:?} {}",
+                        tok, i
+                    )));
+                }
+                return Ok((
+                    Node::Command(Token::Ident(id.to_string()), params, "".to_string()),
+                    i + 1,
+                ));
+            } else if tok[i] == Token::Op(TokenOp::Comma) {
+                i += 1;
+                continue;
+            } else {
+                params.push(tok[i].clone());
+                i += 1;
+                continue;
+            }
+        }
+        if tok.len() <= i {
+            return Err(MyError::ParseError(format!(
+                "command has no ')': {:?} {}",
+                tok, i
+            )));
+        }
+    }
+    Err(MyError::ParseError(format!(
+        "command has no '(': {:?} {}",
+        tok, i
+    )))
+}
+
+fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
+    let i = index;
     if env.is_debug() {
         eprintln!("primary {:?} {}\r", tok, i);
     }
@@ -182,60 +238,19 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
         }
         Token::Ident(id) => {
             if let Some(_constant) = env.is_const(id.as_str()) {
-                return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
+                Ok((Node::Var(Token::Ident(id.clone())), i + 1))
             } else if let Some(func_tuple) = env.is_func(id.as_str()) {
-                return func(env, id, func_tuple.1, tok, index);
+                func(env, id, func_tuple.1, tok, index)
             } else if let Some(_tokens) = env.is_user_func((*id).clone()) {
-                return func(env, &(*id).to_string(), 0, tok, index);
+                func(env, &(*id).to_string(), 0, tok, index)
             } else if let Some(cmd_tuple) = env.is_cmd(id.as_str()) {
-                let mut params = Vec::new();
-                if tok.len() <= (i + 1) {
-                    return Err(MyError::ParseError(format!(
-                        "command has no parameter: {:?} {}",
-                        tok, i
-                    )));
-                } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
-                    i += 2;
-                    while i < tok.len() {
-                        if tok[i] == Token::Op(TokenOp::ParenRight) {
-                            if cmd_tuple.1 != 0 && cmd_tuple.1 != params.len() {
-                                return Err(MyError::ParseError(format!(
-                                    "command parameter number: {:?} {}",
-                                    tok, i
-                                )));
-                            }
-                            return Ok((
-                                Node::Command(Token::Ident(id.clone()), params, "".to_string()),
-                                i + 1,
-                            ));
-                        } else if tok[i] == Token::Op(TokenOp::Comma) {
-                            i += 1;
-                            continue;
-                        } else {
-                            params.push(tok[i].clone());
-                            i += 1;
-                            continue;
-                        }
-                    }
-                    if tok.len() <= i {
-                        return Err(MyError::ParseError(format!(
-                            "command has no ')': {:?} {}",
-                            tok, i
-                        )));
-                    }
-                } else {
-                    return Err(MyError::ParseError(format!(
-                        "command has no '(': {:?} {}",
-                        tok, i
-                    )));
-                }
+                cmd(env, id, cmd_tuple.1, tok, index)
             } else if env.is_variable(id).is_some() {
-                return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
+                Ok((Node::Var(Token::Ident(id.clone())), i + 1))
             } else {
                 env.new_variable(id.clone());
-                return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
+                Ok((Node::Var(Token::Ident(id.clone())), i + 1))
             }
-            Ok((Node::None, i))
         }
         _ => num(env, tok, i),
     }
