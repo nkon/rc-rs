@@ -80,22 +80,23 @@ $
     + 演算子の優先順位、括弧()
     + 整数、浮動小数点数、複素数
     + k/M/G/T/m/u/n/p ... SI suffix
-    + 2進(0b....), 10進, 16進む(0x....)
+    + 2進(0b....), 10進, 16進(0x....)
         - '_' を桁区切りとして使える `123_000_000`
-    + 組込み関数
+    + 組込み関数・定数
         - 算術関数: sin/cos/abs/...今後拡充予定
         - エンジニアリング関数: E12/並列抵抗演算子(`//`)/...
         - 単位変換定数: inch2mm/feet2mm/oz2g/...
     + ユーザ定義変数・関数
 * ユーザインターフェイス
-    + Line Edit/History
-    + Script mode(input from stdin/command line argument, output to stdout)
-    + Initialize file (`~/.rc_rc`)
-    + Comment `#...`
+    + 行編集、ヒストリー
+    + スクリプトモード(input from stdin/command line argument, output to stdout)
+    + ユーザ初期化ファイル(`~/.rc_rc`)
+    + コメント `#...`
     + 出力フォーマット format sep4 radix16 -> 0x200_1fee
     + 対応する括弧のハイライト
 * インストール
     + Linux/Windows/Mac のバイナリがダウンロード可能
+    + RaspberryPiはソースからビルド
 
 
 ## Screen capture
