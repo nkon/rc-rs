@@ -60,6 +60,9 @@ rc> ans*7                       # 最後の計算結果は ans に保存され�
 35
 rc> exit()                      # 終了。Ctrl-c も終了
 $
+
+$ rc 1+2+3                      # コマンド引数に式を書いてもOK
+6
 ```
 
 `rc`はRustで作られていて、Windows, Linux（Raspberry Piを含む）の上で動作確認されています。

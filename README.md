@@ -55,6 +55,9 @@ rc> ans*7                       # ans is the variable of last answer
 35
 rc> exit()                      # exit REPL, Ctrl-c to exit as well.
 $
+
+$ rc 1+2+3                      # command line expression
+6
 ```
 
 * `rc` similar to `bc`, which is a famous command line calculator.

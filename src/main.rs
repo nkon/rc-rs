@@ -5,9 +5,11 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path;
 
-// TODO: input expression can be on command line
 fn print_usage(program: &str, opts: Options) {
-    let brief = format!("rc: CUI calculator\nUsage: {} [options]", program);
+    let brief = format!(
+        "rc: CUI calculator\nUsage: {} [options] [expression]",
+        program
+    );
     print!("{}", opts.usage(&brief));
 }
 
@@ -89,7 +91,17 @@ fn main() {
                     std::process::exit(1);
                 }
             }
-            readline(&mut env);
+
+            if matches.free.is_empty() {
+                readline(&mut env);
+            } else {
+                let mut expression = String::new();
+                for item in matches.free {
+                    expression.push_str(item.as_str());
+                    expression.push(' ');
+                }
+                println!("{}", do_script(&mut env, &expression).unwrap());
+            }
         }
         Err(e) => {
             eprintln!("{}", e);

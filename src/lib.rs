@@ -16,7 +16,7 @@ pub use lexer::*;
 pub use parser::*;
 pub use readline::readline;
 pub use run_test::run_test;
-pub use script::{run_rc, run_script};
+pub use script::{do_script, run_rc, run_script};
 
 #[derive(Error, Debug)]
 pub enum MyError {

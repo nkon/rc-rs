@@ -2,7 +2,7 @@ use std::io::BufRead;
 
 use super::*;
 
-fn do_script(env: &mut Env, line: &str) -> Result<String, MyError> {
+pub fn do_script(env: &mut Env, line: &str) -> Result<String, MyError> {
     if env.debug {
         eprint!("{}", line);
     }
