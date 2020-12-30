@@ -474,6 +474,9 @@ impl<'a> Env<'a> {
             .insert("i", Node::CNum(Complex64::new(0.0, 1.0)));
         self.constant
             .insert("j", Node::CNum(Complex64::new(0.0, 1.0)));
+        self.constant.insert("inch2mm", Node::FNum(25.4));
+        self.constant.insert("feet2mm", Node::FNum(304.8));
+        self.constant.insert("oz2g", Node::FNum(28.3495));
         self.func.insert("sin", (impl_sin as TypeFn, 1));
         self.func.insert("cos", (impl_cos as TypeFn, 1));
         self.func.insert("exp", (impl_exp as TypeFn, 1));
