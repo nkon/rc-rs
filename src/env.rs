@@ -356,7 +356,7 @@ fn impl_defun(env: &mut Env, arg: &[Token]) -> String {
         eprintln!("impl_defun {:?}\r", arg);
     }
     if arg.len() < 2 {
-        return format!("defun should have at least 2 args.");
+        return "defun should have at least 2 args.".to_string();
     }
     if let Token::Ident(id) = &arg[0] {
         let mut implement = Vec::new();

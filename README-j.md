@@ -93,6 +93,7 @@ $ rc 1+2+3                      # コマンド引数に式を書いてもOK
     + Comment `#...`
     + input format(separator: 123_456, radix: 0x55aa)
     + format sep4 radix16 -> 0x200_1fee
+    + Highlight parentheses
 * Install
     + Statically linked single binary
     + Support Linux/Windows/Mac
@@ -118,7 +119,6 @@ Windows, Linux, macOS用のバイナリが[Release](https://github.com/nkon/rc-r
 
 ## 将来の予定
 
-* Highlight parentheses
 * Online help
 * Graph
 * L10N using gettext-rs

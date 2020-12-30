@@ -192,6 +192,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
     match &tok[i] {
         Token::Op(TokenOp::ParenLeft) => {
             let (ex, i) = expr(env, tok, i + 1)?;
+            tok_check_index(tok, i)?;
             if tok[i] != Token::Op(TokenOp::ParenRight) {
                 Err(MyError::ParseError(format!(
                     "')' not found: {:?} {}",
@@ -494,6 +495,9 @@ mod tests {
             assert!(false);
         }
         if let Ok(_) = parse(&mut env, &(lexer("sin".to_string())).unwrap()) {
+            assert!(false);
+        }
+        if let Ok(_) = parse(&mut env, &(lexer("((())".to_string())).unwrap()) {
             assert!(false);
         }
     }

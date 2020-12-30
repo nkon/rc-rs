@@ -6,6 +6,8 @@ pub use crossterm::{
     Command, Result,
 };
 use std::io::{stdout, Write};
+use std::iter::FromIterator;
+use std::{thread, time};
 
 use super::*;
 
@@ -23,6 +25,44 @@ where
         queue!(
             output,
             style::Print(format!("{}{}", prompt, line)),
+            cursor::MoveLeft(line.len() as u16 - cur)
+        )
+        .unwrap();
+    } else {
+        queue!(output, style::Print(format!("{}{}", prompt, line))).unwrap();
+    }
+    output.flush().unwrap();
+}
+
+fn redraw_highlight<W>(
+    output: &mut W,
+    prompt: &str,
+    line: &str,
+    prev: u16,
+    cur: u16,
+    highlight: u16,
+) where
+    W: Write,
+{
+    queue!(
+        output,
+        terminal::Clear(ClearType::CurrentLine),
+        cursor::MoveLeft(prev + prompt.len() as u16)
+    )
+    .unwrap();
+    if cur < line.len() as u16 {
+        let mut chars: Vec<char> = line.chars().collect();
+        let left = chars.split_off(highlight as usize + 1);
+        let c = chars.split_off(chars.len() - 1);
+        //        eprintln!("front={:?} c={:?} left={:?}\r", chars, c, left);
+        queue!(
+            output,
+            style::Print(prompt.to_string()),
+            style::Print(String::from_iter(chars)),
+            style::SetAttribute(style::Attribute::Bold),
+            style::Print(String::from_iter(c)),
+            style::SetAttribute(style::Attribute::Reset),
+            style::Print(String::from_iter(left)),
             cursor::MoveLeft(line.len() as u16 - cur)
         )
         .unwrap();
@@ -103,6 +143,49 @@ fn do_insert(line: &mut String, prev: u16, c: char) -> u16 {
     prev + 1
 }
 
+fn find_match_paren(line: &str, index: usize) -> Option<usize> {
+    let mut count = 0;
+    let mut pos;
+    if line.len() <= index {
+        return None;
+    }
+    let chars: Vec<char> = line.chars().collect();
+    if chars[index] == ')' {
+        pos = index - 1;
+        loop {
+            if chars[pos] == ')' {
+                count += 1;
+            } else if chars[pos] == '(' {
+                if count == 0 {
+                    return Some(pos as usize);
+                } else {
+                    count -= 1;
+                }
+            }
+            if pos == 0 {
+                return None;
+            }
+            pos -= 1;
+        }
+    }
+    if chars[index] == '(' {
+        pos = index + 1;
+        while pos < chars.len() {
+            if chars[pos] == '(' {
+                count += 1;
+            } else if chars[pos] == ')' {
+                if count == 0 {
+                    return Some(pos as usize);
+                } else {
+                    count -= 1;
+                }
+            }
+            pos += 1;
+        }
+    }
+    None
+}
+
 pub fn readline(env: &mut Env) {
     let mut line = String::new();
     let mut cur_x: u16 = 0;
@@ -142,12 +225,22 @@ pub fn readline(env: &mut Env) {
                 KeyCode::Left => {
                     prev_cur_x = cur_x;
                     cur_x = do_left(&mut line, prev_cur_x);
-                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                    if let Some(c) = find_match_paren(&line, cur_x as usize) {
+                        //                        eprintln!("highlight {}\r", c);
+                        redraw_highlight(&mut stdout, "rc> ", &line, prev_cur_x, cur_x, c as u16);
+                    } else {
+                        redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                    }
                 }
                 KeyCode::Right => {
                     prev_cur_x = cur_x;
                     cur_x = do_right(&mut line, prev_cur_x);
-                    redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                    if let Some(c) = find_match_paren(&line, cur_x as usize) {
+                        //                        eprintln!("highlight {}\r", c);
+                        redraw_highlight(&mut stdout, "rc> ", &line, prev_cur_x, cur_x, c as u16);
+                    } else {
+                        redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
+                    }
                 }
                 KeyCode::Up => {
                     if history_index > 0 {
@@ -241,6 +334,19 @@ pub fn readline(env: &mut Env) {
                 KeyCode::Char(c) => {
                     prev_cur_x = cur_x;
                     cur_x = do_insert(&mut line, cur_x, c);
+                    if c == ')' {
+                        if let Some(i) = find_match_paren(&line, cur_x as usize - 1) {
+                            redraw_highlight(
+                                &mut stdout,
+                                "rc> ",
+                                &line,
+                                prev_cur_x,
+                                prev_cur_x,
+                                i as u16,
+                            );
+                            thread::sleep(time::Duration::from_millis(200));
+                        }
+                    }
                     redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
                 _ => {}
@@ -286,5 +392,23 @@ mod tests {
         assert_eq!(next, 6);
         assert_eq!(line, "01234c");
     }
-}
 
+    #[test]
+    fn test_paren() {
+        let line = String::from("()");
+        let ret = find_match_paren(&line, 0);
+        assert_eq!(ret, Some(1));
+        let line = String::from("()");
+        let ret = find_match_paren(&line, 1);
+        assert_eq!(ret, Some(0));
+        let line = String::from("(())");
+        let ret = find_match_paren(&line, 0);
+        assert_eq!(ret, Some(3));
+        let line = String::from("(())");
+        let ret = find_match_paren(&line, 3);
+        assert_eq!(ret, Some(0));
+        let line = String::from("(a(b)c(d)e)");
+        let ret = find_match_paren(&line, 10);
+        assert_eq!(ret, Some(0));
+    }
+}

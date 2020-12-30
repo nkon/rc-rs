@@ -87,7 +87,8 @@ $ rc 1+2+3                      # command line expression
     + Initialize file (`~/.rc_rc`)
     + Comment `#...`
     + input format(separator: 123_456, radix: 0x55aa)
-    + output_format(sep4, radix16) -> 0x200_1fee
+    + format sep4 radix16 -> 0x200_1fee
+    + Highlight parentheses
 * Install
     + Statically linked single binary
     + Support Linux/Windows/Mac
@@ -111,7 +112,6 @@ Windows, Linux, macOS binaries are available from [Release](https://github.com/n
 
 ## Future
 
-* Highlight parentheses
 * Online help
 * Graph
 * L10N using gettext-rs
