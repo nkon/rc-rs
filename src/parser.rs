@@ -486,6 +486,28 @@ mod tests {
     }
 
     #[test]
+    fn test_parser_command() {
+        let mut env = Env::new();
+        env.built_in();
+        assert_eq!(
+            parse_as_string(&mut env, "debug(1)"),
+            "Command(Ident(\"debug\"), [Num(1)], \"\")"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "constant()"),
+            "Command(Ident(\"constant\"), [], \"\")"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "defun(add, _1+_2)"),
+            "Command(Ident(\"defun\"), [Ident(\"add\"), Ident(\"_1\"), Op(Plus), Ident(\"_2\")], \"\")"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "format(sep4, 16)"),
+            "Command(Ident(\"format\"), [Ident(\"sep4\"), Num(16)], \"\")"
+        );
+    }
+
+    #[test]
     fn test_parser_error() {
         let mut env = Env::new();
         env.built_in();
