@@ -529,9 +529,18 @@ mod tests {
 
         assert_eq!(eval_as_string(&mut env, "5//5"), "FNum(2.5)".to_string());
 
-        assert_eq!(eval_as_string(&mut env, "5*inch2mm"), "FNum(127.0)".to_string());
-        assert_eq!(eval_as_string(&mut env, "5*feet2mm"), "FNum(1524.0)".to_string());
-        assert_eq!(eval_as_string(&mut env, "5*oz2g"), "FNum(141.7475)".to_string());
+        assert_eq!(
+            eval_as_string(&mut env, "5*inch2mm"),
+            "FNum(127.0)".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "5*feet2mm"),
+            "FNum(1524.0)".to_string()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "5*oz2g"),
+            "FNum(141.7475)".to_string()
+        );
 
         assert!((eval_as_f64(&mut env, "sin(0.0)")).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "cos(pi/2)")).abs() < 1e-10);
