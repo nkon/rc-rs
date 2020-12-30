@@ -18,7 +18,7 @@ pub struct Env<'a> {
     pub variable: HashMap<String, Node>,
     pub func: HashMap<&'a str, (TypeFn, usize)>, // (function pointer, arg num: 0=variable)
     pub user_func: HashMap<String, Vec<Token>>,  // user defined function
-    pub cmd: HashMap<&'a str, (TypeCmd, usize, &'a str)>, // (function pointer, arg num: 0=variable)
+    pub cmd: HashMap<&'a str, (TypeCmd, usize, &'a str)>, // (function pointer, arg num: 0=variable, description)
     pub debug: bool,
     pub output_radix: u8,
     pub separate_digit: usize,

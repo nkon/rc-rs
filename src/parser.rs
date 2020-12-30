@@ -114,7 +114,53 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
     }
 }
 
-// TODO: func, cmd, var -> separate function
+fn func(env: &mut Env, id: &str, param_num: usize, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
+    let mut i = index;
+    let mut params = Vec::new();
+    if tok.len() <= (i + 1) {
+        return Err(MyError::ParseError(format!(
+            "function has no parameter: {:?} {}",
+            tok, i
+        )));
+    }
+    if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
+        i += 2;
+        while i < tok.len() {
+            if tok[i] == Token::Op(TokenOp::ParenRight) {
+                if param_num != 0 && param_num != params.len() {
+                    return Err(MyError::ParseError(format!(
+                        "function parameter number: {:?} {}",
+                        tok, i
+                    )));
+                }
+                return Ok((Node::Func(Token::Ident(id.to_string()), params), i + 1));
+            } else if tok[i] == Token::Op(TokenOp::Comma) {
+                i += 1;
+                continue;
+            } else if let Ok((t, j)) = expr(env, tok, i) {
+                i = j;
+                params.push(t);
+            } else {
+                return Err(MyError::ParseError(format!(
+                    "function parameter: {:?} {}",
+                    tok, i
+                )));
+            }
+        }
+        if tok.len() <= i {
+            return Err(MyError::ParseError(format!(
+                "function has no ')': {:?} {}",
+                tok, i
+            )));
+        }
+    }
+    Err(MyError::ParseError(format!(
+        "function has no '(': {:?} {}",
+        tok, i
+    )))
+}
+
+// TODO: cmd, var -> separate function
 fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
     let mut i = index;
     if env.is_debug() {
@@ -138,85 +184,9 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
             if let Some(_constant) = env.is_const(id.as_str()) {
                 return Ok((Node::Var(Token::Ident(id.clone())), i + 1));
             } else if let Some(func_tuple) = env.is_func(id.as_str()) {
-                let mut params = Vec::new();
-                if tok.len() <= (i + 1) {
-                    return Err(MyError::ParseError(format!(
-                        "function has no parameter: {:?} {}",
-                        tok, i
-                    )));
-                } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
-                    i += 2;
-                    while i < tok.len() {
-                        if tok[i] == Token::Op(TokenOp::ParenRight) {
-                            if func_tuple.1 != 0 && func_tuple.1 != params.len() {
-                                return Err(MyError::ParseError(format!(
-                                    "function parameter number: {:?} {}",
-                                    tok, i
-                                )));
-                            }
-                            return Ok((Node::Func(Token::Ident(id.clone()), params), i + 1));
-                        } else if tok[i] == Token::Op(TokenOp::Comma) {
-                            i += 1;
-                            continue;
-                        } else if let Ok((t, j)) = expr(env, tok, i) {
-                            i = j;
-                            params.push(t);
-                        } else {
-                            return Err(MyError::ParseError(format!(
-                                "function parameter: {:?} {}",
-                                tok, i
-                            )));
-                        }
-                    }
-                    if tok.len() <= i {
-                        return Err(MyError::ParseError(format!(
-                            "function has no ')': {:?} {}",
-                            tok, i
-                        )));
-                    }
-                } else {
-                    return Err(MyError::ParseError(format!(
-                        "function has no '(': {:?} {}",
-                        tok, i
-                    )));
-                }
+                return func(env, id, func_tuple.1, tok, index);
             } else if let Some(_tokens) = env.is_user_func((*id).clone()) {
-                let mut params = Vec::new();
-                if tok.len() <= (i + 1) {
-                    return Err(MyError::ParseError(format!(
-                        "function has no parameter: {:?} {}",
-                        tok, i
-                    )));
-                } else if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
-                    i += 2;
-                    while i < tok.len() {
-                        if tok[i] == Token::Op(TokenOp::ParenRight) {
-                            return Ok((Node::Func(Token::Ident(id.clone()), params), i + 1));
-                        } else if tok[i] == Token::Op(TokenOp::Comma) {
-                            i += 1;
-                            continue;
-                        } else if let Ok((t, j)) = expr(env, tok, i) {
-                            i = j;
-                            params.push(t);
-                        } else {
-                            return Err(MyError::ParseError(format!(
-                                "function parameter: {:?} {}",
-                                tok, i
-                            )));
-                        }
-                    }
-                    if tok.len() <= i {
-                        return Err(MyError::ParseError(format!(
-                            "function has no ')': {:?} {}",
-                            tok, i
-                        )));
-                    }
-                } else {
-                    return Err(MyError::ParseError(format!(
-                        "function has no '(': {:?} {}",
-                        tok, i
-                    )));
-                }
+                return func(env, &(*id).to_string(), 0, tok, index);
             } else if let Some(cmd_tuple) = env.is_cmd(id.as_str()) {
                 let mut params = Vec::new();
                 if tok.len() <= (i + 1) {
