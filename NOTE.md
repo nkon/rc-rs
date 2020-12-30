@@ -552,7 +552,7 @@ $ ldd target/x86_64-unknown-linux-musl/release/rc
 
 ### Windows
 
-`.cargo/config`に次のように書いておけば、`x86_64-pc-windows-msvc`環境でstatic linkオプションをリンカに対して渡してくれる。
+[`.cargo/config`](.cargo/config)に次のように書いておけば、`x86_64-pc-windows-msvc`環境でstatic linkオプションをリンカに対して渡してくれる。
 ```
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
@@ -562,7 +562,7 @@ rustflags = ["-C", "target-feature=+crt-static"]
 
 `rc`はOSSプロジェクトなので、GitHub ActionsのCIでビルドサーバによる配布用バイナルの作成が可能だ。
 
-`.github/workflows/rust.yaml`にアクションを書いておけば、pushをトリガとしてビルドが走る。Rust自体はクロスビルドが可能な仕組みを持っている。しかし今回はlinux、windows、macOSそれぞれのOSイメージを利用してセルフビルドする。また、ローカルでテストは済んでいるはずだが、ビルド環境でもテストを走らせる。
+[`.github/workflows/rust.yaml`](.github/workflows/rust.yaml)にアクションを書いておけば、pushをトリガとしてビルドが走る。Rust自体はクロスビルドが可能な仕組みを持っている。しかし今回はlinux、windows、macOSそれぞれのOSイメージを利用してセルフビルドする。また、ローカルでテストは済んでいるはずだが、ビルド環境でもテストを走らせる。
 
 Build(matrix)→create-release→upload-releaseという3ステップを踏む。
 

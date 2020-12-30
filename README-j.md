@@ -13,6 +13,8 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
+[README.md](README.md)
+
 rc - simple terminal calculator
 ==============================
 
@@ -54,6 +56,9 @@ pi = 3.141592653589793
 eps = 0.0000000000000002220446049250313
 i = 0+1i
 j = 0+1i
+inch2mm = 25.4
+feet2mm = 304.8
+oz2g = 28.3495
 rc> 2+3
 5
 rc> ans*7                       # 最後の計算結果は ans に保存される
@@ -108,7 +113,7 @@ $ cargo install --path .                       ## installed to ~/.cargo/bin/rc
 
 ## Download
 
-Windows, Linux, macOS binaries are available from [Release](https://github.com/nkon/rc-rs/releases) page.
+Windows, Linux, macOS用のバイナリが[Release](https://github.com/nkon/rc-rs/releases)ページからダウンロードできます。
 
 
 ## 将来の予定
