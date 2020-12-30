@@ -166,55 +166,20 @@ fn func(
     )))
 }
 
-fn cmd(
-    _env: &Env,
-    id: &str,
-    param_num: usize,
-    tok: &[Token],
-    index: usize,
-) -> Result<(Node, usize), MyError> {
+#[allow(clippy::unnecessary_wraps)]
+fn cmd(_env: &Env, id: &str, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
     let mut i = index;
     let mut params = Vec::new();
-    if tok.len() <= (i + 1) {
-        return Err(MyError::ParseError(format!(
-            "command has no parameter: {:?} {}",
-            tok, i
-        )));
+    i += 1;
+    while i < tok.len() {
+        params.push(tok[i].clone());
+        i += 1;
+        continue;
     }
-    if tok[i + 1] == Token::Op(TokenOp::ParenLeft) {
-        i += 2;
-        while i < tok.len() {
-            if tok[i] == Token::Op(TokenOp::ParenRight) {
-                if param_num != 0 && param_num != params.len() {
-                    return Err(MyError::ParseError(format!(
-                        "command parameter number: {:?} {}",
-                        tok, i
-                    )));
-                }
-                return Ok((
-                    Node::Command(Token::Ident(id.to_string()), params, "".to_string()),
-                    i + 1,
-                ));
-            } else if tok[i] == Token::Op(TokenOp::Comma) {
-                i += 1;
-                continue;
-            } else {
-                params.push(tok[i].clone());
-                i += 1;
-                continue;
-            }
-        }
-        if tok.len() <= i {
-            return Err(MyError::ParseError(format!(
-                "command has no ')': {:?} {}",
-                tok, i
-            )));
-        }
-    }
-    Err(MyError::ParseError(format!(
-        "command has no '(': {:?} {}",
-        tok, i
-    )))
+    Ok((
+        Node::Command(Token::Ident(id.to_string()), params, "".to_string()),
+        i + 1,
+    ))
 }
 
 fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
@@ -243,8 +208,8 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
                 func(env, id, func_tuple.1, tok, index)
             } else if let Some(_tokens) = env.is_user_func((*id).clone()) {
                 func(env, &(*id).to_string(), 0, tok, index)
-            } else if let Some(cmd_tuple) = env.is_cmd(id.as_str()) {
-                cmd(env, id, cmd_tuple.1, tok, index)
+            } else if let Some(_cmd_tuple) = env.is_cmd(id.as_str()) {
+                cmd(env, id, tok, index)
             } else if env.is_variable(id).is_some() {
                 Ok((Node::Var(Token::Ident(id.clone())), i + 1))
             } else {
@@ -490,19 +455,23 @@ mod tests {
         let mut env = Env::new();
         env.built_in();
         assert_eq!(
-            parse_as_string(&mut env, "debug(1)"),
+            parse_as_string(&mut env, "debug 1"),
             "Command(Ident(\"debug\"), [Num(1)], \"\")"
         );
         assert_eq!(
-            parse_as_string(&mut env, "constant()"),
+            parse_as_string(&mut env, "debug"),
+            "Command(Ident(\"debug\"), [], \"\")"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "constant"),
             "Command(Ident(\"constant\"), [], \"\")"
         );
         assert_eq!(
-            parse_as_string(&mut env, "defun(add, _1+_2)"),
+            parse_as_string(&mut env, "defun add  _1+_2 "),
             "Command(Ident(\"defun\"), [Ident(\"add\"), Ident(\"_1\"), Op(Plus), Ident(\"_2\")], \"\")"
         );
         assert_eq!(
-            parse_as_string(&mut env, "format(sep4, 16)"),
+            parse_as_string(&mut env, "format sep4 16"),
             "Command(Ident(\"format\"), [Ident(\"sep4\"), Num(16)], \"\")"
         );
     }

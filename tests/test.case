@@ -3,15 +3,15 @@
 sin(0)
 abs(-2)
 max(1,2,3)
-format(16)
+format 16
 65535
-format(10)
-debug(1)
+format 10
+debug 1
 1
-debug(0)
+debug 0
 2
-format(sep3)
+format sep3
 123456
-format(sep0)
+format sep0
 987654
 1+2i

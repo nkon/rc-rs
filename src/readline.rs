@@ -114,7 +114,7 @@ pub fn readline(env: &mut Env) {
     let mut stdout = stdout();
 
     // goto raw mode
-    write!(stdout, "Ctrl-c or \"exit()\" to exit\r\n").unwrap();
+    write!(stdout, "Ctrl-c or \"exit\" to exit\r\n").unwrap();
     write!(stdout, "rc> ").unwrap();
     stdout.flush().unwrap();
 
@@ -288,5 +288,3 @@ mod tests {
     }
 }
 
-// BUG: test
-// FIXME: test

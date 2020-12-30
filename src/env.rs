@@ -177,12 +177,6 @@ fn impl_output_format(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
         eprintln!("impl_output_format {:?}\r", arg);
     }
-    if arg.is_empty() {
-        return format!(
-            "format(radix = {}, separate = {})",
-            env.output_radix, env.separate_digit
-        );
-    }
     for a in arg {
         match a {
             Token::Num(2) => {
@@ -220,7 +214,7 @@ fn impl_output_format(env: &mut Env, arg: &[Token]) -> String {
         }
     }
     format!(
-        "format(radix = {}, separate = {}, float = {:?})",
+        "format radix={} separate={} float={:?}",
         env.output_radix, env.separate_digit, env.float_format,
     )
 }
@@ -329,7 +323,7 @@ fn impl_debug(env: &mut Env, arg: &[Token]) -> String {
         eprintln!("impl_debug {:?}\r", arg);
     }
     if arg.is_empty() {
-        return format!("debug({})", env.debug);
+        return format!("debug {}", env.debug);
     }
     match &arg[0] {
         Token::Num(0) => {
@@ -347,7 +341,7 @@ fn impl_debug(env: &mut Env, arg: &[Token]) -> String {
         }
         _ => {}
     }
-    format!("debug({})", env.debug)
+    format!("debug {}", env.debug)
 }
 
 fn impl_exit(env: &mut Env, arg: &[Token]) -> String {
@@ -360,6 +354,9 @@ fn impl_exit(env: &mut Env, arg: &[Token]) -> String {
 fn impl_defun(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
         eprintln!("impl_defun {:?}\r", arg);
+    }
+    if arg.len() < 2 {
+        return format!("defun should have at least 2 args.");
     }
     if let Token::Ident(id) = &arg[0] {
         let mut implement = Vec::new();

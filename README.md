@@ -28,11 +28,11 @@ rc> 1/(2*pi*(3k//4.7k)*0.22u)   # cut off frequency of CR LPF. "//" means parall
 395.0654615756267
 rc> E12(1234)                   # round to E12 series
 1200
-rc> format(16, sep4)            # output_format
-format(radix = 16, separate = 4)
+rc> format 16 sep4              # output_format. command does not use "(",")",",".
+format radix = 16 separate = 4
 rc> 0xdead_beef - 0xcafe_babe
 0x13af_0431
-rc > format(10, sep3)
+rc > format 10 sep3
 rc> i^i
 0.20787957635076193+0i
 rc> exp(i*pi)                   # Euler`s equation
@@ -40,10 +40,10 @@ rc> exp(i*pi)                   # Euler`s equation
 rc> a=2                         # user defined variable
 rc> a*3
 6
-rc> defun(add, _1 + _2)         # user define function, _1,_2,...,_9 are parameters
+rc> defun add _1 + _2           # user define function, _1,_2,...,_9 are parameters
 rc> add(10,add(2,a))            # recursive user defined function call
 14
-rc> constant()                  # list constants. cmd(), variable(), func(), user_func() also work.
+rc> constant                    # list constants. cmd, variable, func, user_func also work.
 e = 2.718281828459045
 pi = 3.141592653589793
 eps = 0.0000000000000002220446049250313
@@ -56,7 +56,7 @@ rc> 2+3
 5
 rc> ans*7                       # ans is the variable of last answer
 35
-rc> exit()                      # exit REPL, Ctrl-c to exit as well.
+rc> exit                        # exit REPL, Ctrl-c to exit as well.
 $
 
 $ rc 1+2+3                      # command line expression

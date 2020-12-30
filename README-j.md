@@ -35,11 +35,11 @@ rc> 1/(2*pi*(3k//4.7k)*0.22u)   # CR-LPFのカットオフ周波数の計算。
 395.0654615756267
 rc> E12(1234)                   # E12シリーズに丸める
 1200
-rc> format(16, sep4)            # 出力フォーマットを16進、4桁区切りに変更
+rc> format 16 sep4              # 出力フォーマットを16進、4桁区切りに変更。コマンドは()も,も無し
 format(radix = 16, separate = 4)
 rc> 0xdead_beef - 0xcafe_babe   # 0x...は16進、0b....は2進
 0x13af_0431
-rc > format(10, sep3)
+rc > format 10 sep3
 rc> i^i                         # 複素数演算。i,j は虚数単位
 0.20787957635076193+0i
 rc> exp(i*pi)                   # オイラーの等式
@@ -47,10 +47,10 @@ rc> exp(i*pi)                   # オイラーの等式
 rc> a=2                         # ユーザ定義変数
 rc> a*3
 6
-rc> defun(add, _1 + _2)         # ユーザ定義関数。_1,_2,...,_9 は引数
+rc> defun add _1 + _2           # ユーザ定義関数。_1,_2,...,_9 は引数。defunは関数定義のコマンド
 rc> add(10,add(2,a))            # 再帰呼出しも可能
 14
-rc> constant()                  # 定数. cmd(), variable(), func(), user_func() なども
+rc> constant                    # 定数. cmd, variable, func, user_func なども
 e = 2.718281828459045
 pi = 3.141592653589793
 eps = 0.0000000000000002220446049250313
@@ -63,7 +63,7 @@ rc> 2+3
 5
 rc> ans*7                       # 最後の計算結果は ans に保存される
 35
-rc> exit()                      # 終了。Ctrl-c も終了
+rc> exit                        # 終了。Ctrl-c も終了
 $
 
 $ rc 1+2+3                      # コマンド引数に式を書いてもOK
@@ -92,7 +92,7 @@ $ rc 1+2+3                      # コマンド引数に式を書いてもOK
     + Initialize file (`~/.rc_rc`)
     + Comment `#...`
     + input format(separator: 123_456, radix: 0x55aa)
-    + output_format(sep4, radix16) -> 0x200_1fee
+    + format sep4 radix16 -> 0x200_1fee
 * Install
     + Statically linked single binary
     + Support Linux/Windows/Mac

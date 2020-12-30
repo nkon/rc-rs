@@ -98,7 +98,6 @@ fn node_to_token(n: Node) -> Vec<Token> {
     }
 }
 
-// TODO: command does not use '(', ')'.
 fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_func {:?}\r", n);
@@ -603,16 +602,16 @@ mod tests {
             eval_as_string(&mut env, "-pi"),
             "FNum(-3.141592653589793)".to_string()
         );
-        eval_as_string(&mut env, "defun(double, 2*_1)");
+        eval_as_string(&mut env, "defun double 2*_1");
         assert_eq!(eval_as_string(&mut env, "double(2)"), "Num(4)".to_string());
         assert_eq!(
             eval_as_string(&mut env, "double(double(2))"),
             "Num(8)".to_string()
         );
-        eval_as_string(&mut env, "defun(add, _1+_2)");
+        eval_as_string(&mut env, "defun add _1+_2");
         assert_eq!(eval_as_string(&mut env, "add(2,3)"), "Num(5)".to_string());
         assert_eq!(eval_as_string(&mut env, "add(2,a)"), "Num(3)".to_string());
-        eval_as_string(&mut env, "defun(plus_a, a+_1)");
+        eval_as_string(&mut env, "defun plus_a a+_1");
         eval_as_string(&mut env, "a=5");
         assert_eq!(eval_as_string(&mut env, "plus_a(8)"), "Num(13)".to_string());
         assert_eq!(eval_as_string(&mut env, "abs(-2)"), "FNum(2.0)".to_string());
