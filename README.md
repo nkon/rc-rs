@@ -62,6 +62,26 @@ $
 $ rc 1+2+3                      # command line expression
 6
 $
+
+$ rc
+Ctrl-c or "exit()" to exit
+rc> history_max 10              # `history_max` > 0 => save/load history from/to `~/.rc.history`
+history_max 10                  # write `history_max 100` to `~/.rc_rc`
+rc> sin(1)
+0.8414709848078965
+rc> cos(2)
+-0.4161468365471424
+rc> exp(3)
+20.085536923187664
+rc> history                     # show history
+3 sin(1)
+2 cos(2)
+1 exp(3)
+
+rc> history 2                   # re-execute from history
+cos(2)
+-0.4161468365471424
+rc> 
 ```
 
 * `rc` similar to `bc`, which is a famous command line calculator.

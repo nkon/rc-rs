@@ -69,6 +69,26 @@ $
 $ rc 1+2+3                      # コマンド引数に式を書いてもOK
 6
 $
+
+$ rc
+Ctrl-c or "exit()" to exit
+rc> history_max 10              # `history_max` > 0のときヒストリーが `~/.rc.history`に保存される
+history_max 10
+rc> sin(1)
+0.8414709848078965
+rc> cos(2)
+-0.4161468365471424
+rc> exp(3)
+20.085536923187664
+rc> history                     # ヒストリーの表示
+3 sin(1)
+2 cos(2)
+1 exp(3)
+
+rc> history 2                   # ヒストリーからの再実行
+cos(2)
+-0.4161468365471424
+rc> 
 ```
 
 `rc`はRustで作られていて、Windows, Linux（Raspberry Piを含む）の上で動作確認されています。

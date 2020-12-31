@@ -119,7 +119,6 @@ fn main() {
     }
 }
 
-// TODO: history command
 // TODO: load command
 // TODO: online help, refer `HELP.md`.
 // TODO: map -> graph

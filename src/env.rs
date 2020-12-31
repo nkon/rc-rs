@@ -454,16 +454,35 @@ fn impl_cmd(env: &mut Env, arg: &[Token]) -> String {
     ret
 }
 
+
+/// history  -> return history list
+/// history n -> return found command line
 fn impl_history(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
         eprintln!("impl_history {:?}\r", arg);
     }
     if arg.is_empty() {
-        return format!("history {:?}", env.history);
+        let mut index = env.history.len();
+        let mut rev_index = 0;
+        let mut ret = String::new();
+        while index > 0 {
+            ret.push_str(format!("{} {}\r\n", index, env.history[rev_index]).as_str());
+            index -= 1;
+            rev_index += 1;
+        }
+        return ret;
     }
-    String::new()
+    match &arg[0] {
+        Token::Num(i) => {
+            let index = env.history.len()-(*i as usize);
+            let command = env.history[index].clone();
+            env.history.push(command.clone());
+            env.history_index = env.history.len();
+            return command;
+        }
+        _ => {String::new()}
+    }
 }
-
 
 fn impl_history_max(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
