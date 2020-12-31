@@ -1,7 +1,11 @@
 use std::io::BufRead;
+use std::fs::File;
+use std::io::Write;
 
 use super::*;
 
+
+/// read one line -> parse and evaluate. return result as String.
 pub fn do_script(env: &mut Env, line: &str) -> Result<String, MyError> {
     if env.debug {
         eprint!("{}", line);
@@ -22,6 +26,8 @@ pub fn do_script(env: &mut Env, line: &str) -> Result<String, MyError> {
     }
 }
 
+/// read from BufRead stream -> parse and evaluate all lines.
+/// print result to stdout. error to exit.
 pub fn run_script(env: &mut Env, stream: &mut dyn BufRead) {
     let mut line = String::new();
     loop {
@@ -47,6 +53,8 @@ pub fn run_script(env: &mut Env, stream: &mut dyn BufRead) {
     }
 }
 
+/// similar to `run_script()`.
+/// execute silent. error to break.
 pub fn run_rc(env: &mut Env, stream: &mut dyn BufRead) {
     let mut line = String::new();
     loop {
@@ -62,5 +70,50 @@ pub fn run_rc(env: &mut Env, stream: &mut dyn BufRead) {
                 break;
             }
         }
+    }
+}
+
+pub fn run_history(env: &mut Env, stream: &mut dyn BufRead) {
+    let mut line = String::new();
+    loop {
+        match stream.read_line(&mut line) {
+            Ok(0) => break, // EOF
+            Ok(_) => {
+                line.pop();
+                if line.len() == 0 {
+                    continue;
+                }
+                env.history.push(line.clone());
+                env.history_index += 1;
+                match do_script(env, &line){
+                    Ok(_) => {},
+                    Err(_) => {},
+                }
+                line.clear();
+            }
+            Err(_e) => {
+                break;
+            }
+        }
+    }
+}
+
+pub fn save_history(env: &Env) {
+    let mut history = env.history.clone();
+    if env.history_max == 0 {
+        return;
+    }
+
+    if history.len() > env.history_max {
+        history = history.split_off(history.len()-env.history_max);
+    }
+
+    if let Some(mut history_file_path) = dirs::home_dir() {
+        history_file_path.push(".rc.history");
+        let mut file = File::create(history_file_path).expect("file create");
+        while !history.is_empty() {
+            file.write_all(format!("{}\n", history.remove(0)).as_bytes()).unwrap();
+        }
+        file.flush().unwrap();
     }
 }

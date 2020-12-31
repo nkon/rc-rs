@@ -21,15 +21,10 @@ fn main() {
     opts.optflag("h", "help", "print this help");
     opts.optflag("d", "debug", "debug mode");
     opts.optflag("", "test", "run built-in test");
-    opts.optopt("i", "init", "rc file path", "rc_file");
-    opts.optmulti("s", "script", "run script", "FILE");
+    opts.optopt("i", "init", "initialize file path", "rc_file");
+    opts.optmulti("s", "script", "run script", "script_file");
     opts.optflag("v", "version", "version");
 
-    let mut rc_file_path = path::PathBuf::new();
-    if let Some(mut home_dir) = dirs::home_dir() {
-        home_dir.push(".rc_rc");
-        rc_file_path = home_dir;
-    }
 
     match opts.parse(&args[1..]) {
         Ok(matches) => {
@@ -48,7 +43,11 @@ fn main() {
             let mut env = Env::new();
             env.built_in();
 
-            // overwritten by '-r' option
+            let mut rc_file_path = path::PathBuf::new();
+            if let Some(mut rc_file_path) = dirs::home_dir() {
+                rc_file_path.push(".rc_rc");
+            }
+            // overwritten `~/.rc_rc` by '-i' option
             if let Some(rc_file_str) = matches.opt_str("i") {
                 rc_file_path = path::Path::new(&rc_file_str).to_path_buf();
                 if !rc_file_path.exists() {
@@ -85,10 +84,20 @@ fn main() {
                                 Err(e) => println!("{}: {}", filename, e),
                             })
                     }
-                    std::process::exit(0);
                 } else {
                     eprintln!("-s FILE required");
                     std::process::exit(1);
+                }
+            }
+
+            if env.history_max > 0 {
+                if let Some(mut history_file_path) = dirs::home_dir() {
+                    history_file_path.push(".rc.history");
+                    env.history_path = history_file_path.clone();
+                    eprintln!("history_path={:?}", env.history_path);
+                    if let Ok(file) = File::open(history_file_path) {
+                        run_history(&mut env, &mut BufReader::new(file));
+                    }
                 }
             }
 
@@ -110,7 +119,7 @@ fn main() {
     }
 }
 
-// TODO: load history, history command
+// TODO: history command
 // TODO: load command
 // TODO: online help, refer `HELP.md`.
 // TODO: map -> graph

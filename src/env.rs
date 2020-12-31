@@ -1,6 +1,7 @@
 use super::*;
 use std::collections::HashMap;
 use std::str;
+use std::path;
 
 pub type TypeFn = fn(&mut Env, &[Node]) -> Node;
 pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
@@ -23,6 +24,10 @@ pub struct Env<'a> {
     pub output_radix: u8,
     pub separate_digit: usize,
     pub float_format: FloatFormat,
+    pub history_path:path::PathBuf,
+    pub history_max: usize,
+    pub history_index: usize,
+    pub history: Vec<String>,        
 }
 
 // Implement of functions.
@@ -348,6 +353,7 @@ fn impl_exit(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
         eprintln!("impl_exit {:?}\r", arg);
     }
+    save_history(&env);
     std::process::exit(0);
 }
 
@@ -448,6 +454,33 @@ fn impl_cmd(env: &mut Env, arg: &[Token]) -> String {
     ret
 }
 
+fn impl_history(env: &mut Env, arg: &[Token]) -> String {
+    if env.is_debug() {
+        eprintln!("impl_history {:?}\r", arg);
+    }
+    if arg.is_empty() {
+        return format!("history {:?}", env.history);
+    }
+    String::new()
+}
+
+
+fn impl_history_max(env: &mut Env, arg: &[Token]) -> String {
+    if env.is_debug() {
+        eprintln!("impl_history_max {:?}\r", arg);
+    }
+    if arg.is_empty() {
+        return format!("history_max {}", env.history_max);
+    }
+    match &arg[0] {
+        Token::Num(n) => {
+            env.history_max = *n as usize;
+        }
+        _ => {}
+    }
+    format!("history_max {}", env.history_max)
+}
+
 impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
         Env {
@@ -460,6 +493,10 @@ impl<'a> Env<'a> {
             output_radix: 10,
             separate_digit: 0,
             float_format: FloatFormat::Fix,
+            history_path: path::PathBuf::new(),
+            history_max: 0,
+            history_index: 0,
+            history: Vec::new(),     
         }
     }
 
@@ -507,6 +544,11 @@ impl<'a> Env<'a> {
         );
         self.cmd
             .insert("cmd", (impl_cmd as TypeCmd, 0, "list commands"));
+
+        self.cmd
+            .insert("history", (impl_history as TypeCmd, 0, "show history"));
+        self.cmd
+            .insert("history_max", (impl_history_max as TypeCmd, 1, "set and show history max"));
 
         self.new_variable("ans".to_string());
     }

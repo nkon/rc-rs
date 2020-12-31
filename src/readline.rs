@@ -190,8 +190,6 @@ pub fn readline(env: &mut Env) {
     let mut line = String::new();
     let mut cur_x: u16 = 0;
     let mut prev_cur_x: u16;
-    let mut history_index = 0;
-    let mut history: Vec<String> = Vec::new();
 
     enable_raw_mode().unwrap();
     let mut stdout = stdout();
@@ -209,6 +207,7 @@ pub fn readline(env: &mut Env) {
             // print!("keyev={:?}\r\n", keyev);
             if keyev.modifiers == KeyModifiers::CONTROL && keyev.code == KeyCode::Char('c') {
                 write!(stdout, "\r\n").unwrap();
+                save_history(&env);
                 break;
             }
             match keyev.code {
@@ -243,21 +242,21 @@ pub fn readline(env: &mut Env) {
                     }
                 }
                 KeyCode::Up => {
-                    if history_index > 0 {
-                        history_index -= 1;
-                        if history_index < history.len() {
+                    if env.history_index > 0 {
+                        env.history_index -= 1;
+                        if env.history_index < env.history.len() {
                             prev_cur_x = line.len() as u16;
-                            line = history[history_index].clone();
+                            line = env.history[env.history_index].clone();
                             cur_x = line.len() as u16;
                             redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                         }
                     }
                 }
                 KeyCode::Down => {
-                    history_index += 1;
+                    env.history_index += 1;
                     prev_cur_x = line.len() as u16;
-                    if history_index < history.len() {
-                        line = history[history_index].clone();
+                    if env.history_index < env.history.len() {
+                        line = env.history[env.history_index].clone();
                     } else {
                         line = String::new();
                     }
@@ -265,8 +264,8 @@ pub fn readline(env: &mut Env) {
                     redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
                 KeyCode::Enter => {
-                    history.push(line.clone());
-                    history_index = history.len();
+                    env.history.push(line.clone());
+                    env.history_index = env.history.len();
                     write!(stdout, "\r\n").unwrap();
                     match lexer(line.clone()) {
                         Ok(v) => {
