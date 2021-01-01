@@ -121,6 +121,7 @@ rc>
 
 ## Screen capture
 
+![screen capture](images/screencam-002.gif)
 
 ## Install
 

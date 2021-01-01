@@ -44,8 +44,12 @@ fn main() {
             env.built_in();
 
             let mut rc_file_path = path::PathBuf::new();
-            if let Some(mut rc_file_path) = dirs::home_dir() {
-                rc_file_path.push(".rc_rc");
+            match dirs::home_dir() {
+                Some(home_dir) => {
+                    rc_file_path = home_dir;
+                    rc_file_path.push(".rc_rc");
+                }
+                _ => {}
             }
             // overwritten `~/.rc_rc` by '-i' option
             if let Some(rc_file_str) = matches.opt_str("i") {
