@@ -209,29 +209,7 @@ where
         Node::Command(cmd, params, result) => {
             if cmd == Token::Ident("history".to_owned()) && params.len() > 0 {
                 error_print(output, format!("{}\r\n", result.clone()).as_str());
-                match lexer(result.clone()) {
-                    Ok(v) => {
-                        if v.is_empty() {
-                            return;
-                        }
-                        match parse(env, &v) {
-                            Ok(node) => match eval(env, &node) {
-                                Ok(node) => {
-                                    print_result(output, env, node);
-                                }
-                                Err(e) => {
-                                    error_print(output, format!("{}\r\n", e).as_str());
-                                }
-                            },
-                            Err(e) => {
-                                error_print(output, format!("{}\r\n", e).as_str());
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        error_print(output, format!("{}\r\n", e).as_str());
-                    }
-                }
+                do_line(output, env, &result)
             } else {
                 error_print(output, format!("{}\r\n", result).as_str());
             }
@@ -242,6 +220,35 @@ where
                 output,
                 format!("eval error: Unexpected eval result {:?}\r\n", node).as_str(),
             );
+        }
+    }
+}
+
+fn do_line<W>(output: &mut W, env: &mut Env, line: &String)
+where
+    W: Write,
+{
+    match lexer(line.clone()) {
+        Ok(v) => {
+            if v.is_empty() {
+                return;
+            }
+            match parse(env, &v) {
+                Ok(node) => match eval(env, &node) {
+                    Ok(node) => {
+                        print_result(output, env, node);
+                    }
+                    Err(e) => {
+                        error_print(output, format!("{}\r\n", e).as_str());
+                    }
+                },
+                Err(e) => {
+                    error_print(output, format!("{}\r\n", e).as_str());
+                }
+            }
+        }
+        Err(e) => {
+            error_print(output, format!("{}\r\n", e).as_str());
         }
     }
 }
@@ -324,41 +331,12 @@ pub fn readline(env: &mut Env) {
                     redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
                 KeyCode::Enter => {
-                    if line.len() > 0
-                        && line.find("history") == None
-                        && line.find("exit") == None
-                    {
+                    if line.len() > 0 && line.find("history") == None && line.find("exit") == None {
                         env.history.push(line.clone());
                         env.history_index = env.history.len();
                     }
                     write!(stdout, "\r\n").unwrap();
-                    match lexer(line.clone()) {
-                        Ok(v) => {
-                            if v.is_empty() {
-                                line.clear();
-                                cur_x = 0;
-                                prev_cur_x = cur_x;
-                                redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
-                                continue;
-                            }
-                            match parse(env, &v) {
-                                Ok(node) => match eval(env, &node) {
-                                    Ok(node) => {
-                                        print_result(&mut stdout, env, node);
-                                    }
-                                    Err(e) => {
-                                        error_print(&mut stdout, format!("{}\r\n", e).as_str());
-                                    }
-                                },
-                                Err(e) => {
-                                    error_print(&mut stdout, format!("{}\r\n", e).as_str());
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            error_print(&mut stdout, format!("{}\r\n", e).as_str());
-                        }
-                    }
+                    do_line(&mut stdout, env, &line);
                     line.clear();
                     cur_x = 0;
                     prev_cur_x = cur_x;
