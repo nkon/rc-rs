@@ -139,7 +139,7 @@ fn func(
                         tok, i
                     )));
                 }
-                return Ok((Node::Func(Token::Ident(id.to_string()), params), i + 1));
+                return Ok((Node::Func(Token::Ident(id.to_owned()), params), i + 1));
             } else if tok[i] == Token::Op(TokenOp::Comma) {
                 i += 1;
                 continue;
@@ -177,7 +177,7 @@ fn cmd(_env: &Env, id: &str, tok: &[Token], index: usize) -> Result<(Node, usize
         continue;
     }
     Ok((
-        Node::Command(Token::Ident(id.to_string()), params, "".to_string()),
+        Node::Command(Token::Ident(id.to_owned()), params, "".to_owned()),
         i + 1,
     ))
 }
@@ -208,7 +208,7 @@ fn primary(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), 
             } else if let Some(func_tuple) = env.is_func(id.as_str()) {
                 func(env, id, func_tuple.1, tok, index)
             } else if let Some(_tokens) = env.is_user_func((*id).clone()) {
-                func(env, &(*id).to_string(), 0, tok, index)
+                func(env, &(*id).to_owned(), 0, tok, index)
             } else if let Some(_cmd_tuple) = env.is_cmd(id.as_str()) {
                 cmd(env, id, tok, index)
             } else if env.is_variable(id).is_some() {
@@ -342,7 +342,7 @@ fn assign(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErr
 /// use rc::Env;
 /// let mut env = Env::new();
 /// env.built_in();
-/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_string()).unwrap())).unwrap()),"BinOp(Op(Plus), Num(1), Num(2))");
+/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_owned()).unwrap())).unwrap()),"BinOp(Op(Plus), Num(1), Num(2))");
 /// ```
 // TODO: multiple expression
 pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, MyError> {
@@ -359,7 +359,7 @@ mod tests {
     use super::*;
 
     fn parse_as_string(env: &mut Env, input: &str) -> String {
-        match parse(env, &(lexer(input.to_string())).unwrap()) {
+        match parse(env, &(lexer(input.to_owned())).unwrap()) {
             Ok(n) => {
                 format!("{:?}", n)
             }
@@ -482,22 +482,22 @@ mod tests {
         let mut env = Env::new();
         env.built_in();
 
-        if let Ok(_) = parse(&mut env, &(lexer("2*sin(1, 2)".to_string())).unwrap()) {
+        if let Ok(_) = parse(&mut env, &(lexer("2*sin(1, 2)".to_owned())).unwrap()) {
             assert!(false);
         }
-        if let Ok(_) = parse(&mut env, &(lexer("sin(".to_string())).unwrap()) {
+        if let Ok(_) = parse(&mut env, &(lexer("sin(".to_owned())).unwrap()) {
             assert!(false);
         }
-        if let Ok(_) = parse(&mut env, &(lexer("sin()".to_string())).unwrap()) {
+        if let Ok(_) = parse(&mut env, &(lexer("sin()".to_owned())).unwrap()) {
             assert!(false);
         }
-        if let Ok(_) = parse(&mut env, &(lexer("1+2+".to_string())).unwrap()) {
+        if let Ok(_) = parse(&mut env, &(lexer("1+2+".to_owned())).unwrap()) {
             assert!(false);
         }
-        if let Ok(_) = parse(&mut env, &(lexer("sin".to_string())).unwrap()) {
+        if let Ok(_) = parse(&mut env, &(lexer("sin".to_owned())).unwrap()) {
             assert!(false);
         }
-        if let Ok(_) = parse(&mut env, &(lexer("((())".to_string())).unwrap()) {
+        if let Ok(_) = parse(&mut env, &(lexer("((())".to_owned())).unwrap()) {
             assert!(false);
         }
     }

@@ -105,11 +105,6 @@ Rustの`String`は文字の配列ではない。毎回ググっているが、�
 
 `chars()`でイテレータを取り出し、`collect()`で集約する。型ヒントとして`Vec<char>`が必要。そうしないと`Vec<u8>`と区別が付けられない。
 
-```rust
-let s = String::from("abcdef");
-let chars: Vec<char> = s.chars().collect();
-```
-
 #### `Vec<char>` => `String`
 
 `FromIterator`という標準クレートを使うと楽。
@@ -120,6 +115,11 @@ let s = String::from("abcdef");
 let chars: Vec<char> = s.chars().collect();
 let s2 = String::from_iter(chars);
 ```
+
+#### `to_owned()` vs. `to_string()`
+
+`&str`型の固定文字列を`String`に変換するときは`to_owned()`の方が若干効率が良い。
+`to_string()`は一般のオブジェクトを`String`に変換するためのメソッド。`to_owned()`の方が`&str`に特殊化されている。
 
 ## Parser
 

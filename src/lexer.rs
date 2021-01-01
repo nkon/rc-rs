@@ -215,20 +215,20 @@ fn tok_ident(chars: &[char], index: usize) -> (Token, usize) {
 /// ```
 /// use rc::lexer;
 /// use rc::Token;
-/// assert_eq!(lexer("1".to_string()).unwrap(), [Token::Num(1)]);
-/// assert_eq!(lexer("0".to_string()).unwrap(), [Token::Num(0)]);
-/// assert_eq!(lexer("10".to_string()).unwrap(), [Token::Num(10)]);
-/// assert_eq!(lexer("1.1".to_string()).unwrap(), [Token::FNum(1.1)]);
-/// assert_eq!(lexer("0.1".to_string()).unwrap(), [Token::FNum(0.1)]);
-/// assert_eq!(lexer("1.1E2".to_string()).unwrap(), [Token::FNum(110.0)]);
-/// assert_eq!(lexer("1.1E-2".to_string()).unwrap(), [Token::FNum(0.011)]);
-/// assert_eq!(lexer("100_000".to_string()).unwrap(), [Token::Num(100000)]);
-/// assert_eq!(lexer("0xa".to_string()).unwrap(), [Token::Num(10)]);
-/// assert_eq!(lexer("011".to_string()).unwrap(), [Token::Num(9)]);
-/// assert_eq!(lexer("0b11".to_string()).unwrap(), [Token::Num(3)]);
-/// assert_eq!(lexer("1e3".to_string()).unwrap(), [Token::FNum(1000.0)]);
-/// assert_eq!(lexer("9223372036854775807".to_string()).unwrap(), [Token::Num(9223372036854775807)]);
-/// assert_eq!(lexer("18446744073709551615".to_string()).unwrap(), [Token::Num(18446744073709551615)]);
+/// assert_eq!(lexer("1".to_owned()).unwrap(), [Token::Num(1)]);
+/// assert_eq!(lexer("0".to_owned()).unwrap(), [Token::Num(0)]);
+/// assert_eq!(lexer("10".to_owned()).unwrap(), [Token::Num(10)]);
+/// assert_eq!(lexer("1.1".to_owned()).unwrap(), [Token::FNum(1.1)]);
+/// assert_eq!(lexer("0.1".to_owned()).unwrap(), [Token::FNum(0.1)]);
+/// assert_eq!(lexer("1.1E2".to_owned()).unwrap(), [Token::FNum(110.0)]);
+/// assert_eq!(lexer("1.1E-2".to_owned()).unwrap(), [Token::FNum(0.011)]);
+/// assert_eq!(lexer("100_000".to_owned()).unwrap(), [Token::Num(100000)]);
+/// assert_eq!(lexer("0xa".to_owned()).unwrap(), [Token::Num(10)]);
+/// assert_eq!(lexer("011".to_owned()).unwrap(), [Token::Num(9)]);
+/// assert_eq!(lexer("0b11".to_owned()).unwrap(), [Token::Num(3)]);
+/// assert_eq!(lexer("1e3".to_owned()).unwrap(), [Token::FNum(1000.0)]);
+/// assert_eq!(lexer("9223372036854775807".to_owned()).unwrap(), [Token::Num(9223372036854775807)]);
+/// assert_eq!(lexer("18446744073709551615".to_owned()).unwrap(), [Token::Num(18446744073709551615)]);
 /// ```
 pub fn lexer(s: String) -> Result<Vec<Token>, MyError> {
     let mut ret = Vec::new();
@@ -325,12 +325,12 @@ mod tests {
 
     #[test]
     fn test_tok_get_num() {
-        assert_eq!(tok_get_num(&s2v("0"), 0), ("0".to_string(), 1));
-        assert_eq!(tok_get_num(&s2v("1"), 0), ("1".to_string(), 1));
-        assert_eq!(tok_get_num(&s2v("34"), 0), ("34".to_string(), 2));
-        assert_eq!(tok_get_num(&s2v("56a"), 0), ("56".to_string(), 2));
-        assert_eq!(tok_get_num(&s2v(""), 0), ("".to_string(), 0));
-        assert_eq!(tok_get_num(&s2v("a"), 0), ("".to_string(), 0));
+        assert_eq!(tok_get_num(&s2v("0"), 0), ("0".to_owned(), 1));
+        assert_eq!(tok_get_num(&s2v("1"), 0), ("1".to_owned(), 1));
+        assert_eq!(tok_get_num(&s2v("34"), 0), ("34".to_owned(), 2));
+        assert_eq!(tok_get_num(&s2v("56a"), 0), ("56".to_owned(), 2));
+        assert_eq!(tok_get_num(&s2v(""), 0), ("".to_owned(), 0));
+        assert_eq!(tok_get_num(&s2v("a"), 0), ("".to_owned(), 0));
     }
     #[test]
     fn test_tok_num_int() {
@@ -379,10 +379,10 @@ mod tests {
 
     #[test]
     fn test_tok_num_error() {
-        if let Ok(_) = lexer("018".to_string()) {
+        if let Ok(_) = lexer("018".to_owned()) {
             assert!(false);
         }
-        if let Ok(_) = lexer("0b12".to_string()) {
+        if let Ok(_) = lexer("0b12".to_owned()) {
             assert!(false);
         }
     }
@@ -390,16 +390,16 @@ mod tests {
     #[test]
     fn test_tok_ident() {
         let (tok, idx) = tok_ident(&s2v("i"), 0);
-        assert_eq!(tok, Token::Ident("i".to_string()));
+        assert_eq!(tok, Token::Ident("i".to_owned()));
         assert_eq!(idx, 1);
         let (tok, idx) = tok_ident(&s2v("sin()"), 0);
-        assert_eq!(tok, Token::Ident("sin".to_string()));
+        assert_eq!(tok, Token::Ident("sin".to_owned()));
         assert_eq!(idx, 3);
     }
     #[test]
     fn test_lexer() {
         assert_eq!(
-            lexer("1+2+3".to_string()).unwrap(),
+            lexer("1+2+3".to_owned()).unwrap(),
             [
                 Token::Num(1),
                 Token::Op(TokenOp::Plus),
@@ -409,7 +409,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            lexer(" 1 + 2 + 3 ".to_string()).unwrap(),
+            lexer(" 1 + 2 + 3 ".to_owned()).unwrap(),
             [
                 Token::Num(1),
                 Token::Op(TokenOp::Plus),
@@ -419,7 +419,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            lexer(" 1 + 2 + 3 ### comment".to_string()).unwrap(),
+            lexer(" 1 + 2 + 3 ### comment".to_owned()).unwrap(),
             [
                 Token::Num(1),
                 Token::Op(TokenOp::Plus),
@@ -429,7 +429,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            lexer("1 2 34+-*/%()-^".to_string()).unwrap(),
+            lexer("1 2 34+-*/%()-^".to_owned()).unwrap(),
             [
                 Token::Num(1),
                 Token::Num(2),
@@ -446,43 +446,43 @@ mod tests {
             ]
         );
         assert_eq!(
-            lexer("sin(2.0)".to_string()).unwrap(),
+            lexer("sin(2.0)".to_owned()).unwrap(),
             [
-                Token::Ident("sin".to_string()),
+                Token::Ident("sin".to_owned()),
                 Token::Op(TokenOp::ParenLeft),
                 Token::FNum(2.0),
                 Token::Op(TokenOp::ParenRight),
             ]
         );
         assert_eq!(
-            lexer("1k*3.0u".to_string()).unwrap(),
+            lexer("1k*3.0u".to_owned()).unwrap(),
             [
                 Token::Num(1),
-                Token::Ident("k".to_string()),
+                Token::Ident("k".to_owned()),
                 Token::Op(TokenOp::Mul),
                 Token::FNum(3.0),
-                Token::Ident("u".to_string()),
+                Token::Ident("u".to_owned()),
             ]
         );
         assert_eq!(
-            lexer("sin(0.5*pi)".to_string()).unwrap(),
+            lexer("sin(0.5*pi)".to_owned()).unwrap(),
             [
-                Token::Ident("sin".to_string()),
+                Token::Ident("sin".to_owned()),
                 Token::Op(TokenOp::ParenLeft),
                 Token::FNum(0.5),
                 Token::Op(TokenOp::Mul),
-                Token::Ident("pi".to_string()),
+                Token::Ident("pi".to_owned()),
                 Token::Op(TokenOp::ParenRight),
             ]
         );
         assert_eq!(
-            lexer("123    #asdfasdfasfd".to_string()).unwrap(),
+            lexer("123    #asdfasdfasfd".to_owned()).unwrap(),
             [Token::Num(123)]
         );
         assert_eq!(
-            lexer("a=1".to_string()).unwrap(),
+            lexer("a=1".to_owned()).unwrap(),
             [
-                Token::Ident("a".to_string()),
+                Token::Ident("a".to_owned()),
                 Token::Op(TokenOp::Equal),
                 Token::Num(1),
             ]

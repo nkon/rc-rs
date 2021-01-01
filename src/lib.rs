@@ -66,13 +66,11 @@ fn eval_const(env: &Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_const {:?}\r", n);
     }
-    if let Node::Var(id) = n {
-        if let Token::Ident(ident) = id {
-            if let Some(constant) = env.is_const(ident.as_str()) {
-                return Ok(constant);
-            } else if let Some(variable) = env.is_variable(ident.as_str()) {
-                return Ok(variable);
-            }
+    if let Node::Var(Token::Ident(ident)) = n {
+        if let Some(constant) = env.is_const(ident.as_str()) {
+            return Ok(constant);
+        } else if let Some(variable) = env.is_variable(ident.as_str()) {
+            return Ok(variable);
         }
     }
     Err(MyError::EvalError(format!(
@@ -102,113 +100,111 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_func {:?}\r", n);
     }
-    if let Node::Func(tok, param) = n {
-        if let Token::Ident(ident) = tok {
-            if let Some(func_tuple) = env.is_func(ident.as_str()) {
-                let mut params: Vec<Node> = Vec::new();
-                for i in param {
-                    let param_value = eval(env, &i)?;
-                    params.push(param_value);
-                }
-                return Ok(func_tuple.0(env, &params));
+    if let Node::Func(Token::Ident(ident), param) = n {
+        if let Some(func_tuple) = env.is_func(ident.as_str()) {
+            let mut params: Vec<Node> = Vec::new();
+            for i in param {
+                let param_value = eval(env, &i)?;
+                params.push(param_value);
             }
-            if let Some(tokens) = env.is_user_func((*ident).clone()) {
-                let mut params: Vec<Node> = Vec::new();
-                for i in param {
-                    let param_value = eval(env, &i)?;
-                    params.push(param_value);
-                }
-                let mut new_tokens: Vec<Token> = Vec::new();
-                for t in tokens {
-                    match t {
-                        Token::Ident(ref id) => {
-                            if id == "_1" {
-                                if params.is_empty() {
-                                    return Err(MyError::EvalError(format!(
-                                        "no parameter {:?}",
-                                        new_tokens
-                                    )));
-                                }
-                                new_tokens.append(&mut node_to_token(params[0].clone()));
-                            } else if id == "_2" {
-                                if params.len() < 2 {
-                                    return Err(MyError::EvalError(format!(
-                                        "no parameter {:?}",
-                                        new_tokens
-                                    )));
-                                }
-                                new_tokens.append(&mut node_to_token(params[1].clone()));
-                            } else if id == "_3" {
-                                if params.len() < 3 {
-                                    return Err(MyError::EvalError(format!(
-                                        "no parameter {:?}",
-                                        new_tokens
-                                    )));
-                                }
-                                new_tokens.append(&mut node_to_token(params[2].clone()));
-                            } else if id == "_4" {
-                                if params.len() < 4 {
-                                    return Err(MyError::EvalError(format!(
-                                        "no parameter {:?}",
-                                        new_tokens
-                                    )));
-                                }
-                                new_tokens.append(&mut node_to_token(params[3].clone()));
-                            } else if id == "_5" {
-                                if params.len() < 5 {
-                                    return Err(MyError::EvalError(format!(
-                                        "no parameter {:?}",
-                                        new_tokens
-                                    )));
-                                }
-                                new_tokens.append(&mut node_to_token(params[4].clone()));
-                            } else if id == "_6" {
-                                if params.len() < 6 {
-                                    return Err(MyError::EvalError(format!(
-                                        "no parameter {:?}",
-                                        new_tokens
-                                    )));
-                                }
-                                new_tokens.append(&mut node_to_token(params[5].clone()));
-                            } else if id == "_7" {
-                                if params.len() < 7 {
-                                    return Err(MyError::EvalError(format!(
-                                        "no parameter {:?}",
-                                        new_tokens
-                                    )));
-                                }
-                                new_tokens.append(&mut node_to_token(params[6].clone()));
-                            } else if id == "_8" {
-                                if params.len() < 8 {
-                                    return Err(MyError::EvalError(format!(
-                                        "no parameter {:?}",
-                                        new_tokens
-                                    )));
-                                }
-                                new_tokens.append(&mut node_to_token(params[7].clone()));
-                            } else if id == "_9" {
-                                if params.len() < 9 {
-                                    return Err(MyError::EvalError(format!(
-                                        "no parameter {:?}",
-                                        new_tokens
-                                    )));
-                                }
-                                new_tokens.append(&mut node_to_token(params[8].clone()));
-                            } else {
-                                new_tokens.push(t);
+            return Ok(func_tuple.0(env, &params));
+        }
+        if let Some(tokens) = env.is_user_func((*ident).clone()) {
+            let mut params: Vec<Node> = Vec::new();
+            for i in param {
+                let param_value = eval(env, &i)?;
+                params.push(param_value);
+            }
+            let mut new_tokens: Vec<Token> = Vec::new();
+            for t in tokens {
+                match t {
+                    Token::Ident(ref id) => {
+                        if id == "_1" {
+                            if params.is_empty() {
+                                return Err(MyError::EvalError(format!(
+                                    "no parameter {:?}",
+                                    new_tokens
+                                )));
                             }
-                        }
-                        _ => {
+                            new_tokens.append(&mut node_to_token(params[0].clone()));
+                        } else if id == "_2" {
+                            if params.len() < 2 {
+                                return Err(MyError::EvalError(format!(
+                                    "no parameter {:?}",
+                                    new_tokens
+                                )));
+                            }
+                            new_tokens.append(&mut node_to_token(params[1].clone()));
+                        } else if id == "_3" {
+                            if params.len() < 3 {
+                                return Err(MyError::EvalError(format!(
+                                    "no parameter {:?}",
+                                    new_tokens
+                                )));
+                            }
+                            new_tokens.append(&mut node_to_token(params[2].clone()));
+                        } else if id == "_4" {
+                            if params.len() < 4 {
+                                return Err(MyError::EvalError(format!(
+                                    "no parameter {:?}",
+                                    new_tokens
+                                )));
+                            }
+                            new_tokens.append(&mut node_to_token(params[3].clone()));
+                        } else if id == "_5" {
+                            if params.len() < 5 {
+                                return Err(MyError::EvalError(format!(
+                                    "no parameter {:?}",
+                                    new_tokens
+                                )));
+                            }
+                            new_tokens.append(&mut node_to_token(params[4].clone()));
+                        } else if id == "_6" {
+                            if params.len() < 6 {
+                                return Err(MyError::EvalError(format!(
+                                    "no parameter {:?}",
+                                    new_tokens
+                                )));
+                            }
+                            new_tokens.append(&mut node_to_token(params[5].clone()));
+                        } else if id == "_7" {
+                            if params.len() < 7 {
+                                return Err(MyError::EvalError(format!(
+                                    "no parameter {:?}",
+                                    new_tokens
+                                )));
+                            }
+                            new_tokens.append(&mut node_to_token(params[6].clone()));
+                        } else if id == "_8" {
+                            if params.len() < 8 {
+                                return Err(MyError::EvalError(format!(
+                                    "no parameter {:?}",
+                                    new_tokens
+                                )));
+                            }
+                            new_tokens.append(&mut node_to_token(params[7].clone()));
+                        } else if id == "_9" {
+                            if params.len() < 9 {
+                                return Err(MyError::EvalError(format!(
+                                    "no parameter {:?}",
+                                    new_tokens
+                                )));
+                            }
+                            new_tokens.append(&mut node_to_token(params[8].clone()));
+                        } else {
                             new_tokens.push(t);
                         }
                     }
+                    _ => {
+                        new_tokens.push(t);
+                    }
                 }
-                if env.is_debug() {
-                    eprintln!("eval_func re-wrote tokens: {:?}\r", new_tokens);
-                }
-                let func_node = parse(env, &new_tokens)?;
-                return eval(env, &func_node);
             }
+            if env.is_debug() {
+                eprintln!("eval_func re-wrote tokens: {:?}\r", new_tokens);
+            }
+            let func_node = parse(env, &new_tokens)?;
+            return eval(env, &func_node);
         }
     }
     Err(MyError::EvalError(format!("unknown function: {:?}", n)))
@@ -459,7 +455,7 @@ pub fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     let result = do_eval(env, n)?;
     match result {
         Node::Num(_) | Node::FNum(_) | Node::CNum(_) => {
-            env.set_variable("ans".to_string(), result.clone())?;
+            env.set_variable("ans".to_owned(), result.clone())?;
             Ok(result)
         }
         Node::Command(_, _, _) => Ok(result),
@@ -473,13 +469,13 @@ mod tests {
     use super::*;
 
     fn eval_as_string(env: &mut Env, input: &str) -> String {
-        let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
+        let n = parse(env, &(lexer(input.to_owned())).unwrap()).unwrap();
         let n = eval(env, &n).unwrap();
         format!("{:?}", n)
     }
 
     fn eval_as_f64(env: &mut Env, input: &str) -> f64 {
-        let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
+        let n = parse(env, &(lexer(input.to_owned())).unwrap()).unwrap();
         if let Node::FNum(f) = eval(env, &n).unwrap() {
             return f;
         }
@@ -488,7 +484,7 @@ mod tests {
     }
 
     fn eval_as_complex64(env: &mut Env, input: &str) -> Complex64 {
-        let n = parse(env, &(lexer(input.to_string())).unwrap()).unwrap();
+        let n = parse(env, &(lexer(input.to_owned())).unwrap()).unwrap();
         if let Node::CNum(c) = eval(env, &n).unwrap() {
             return c;
         }
@@ -501,98 +497,98 @@ mod tests {
         let mut env = Env::new();
         env.built_in();
 
-        assert_eq!(eval_as_string(&mut env, "1+2"), "Num(3)".to_string());
-        assert_eq!(eval_as_string(&mut env, "1+2*3"), "Num(7)".to_string());
-        assert_eq!(eval_as_string(&mut env, "1*2+3"), "Num(5)".to_string());
-        assert_eq!(eval_as_string(&mut env, "1+2+3"), "Num(6)".to_string());
-        assert_eq!(eval_as_string(&mut env, "(1+2)*3"), "Num(9)".to_string());
-        assert_eq!(eval_as_string(&mut env, "-2"), "Num(-2)".to_string());
+        assert_eq!(eval_as_string(&mut env, "1+2"), "Num(3)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1+2*3"), "Num(7)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1*2+3"), "Num(5)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1+2+3"), "Num(6)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "(1+2)*3"), "Num(9)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "-2"), "Num(-2)".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "-9223372036854775807"),
-            "Num(-9223372036854775807)".to_string()
+            "Num(-9223372036854775807)".to_owned()
         );
         assert!(((eval_as_f64(&mut env, "1.1+2.2") - 3.3).abs()) < 1e-10);
-        assert_eq!(eval_as_string(&mut env, "-(2+3)"), "Num(-5)".to_string());
-        assert_eq!(eval_as_string(&mut env, "+(2+3)"), "Num(5)".to_string());
-        assert_eq!(eval_as_string(&mut env, "1.0+2"), "FNum(3.0)".to_string());
-        assert_eq!(eval_as_string(&mut env, "1+2.0"), "FNum(3.0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "-(2+3)"), "Num(-5)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "+(2+3)"), "Num(5)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1.0+2"), "FNum(3.0)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1+2.0"), "FNum(3.0)".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "(1+2.0)*3"),
-            "FNum(9.0)".to_string()
+            "FNum(9.0)".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "pi"),
-            "FNum(3.141592653589793)".to_string()
+            "FNum(3.141592653589793)".to_owned()
         );
-        assert_eq!(eval_as_string(&mut env, "2k*3u"), "FNum(0.006)".to_string());
+        assert_eq!(eval_as_string(&mut env, "2k*3u"), "FNum(0.006)".to_owned());
 
-        assert_eq!(eval_as_string(&mut env, "5//5"), "FNum(2.5)".to_string());
+        assert_eq!(eval_as_string(&mut env, "5//5"), "FNum(2.5)".to_owned());
 
         assert_eq!(
             eval_as_string(&mut env, "5*inch2mm"),
-            "FNum(127.0)".to_string()
+            "FNum(127.0)".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "5*feet2mm"),
-            "FNum(1524.0)".to_string()
+            "FNum(1524.0)".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "5*oz2g"),
-            "FNum(141.7475)".to_string()
+            "FNum(141.7475)".to_owned()
         );
 
         assert!((eval_as_f64(&mut env, "sin(0.0)")).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "cos(pi/2)")).abs() < 1e-10);
-        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0)".to_owned());
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
-        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0)".to_string());
-        assert_eq!(eval_as_string(&mut env, "1%3"), "Num(1)".to_string());
-        assert_eq!(eval_as_string(&mut env, "2%3"), "Num(2)".to_string());
-        assert_eq!(eval_as_string(&mut env, "3%3"), "Num(0)".to_string());
-        assert_eq!(eval_as_string(&mut env, "3.0%3"), "Num(0)".to_string());
-        assert_eq!(eval_as_string(&mut env, "1/3"), "Num(0)".to_string());
-        assert_eq!(eval_as_string(&mut env, "3/3"), "Num(1)".to_string());
-        assert_eq!(eval_as_string(&mut env, "3.0/2"), "FNum(1.5)".to_string());
+        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1%3"), "Num(1)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "2%3"), "Num(2)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "3%3"), "Num(0)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "3.0%3"), "Num(0)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1/3"), "Num(0)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "3/3"), "Num(1)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "3.0/2"), "FNum(1.5)".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "ave(1,2,3)"),
-            "FNum(2.0)".to_string()
+            "FNum(2.0)".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "max(1,2,3)"),
-            "FNum(3.0)".to_string()
+            "FNum(3.0)".to_owned()
         );
         eval_as_string(&mut env, "a=1");
-        assert_eq!(eval_as_string(&mut env, "a"), "Num(1)".to_string());
-        assert_eq!(eval_as_string(&mut env, "2^3"), "Num(8)".to_string());
+        assert_eq!(eval_as_string(&mut env, "a"), "Num(1)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "2^3"), "Num(8)".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "2^3^4"),
-            "Num(2417851639229258349412352)".to_string()
+            "Num(2417851639229258349412352)".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "2^-0.5"),
-            "FNum(0.7071067811865476)".to_string()
+            "FNum(0.7071067811865476)".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "1+2i"),
-            "CNum(Complex { re: 1.0, im: 2.0 })".to_string()
+            "CNum(Complex { re: 1.0, im: 2.0 })".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2i) - (3-5i)"),
-            "CNum(Complex { re: -2.0, im: 7.0 })".to_string()
+            "CNum(Complex { re: -2.0, im: 7.0 })".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2i) * (3-5i)"),
-            "CNum(Complex { re: 13.0, im: 1.0 })".to_string()
+            "CNum(Complex { re: 13.0, im: 1.0 })".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2i) / (1-1.0i)"),
-            "CNum(Complex { re: -0.5, im: 1.5 })".to_string()
+            "CNum(Complex { re: -0.5, im: 1.5 })".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "2 // 2i"),
-            "CNum(Complex { re: 1.0, im: 1.0 })".to_string()
+            "CNum(Complex { re: 1.0, im: 1.0 })".to_owned()
         );
         assert!((eval_as_complex64(&mut env, "exp(i*pi)").re + 1.0).abs() < 1e-10);
         assert!((eval_as_complex64(&mut env, "exp(i*pi)").im).abs() < 1e-10);
@@ -600,21 +596,21 @@ mod tests {
         assert!((eval_as_complex64(&mut env, "i^i").im).abs() < 1e-10);
         assert_eq!(
             eval_as_string(&mut env, "-pi"),
-            "FNum(-3.141592653589793)".to_string()
+            "FNum(-3.141592653589793)".to_owned()
         );
         eval_as_string(&mut env, "defun double 2*_1");
-        assert_eq!(eval_as_string(&mut env, "double(2)"), "Num(4)".to_string());
+        assert_eq!(eval_as_string(&mut env, "double(2)"), "Num(4)".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "double(double(2))"),
-            "Num(8)".to_string()
+            "Num(8)".to_owned()
         );
         eval_as_string(&mut env, "defun add _1+_2");
-        assert_eq!(eval_as_string(&mut env, "add(2,3)"), "Num(5)".to_string());
-        assert_eq!(eval_as_string(&mut env, "add(2,a)"), "Num(3)".to_string());
+        assert_eq!(eval_as_string(&mut env, "add(2,3)"), "Num(5)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "add(2,a)"), "Num(3)".to_owned());
         eval_as_string(&mut env, "defun plus_a a+_1");
         eval_as_string(&mut env, "a=5");
-        assert_eq!(eval_as_string(&mut env, "plus_a(8)"), "Num(13)".to_string());
-        assert_eq!(eval_as_string(&mut env, "abs(-2)"), "FNum(2.0)".to_string());
+        assert_eq!(eval_as_string(&mut env, "plus_a(8)"), "Num(13)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "abs(-2)"), "FNum(2.0)".to_owned());
         assert!((eval_as_f64(&mut env, "abs(-2.5)") - 2.5).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "abs(1+i)") - 1.4142135623730951).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "sqrt(2)") - 1.4142135623730951).abs() < 1e-10);
@@ -628,11 +624,11 @@ mod tests {
         let mut env = Env::new();
         env.built_in();
 
-        let n = parse(&mut env, &(lexer("pi=3".to_string())).unwrap()).unwrap();
+        let n = parse(&mut env, &(lexer("pi=3".to_owned())).unwrap()).unwrap();
         if let Ok(_) = eval(&mut env, &n) {
             assert!(false);
         }
-        let n = parse(&mut env, &(lexer("abs(1-i+)".to_string())).unwrap()).unwrap();
+        let n = parse(&mut env, &(lexer("abs(1-i+)".to_owned())).unwrap()).unwrap();
         if let Ok(_) = eval(&mut env, &n) {
             assert!(false);
         }

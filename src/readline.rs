@@ -57,7 +57,7 @@ fn redraw_highlight<W>(
         //        eprintln!("front={:?} c={:?} left={:?}\r", chars, c, left);
         queue!(
             output,
-            style::Print(prompt.to_string()),
+            style::Print(prompt.to_owned()),
             style::Print(String::from_iter(chars)),
             style::SetAttribute(style::Attribute::Bold),
             style::Print(String::from_iter(c)),
@@ -207,8 +207,8 @@ where
             result_print(output, format!("{}\r\n", c).as_str());
         }
         Node::Command(cmd, params, result) => {
-            if cmd == Token::Ident("history".to_owned()) && params.len() > 0 {
-                error_print(output, format!("{}\r\n", result.clone()).as_str());
+            if cmd == Token::Ident("history".to_owned()) && !params.is_empty() {
+                error_print(output, format!("{}\r\n", result).as_str());
                 do_line(output, env, &result)
             } else {
                 error_print(output, format!("{}\r\n", result).as_str());
@@ -224,11 +224,11 @@ where
     }
 }
 
-fn do_line<W>(output: &mut W, env: &mut Env, line: &String)
+fn do_line<W>(output: &mut W, env: &mut Env, line: &str)
 where
     W: Write,
 {
-    match lexer(line.clone()) {
+    match lexer(line.to_owned()) {
         Ok(v) => {
             if v.is_empty() {
                 return;
@@ -331,7 +331,8 @@ pub fn readline(env: &mut Env) {
                     redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
                 KeyCode::Enter => {
-                    if line.len() > 0 && line.find("history") == None && line.find("exit") == None {
+                    if !line.is_empty() && line.find("history") == None && line.find("exit") == None
+                    {
                         env.history.push(line.clone());
                         env.history_index = env.history.len();
                     }

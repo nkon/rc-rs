@@ -1,7 +1,7 @@
 use super::*;
 use std::collections::HashMap;
-use std::str;
 use std::path;
+use std::str;
 
 pub type TypeFn = fn(&mut Env, &[Node]) -> Node;
 pub type TypeCmd = fn(&mut Env, &[Token]) -> String;
@@ -24,10 +24,10 @@ pub struct Env<'a> {
     pub output_radix: u8,
     pub separate_digit: usize,
     pub float_format: FloatFormat,
-    pub history_path:path::PathBuf,
+    pub history_path: path::PathBuf,
     pub history_max: usize,
     pub history_index: usize,
-    pub history: Vec<String>,        
+    pub history: Vec<String>,
 }
 
 // Implement of functions.
@@ -362,7 +362,7 @@ fn impl_defun(env: &mut Env, arg: &[Token]) -> String {
         eprintln!("impl_defun {:?}\r", arg);
     }
     if arg.len() < 2 {
-        return "defun should have at least 2 args.".to_string();
+        return "defun should have at least 2 args.".to_owned();
     }
     if let Token::Ident(id) = &arg[0] {
         let mut implement = Vec::new();
@@ -370,7 +370,7 @@ fn impl_defun(env: &mut Env, arg: &[Token]) -> String {
             implement.push((*i).clone());
         }
         implement.remove(0);
-        env.new_user_func((*id).to_string(), &implement);
+        env.new_user_func((*id).to_owned(), &implement);
     }
     String::from("")
 }
@@ -454,7 +454,6 @@ fn impl_cmd(env: &mut Env, arg: &[Token]) -> String {
     ret
 }
 
-
 /// history  -> return history list
 /// history n -> return found command line
 fn impl_history(env: &mut Env, arg: &[Token]) -> String {
@@ -474,13 +473,13 @@ fn impl_history(env: &mut Env, arg: &[Token]) -> String {
     }
     match &arg[0] {
         Token::Num(i) => {
-            let index = env.history.len()-(*i as usize);
+            let index = env.history.len() - (*i as usize);
             let command = env.history[index].clone();
             env.history.push(command.clone());
             env.history_index = env.history.len();
-            return command;
+            command
         }
-        _ => {String::new()}
+        _ => String::new(),
     }
 }
 
@@ -491,11 +490,8 @@ fn impl_history_max(env: &mut Env, arg: &[Token]) -> String {
     if arg.is_empty() {
         return format!("history_max {}", env.history_max);
     }
-    match &arg[0] {
-        Token::Num(n) => {
-            env.history_max = *n as usize;
-        }
-        _ => {}
+    if let Token::Num(n) = &arg[0] {
+        env.history_max = *n as usize;
     }
     format!("history_max {}", env.history_max)
 }
@@ -515,7 +511,7 @@ impl<'a> Env<'a> {
             history_path: path::PathBuf::new(),
             history_max: 0,
             history_index: 0,
-            history: Vec::new(),     
+            history: Vec::new(),
         }
     }
 
@@ -566,10 +562,12 @@ impl<'a> Env<'a> {
 
         self.cmd
             .insert("history", (impl_history as TypeCmd, 0, "show history"));
-        self.cmd
-            .insert("history_max", (impl_history_max as TypeCmd, 1, "set and show history max"));
+        self.cmd.insert(
+            "history_max",
+            (impl_history_max as TypeCmd, 1, "set and show history max"),
+        );
 
-        self.new_variable("ans".to_string());
+        self.new_variable("ans".to_owned());
     }
 
     pub fn is_const(&self, key: &str) -> Option<Node> {
@@ -646,20 +644,20 @@ mod tests {
     #[test]
     fn test_format_num() {
         let mut env = Env::new();
-        assert_eq!(output_format_num(&mut env, 1), "1".to_string());
+        assert_eq!(output_format_num(&mut env, 1), "1".to_owned());
         env.separate_digit = 4;
         assert_eq!(
             output_format_num(&mut env, 12345678),
-            "1234_5678".to_string()
+            "1234_5678".to_owned()
         );
     }
     #[test]
     fn test_format_float() {
         let mut env = Env::new();
-        assert_eq!(output_format_float(&mut env, 1.23), "1.23".to_string());
+        assert_eq!(output_format_float(&mut env, 1.23), "1.23".to_owned());
         env.float_format = FloatFormat::Sci;
-        assert_eq!(output_format_float(&mut env, 1e10), "1e10".to_string());
+        assert_eq!(output_format_float(&mut env, 1e10), "1e10".to_owned());
         env.float_format = FloatFormat::Eng;
-        assert_eq!(output_format_float(&mut env, 1e10), "10G".to_string());
+        assert_eq!(output_format_float(&mut env, 1e10), "10G".to_owned());
     }
 }

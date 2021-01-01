@@ -25,7 +25,6 @@ fn main() {
     opts.optmulti("s", "script", "run script", "script_file");
     opts.optflag("v", "version", "version");
 
-
     match opts.parse(&args[1..]) {
         Ok(matches) => {
             if matches.opt_present("h") {
@@ -44,12 +43,9 @@ fn main() {
             env.built_in();
 
             let mut rc_file_path = path::PathBuf::new();
-            match dirs::home_dir() {
-                Some(home_dir) => {
-                    rc_file_path = home_dir;
-                    rc_file_path.push(".rc_rc");
-                }
-                _ => {}
+            if let Some(home_dir) = dirs::home_dir() {
+                rc_file_path = home_dir;
+                rc_file_path.push(".rc_rc");
             }
             // overwritten `~/.rc_rc` by '-i' option
             if let Some(rc_file_str) = matches.opt_str("i") {
