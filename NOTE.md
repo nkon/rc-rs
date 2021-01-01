@@ -5,6 +5,9 @@ Table of Contents
 
 * [目的](#目的)
 * [Lexer](#lexer)
+    * [StringとVec<char>の変換](#stringとveccharの変換)
+    * [String => Vec<char>](#string--vecchar)
+    * [Vec<char> => String](#vecchar--string)
 * [Parser](#parser)
     * [整数・浮動小数点数・複素数](#整数浮動小数点数複素数)
     * [Enum](#enum)
@@ -21,6 +24,7 @@ Table of Contents
 * [オブジェクト指向](#オブジェクト指向)
 * [ファイル分割](#ファイル分割)
 * [端末制御](#端末制御)
+    * [括弧の強調](#括弧の強調)
 * [コマンドラインオプション](#コマンドラインオプション)
     * [バージョン情報の自動取得](#バージョン情報の自動取得)
 * [テスト](#テスト)
@@ -391,43 +395,51 @@ defun add _1 + _2
 
 ```rust
 fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
-    if let Node::Func(tok, param) = n {
-        if let Token::Ident(ident) = tok {
-            if let Some(tokens) = env.is_user_func((*ident).clone()) {         // `tokens` に関数定義のトークン列が得られる
-                let mut params: Vec<Node> = Vec::new();
-                for i in param {
-                    let param_value = eval(env, &i)?;
-                    params.push(param_value);
-                }
-                let mut new_tokens: Vec<Token> = Vec::new();
-                for t in tokens {                                              // トークン列をスキャンして置換する
-                    match t {
-                        Token::Ident(ref id) => {
-                            if id == "_1" {                                    // `_1`という識別子を置換する
-                                if params.is_empty() {
-                                    return Err(MyError::EvalError(format!("no parameter {:?}",new_tokens)));
-                                }
-                                new_tokens.append(&mut node_to_token(params[0].clone()));
-                            } else if id == "_2" {
-                                // .... 中略 .....
-                            } else {
-                                new_tokens.push(t);
+    if let Node::Func(Token::Ident(ident), param) = n {
+        if let Some(tokens) = env.is_user_func((*ident).clone()) {         // `tokens` に関数定義のトークン列が得られる
+            let mut params: Vec<Node> = Vec::new();
+            for i in param {
+                let param_value = eval(env, &i)?;
+                params.push(param_value);
+            }
+            let mut new_tokens: Vec<Token> = Vec::new();
+            for t in tokens {                                              // トークン列をスキャンして置換する
+                match t {
+                    Token::Ident(ref id) => {
+                        if id == "_1" {                                    // `_1`という識別子を置換する
+                            if params.is_empty() {
+                                return Err(MyError::EvalError(format!("no parameter {:?}",new_tokens)));
                             }
-                        }
-                        _ => {
+                            new_tokens.append(&mut node_to_token(params[0].clone()));
+                        } else if id == "_2" {
+                            // .... 中略 .....
+                        } else {
                             new_tokens.push(t);
                         }
                     }
+                    _ => {
+                        new_tokens.push(t);
+                    }
                 }
-                let func_node = parse(env, &new_tokens)?;                      // 置換が終わったトークン列をパーズし
-                return eval(env, &func_node);                                  // 評価する
             }
+            let func_node = parse(env, &new_tokens)?;                      // 置換が終わったトークン列をパーズし
+            return eval(env, &func_node);                                  // 評価する
         }
     }
 }
 ```
 
 簡易的な実装だが、これで再帰呼出しも実現できる。ただし、引数の個数が最大9個に限られるのが欠点だ。
+
+### `if let` の2段階分解
+
+上の引用の2行目のように`if let`を使って、2段階の`Enum`分解が一気に可能だ。最近`clippy`に教えてもらった。
+
+`Node`型の引数`n`から`Func`の要素である`param`と、その中の識別子`ident`（これは`Token::Ident()`で包まれている）を一気に取り出す。
+
+```rust
+    if let Node::Func(Token::Ident(ident), param) = n {
+```
 
 ## オブジェクト指向
 

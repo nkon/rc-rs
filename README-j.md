@@ -3,7 +3,7 @@
 Table of Contents
 -----------------
 
-* [機能](#機能)
+* [主な機能と特徴](#主な機能と特徴)
 * [Screen capture](#screen-capture)
 * [Install](#install)
     * [Build from source](#build-from-source)
