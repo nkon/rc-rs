@@ -256,8 +256,8 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         if *tok == Token::Op(TokenOp::Equal) {
             return Ok(eval_assign(env, n)?);
         }
-        let lhs = eval(env, lhs)?;
-        let rhs = eval(env, rhs)?;
+        let lhs = do_eval(env, lhs)?;
+        let rhs = do_eval(env, rhs)?;
         match tok {
             Token::Op(TokenOp::Plus) => {
                 if let Node::Num(nl) = lhs {
@@ -422,7 +422,7 @@ fn eval_unary(env: &mut Env, n: &Node) -> Result<Node, MyError> {
             } else if let Node::CNum(c) = para {
                 return Ok(Node::CNum(-c));
             } else {
-                let result = eval(env, &para)?;
+                let result = do_eval(env, &para)?;
                 let new_node = Node::Unary(Token::Op(TokenOp::Minus), Box::new(result));
                 return eval_unary(env, &new_node);
             }
