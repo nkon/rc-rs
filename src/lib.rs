@@ -460,7 +460,7 @@ pub fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         }
         Node::Command(_, _, _) => Ok(result),
         Node::None => Ok(result),
-        _ => do_eval(env, &result),
+        _ => return eval(env, &result),
     }
 }
 
@@ -617,6 +617,9 @@ mod tests {
         assert!((eval_as_complex64(&mut env, "sqrt(2i)").re - 1.0).abs() < 1e-10);
         assert!((eval_as_complex64(&mut env, "sqrt(2i)").im - 1.0).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "arg(1+i)") - 0.7853981633974483).abs() < 1e-10);
+        eval_as_string(&mut env, "b=a");
+        eval_as_string(&mut env, "c=b");
+        assert_eq!(eval_as_string(&mut env, "c"), "Num(5)".to_owned());
     }
 
     #[test]
