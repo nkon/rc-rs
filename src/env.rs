@@ -571,17 +571,11 @@ impl<'a> Env<'a> {
     }
 
     pub fn is_const(&self, key: &str) -> Option<Node> {
-        match self.constant.get(key) {
-            Some(f) => Some(f.clone()),
-            None => None,
-        }
+        self.constant.get(key).cloned()
     }
 
     pub fn is_variable(&self, key: &str) -> Option<Node> {
-        match self.variable.get(key) {
-            Some(f) => Some(f.clone()),
-            None => None,
-        }
+        self.variable.get(key).cloned()
     }
 
     pub fn new_variable(&mut self, key: String) {
@@ -598,17 +592,11 @@ impl<'a> Env<'a> {
     }
 
     pub fn is_func(&self, key: &str) -> Option<(TypeFn, usize)> {
-        match self.func.get(key) {
-            Some(&f) => Some(f),
-            None => None,
-        }
+        self.func.get(key).copied()
     }
 
     pub fn is_cmd(&self, key: &str) -> Option<(TypeCmd, usize, &str)> {
-        match self.cmd.get(key) {
-            Some(&f) => Some(f),
-            None => None,
-        }
+        self.cmd.get(key).copied()
     }
 
     fn new_user_func(&mut self, key: String, arg: &[Token]) {
@@ -616,10 +604,7 @@ impl<'a> Env<'a> {
     }
 
     pub fn is_user_func(&self, key: String) -> Option<Vec<Token>> {
-        match self.user_func.get(&key) {
-            Some(v) => Some(v.clone()),
-            None => None,
-        }
+        self.user_func.get(&key).cloned()
     }
 
     pub fn set_debug(&mut self, flag: bool) {

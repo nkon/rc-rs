@@ -254,7 +254,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     }
     if let Node::BinOp(tok, lhs, rhs) = n {
         if *tok == Token::Op(TokenOp::Equal) {
-            return Ok(eval_assign(env, n)?);
+            return eval_assign(env, n);
         }
         let lhs = eval(env, lhs)?;
         let rhs = eval(env, rhs)?;
@@ -457,7 +457,7 @@ fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         Node::Num(_) | Node::FNum(_) | Node::CNum(_) => Ok(result),
         Node::Command(_, _, _) => Ok(result),
         Node::None => Ok(result),
-        _ => return eval(env, &result),
+        _ => eval(env, &result),
     }
 }
 
