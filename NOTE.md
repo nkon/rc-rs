@@ -664,7 +664,7 @@ Build(matrix)→create-release→upload-releaseという3ステップを踏む�
       zip --junk-paths rc-${{ matrix.target }} target/${{ matrix.target }}/release/rc
 ```
 
-これで、`v*`というタグを付けてpushすればGitHub Actionsで各々の実行ファイルを作成し、リリースページから、linux(MUSL), windows, macOS用のバイナリがダウンロードできる。VS-Codeのgit統合にはタグをプッシュするボタンはない（コマンドパレットから`git push`とタイプすると`Git: Push Tags`が補完される）ので、このアクションを起動したい時はコマンドラインでタグをプッシュする必要がある（`git push --tag`）。
+これで、`v*`というタグを付けてpushすればGitHub Actionsで各々の実行ファイルを作成し、リリースページから、linux(MUSL), windows, macOS用のバイナリがダウンロードできる。VS-Codeのgit統合にはタグをプッシュするボタンはない（コマンドパレットから`git push`とタイプすると`Git: Push Tags`が補完される）ので、このアクションを起動したい時はコマンドラインでタグをプッシュする必要がある（`git push --tags`）。
 
 しかし、macOS用は環境がないので未テスト。M1 macについてもなおさら。どなたかテストレポートが欲しい。
 

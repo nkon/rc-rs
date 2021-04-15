@@ -234,7 +234,7 @@ where
                 return;
             }
             match parse(env, &v) {
-                Ok(node) => match eval(env, &node) {
+                Ok(node) => match eval_top(env, &node) {
                     Ok(node) => {
                         print_result(output, env, node);
                     }

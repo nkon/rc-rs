@@ -448,11 +448,24 @@ fn do_eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     }
 }
 
-pub fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
+fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval {:?}\r", n);
     }
     let result = do_eval(env, n)?;
+    match result {
+        Node::Num(_) | Node::FNum(_) | Node::CNum(_) => Ok(result),
+        Node::Command(_, _, _) => Ok(result),
+        Node::None => Ok(result),
+        _ => return eval(env, &result),
+    }
+}
+
+pub fn eval_top(env: &mut Env, n: &Node) -> Result<Node, MyError> {
+    if env.is_debug() {
+        eprintln!("eval {:?}\r", n);
+    }
+    let result = eval(env, n)?;
     match result {
         Node::Num(_) | Node::FNum(_) | Node::CNum(_) => {
             env.set_variable("ans".to_owned(), result.clone())?;
@@ -460,7 +473,9 @@ pub fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         }
         Node::Command(_, _, _) => Ok(result),
         Node::None => Ok(result),
-        _ => return eval(env, &result),
+        _ => Err(MyError::EvalError(
+            "unexpected return of do_eval()".to_owned(),
+        )),
     }
 }
 
