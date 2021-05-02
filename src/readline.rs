@@ -207,11 +207,9 @@ where
             result_print(output, format!("{}\r\n", c).as_str());
         }
         Node::Command(cmd, params, result) => {
+            error_print(output, format!("{}\r\n", result).as_str());
             if cmd == Token::Ident("history".to_owned()) && !params.is_empty() {
-                error_print(output, format!("{}\r\n", result).as_str());
                 do_line(output, env, &result)
-            } else {
-                error_print(output, format!("{}\r\n", result).as_str());
             }
         }
         Node::None => {}

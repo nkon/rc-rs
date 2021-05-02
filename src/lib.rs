@@ -322,6 +322,9 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
             Token::Op(TokenOp::Div) => {
                 if let Node::Num(nl) = lhs {
                     if let Node::Num(nr) = rhs {
+                        if nr == 0 {
+                            return Ok(Node::FNum(std::f64::INFINITY));
+                        }
                         return Ok(Node::Num(nl / nr));
                     }
                 }
@@ -638,6 +641,13 @@ mod tests {
         eval_as_string(&mut env, "d=c");
         eval_as_string(&mut env, "ee=d+c");
         assert_eq!(eval_as_string(&mut env, "ee"), "Num(10)".to_owned());
+        // divided by zero
+        assert_eq!(eval_as_string(&mut env, "1/0"), "FNum(inf)".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1.0/0.0"), "FNum(inf)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "1/(0.0+0.0i)"),
+            "CNum(Complex { re: NaN, im: NaN })".to_owned()
+        );
     }
 
     #[test]
