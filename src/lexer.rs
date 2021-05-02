@@ -314,12 +314,9 @@ mod tests {
     }
 
     fn assert_tok_index(result: Result<(lexer::Token, usize), MyError>, tok: Token, index: usize) {
-        match result {
-            Ok((good, idx)) => {
-                assert_eq!(good, tok);
-                assert_eq!(idx, index);
-            }
-            _ => {}
+        if let Ok((good, idx)) = result {
+            assert_eq!(good, tok);
+            assert_eq!(idx, index);
         }
     }
 

@@ -1,3 +1,4 @@
 /target
 tests/*.result
 git_commit_hash.txt
+launch.json

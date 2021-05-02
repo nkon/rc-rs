@@ -234,7 +234,8 @@ fn eval_assign(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         match &**lhs {
             Node::Var(Token::Ident(id)) => {
                 if env.is_variable(id).is_some() {
-                    env.set_variable(id.clone(), (**rhs).clone())?;
+                    // env.set_variable(id.clone(), (**rhs).clone())?; // assign is bind of AST
+                    env.set_variable(id.clone(), do_eval(&mut env.clone(), rhs)?)?; // assign is bind of value at the assignment time
                     return Ok(Node::None);
                 } else {
                     return Err(MyError::EvalError(format!("Can not assign to {:?}", id)));
@@ -641,6 +642,14 @@ mod tests {
         eval_as_string(&mut env, "d=c");
         eval_as_string(&mut env, "ee=d+c");
         assert_eq!(eval_as_string(&mut env, "ee"), "Num(10)".to_owned());
+
+        // assignment
+        eval_as_string(&mut env, "aa=1");
+        eval_as_string(&mut env, "bb=aa");
+        eval_as_string(&mut env, "aa=2");
+        // assert_eq!(eval_as_string(&mut env, "bb"), "Num(2)".to_owned());    // assign to bb is binded to AST of aa
+        assert_eq!(eval_as_string(&mut env, "bb"), "Num(1)".to_owned()); // assign to bb is ?binded to value of aa at the assigned time
+
         // divided by zero
         assert_eq!(eval_as_string(&mut env, "1/0"), "FNum(inf)".to_owned());
         assert_eq!(eval_as_string(&mut env, "1.0/0.0"), "FNum(inf)".to_owned());
