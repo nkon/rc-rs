@@ -346,7 +346,7 @@ fn assign(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErr
 /// ```
 // TODO: multiple expression
 pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, MyError> {
-    let (node, i) = assign(env, &tok, 0)?;
+    let (node, i) = assign(env, tok, 0)?;
     if i < tok.len() {
         Err(MyError::ParseError(format!("token left: {:?} {}", tok, i)))
     } else {
@@ -426,7 +426,7 @@ mod tests {
         assert_eq!(parse_as_string(&mut env, "2k"), "FNum(2000.0)");
         assert_eq!(
             parse_as_string(&mut env, "2u*pi"),
-            "BinOp(Op(Mul), FNum(0.000002), Var(Ident(\"pi\")))"
+            "BinOp(Op(Mul), FNum(2e-6), Var(Ident(\"pi\")))"
         );
         assert_eq!(
             parse_as_string(&mut env, "2*sin(0.5*pi)"),

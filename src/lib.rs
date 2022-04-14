@@ -104,7 +104,7 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         if let Some(func_tuple) = env.is_func(ident.as_str()) {
             let mut params: Vec<Node> = Vec::new();
             for i in param {
-                let param_value = eval(env, &i)?;
+                let param_value = eval(env, i)?;
                 params.push(param_value);
             }
             return Ok(func_tuple.0(env, &params));
@@ -112,7 +112,7 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         if let Some(tokens) = env.is_user_func((*ident).clone()) {
             let mut params: Vec<Node> = Vec::new();
             for i in param {
-                let param_value = eval(env, &i)?;
+                let param_value = eval(env, i)?;
                 params.push(param_value);
             }
             let mut new_tokens: Vec<Token> = Vec::new();

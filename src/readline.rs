@@ -272,7 +272,7 @@ pub fn readline(env: &mut Env) {
             // print!("keyev={:?}\r\n", keyev);
             if keyev.modifiers == KeyModifiers::CONTROL && keyev.code == KeyCode::Char('c') {
                 write!(stdout, "\r\n").unwrap();
-                save_history(&env);
+                save_history(env);
                 break;
             }
             match keyev.code {

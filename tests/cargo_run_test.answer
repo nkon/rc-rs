@@ -12,9 +12,9 @@ lexer
 -1 -> [Op(Minus), Num(1)]
 +-*/%()^100 -> [Op(Plus), Op(Minus), Op(Mul), Op(Div), Op(Mod), Op(ParenLeft), Op(ParenRight), Op(Caret), Op(Minus), Num(100)]
 1.234 -> [FNum(1.234)]
-1.234e-56 -> [FNum(0.00000000000000000000000000000000000000000000000000000001234)]
--1.234e-56-78 -> [Op(Minus), FNum(0.00000000000000000000000000000000000000000000000000000001234), Op(Minus), Num(78)]
-1/(2*3.14*270e-12*31.4e3) -> [Num(1), Op(Div), Op(ParenLeft), Num(2), Op(Mul), FNum(3.14), Op(Mul), FNum(0.00000000027), Op(Mul), FNum(31400.0), Op(ParenRight)]
+1.234e-56 -> [FNum(1.234e-56)]
+-1.234e-56-78 -> [Op(Minus), FNum(1.234e-56), Op(Minus), Num(78)]
+1/(2*3.14*270e-12*31.4e3) -> [Num(1), Op(Div), Op(ParenLeft), Num(2), Op(Mul), FNum(3.14), Op(Mul), FNum(2.7e-10), Op(Mul), FNum(31400.0), Op(ParenRight)]
 lexer error: invalid digit found in string 0b12
 lexer error: invalid digit found in string 018
 
@@ -36,7 +36,7 @@ parser
 1*2*3 -> BinOp(Op(Mul), BinOp(Op(Mul), Num(1), Num(2)), Num(3))
 -(1+2) -> Unary(Op(Minus), BinOp(Op(Plus), Num(1), Num(2)))
 1.2*3.4e5 -> BinOp(Op(Mul), FNum(1.2), Unary(Op(Minus), FNum(340000.0)))
-1/(2*3.14*270e-12*31.4e3) -> BinOp(Op(Div), Num(1), BinOp(Op(Mul), BinOp(Op(Mul), BinOp(Op(Mul), Num(2), FNum(3.14)), FNum(0.00000000027)), FNum(31400.0)))
+1/(2*3.14*270e-12*31.4e3) -> BinOp(Op(Div), Num(1), BinOp(Op(Mul), BinOp(Op(Mul), BinOp(Op(Mul), Num(2), FNum(3.14)), FNum(2.7e-10)), FNum(31400.0)))
 1+2+ -> Err(ParseError("unexpected end of input: [Num(1), Op(Plus), Num(2), Op(Plus)]"))
 
 eval

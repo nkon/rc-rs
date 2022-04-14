@@ -76,6 +76,8 @@ fn impl_abs(_env: &mut Env, arg: &[Node]) -> Node {
     }
 }
 
+
+#[allow(clippy::if_same_then_else)]
 fn impl_arg(_env: &mut Env, arg: &[Node]) -> Node {
     if let Node::Num(_) = arg[0] {
         Node::FNum(0.0)
@@ -102,7 +104,7 @@ fn impl_max(env: &mut Env, arg: &[Node]) -> Node {
     }
     let mut max = std::f64::MIN;
     for i in arg {
-        if let Ok(val) = eval_fvalue(env, &i) {
+        if let Ok(val) = eval_fvalue(env, i) {
             if max < val {
                 max = val;
             }
@@ -119,7 +121,7 @@ fn impl_ave(env: &mut Env, arg: &[Node]) -> Node {
     }
     let mut sum: f64 = 0.0;
     for i in arg {
-        if let Ok(val) = eval_fvalue(env, &i) {
+        if let Ok(val) = eval_fvalue(env, i) {
             sum += val;
         }
     }
@@ -353,7 +355,7 @@ fn impl_exit(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
         eprintln!("impl_exit {:?}\r", arg);
     }
-    save_history(&env);
+    save_history(env);
     std::process::exit(0);
 }
 
