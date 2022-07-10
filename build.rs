@@ -14,7 +14,7 @@ fn main() {
             "\"{}\"",
             String::from_utf8(commit_hash.stdout.to_vec())
                 .unwrap()
-                .replace("\n", "")
+                .replace('\n', "")
         )
         .as_bytes(),
     )
