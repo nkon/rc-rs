@@ -439,7 +439,7 @@ fn do_eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("do_eval {:?}\r", n);
     }
-    match &*n {
+    match n {
         Node::Num(n) => Ok(Node::Num(*n)),
         Node::FNum(f) => Ok(Node::FNum(*f)),
         Node::CNum(c) => Ok(Node::CNum(*c)),
