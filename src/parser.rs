@@ -34,6 +34,43 @@ fn tok_check_index(tok: &[Token], i: usize) -> Result<(), MyError> {
     }
 }
 
+fn units(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
+    let mut i = index;
+    if env.is_debug() {
+        eprintln!("units {:?} {}\r", tok, i);
+    }
+
+    if (i + 1) < tok.len() {
+        // check token over run
+        match &tok[i + 1] {
+            Token::Op(TokenOp::SqBracketLeft) => {
+                i += 2;
+                let mut node = Node::None;
+                loop {
+                    match &tok[i] {
+                        Token::Op(TokenOp::SqBracketRight) => {
+                            return Ok((Node::Units(Box::new(node)), i));
+                        }
+                        // Token::Ident(id) => {
+                        //     node = Node::Var(Token::Ident(id.clone()));
+                        //     i += 1;
+                        // }
+                        _ => {
+                            let (new_node, new_index) = expr(env, tok, i)?;
+                            i = new_index;
+                            node = new_node;
+                        }
+                    }
+                }
+            }
+            _ => {
+                return Ok((Node::Units(Box::new(Node::None)), i));
+            }
+        }
+    }
+    Ok((Node::Units(Box::new(Node::None)), i))
+}
+
 fn postfix(env: &mut Env, tok: &[Token], index: usize) -> (bool, f64, bool, usize) {
     // has_postfix, scale, is_complex, new_index
     if env.is_debug() {
@@ -92,54 +129,35 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
     match tok[i] {
         Token::Num(n) => {
             let (has_postfix, scale, is_complex, index) = postfix(env, tok, i);
+            let (units, index) = units(env, tok, index)?;
             if has_postfix {
                 if is_complex {
                     Ok((
-                        Node::CNum(
-                            Complex64::new(0.0, n as f64 * scale),
-                            Box::new(Node::Units(Box::new(Node::None))),
-                        ),
+                        Node::CNum(Complex64::new(0.0, n as f64 * scale), Box::new(units)),
                         index + 1,
                     ))
                 } else {
-                    Ok((
-                        Node::FNum(
-                            n as f64 * scale,
-                            Box::new(Node::Units(Box::new(Node::None))),
-                        ),
-                        index + 1,
-                    ))
+                    Ok((Node::FNum(n as f64 * scale, Box::new(units)), index + 1))
                 }
             } else if is_complex {
                 Ok((
-                    Node::CNum(
-                        Complex64::new(0.0, n as f64),
-                        Box::new(Node::Units(Box::new(Node::None))),
-                    ),
+                    Node::CNum(Complex64::new(0.0, n as f64), Box::new(units)),
                     index + 1,
                 ))
             } else {
-                Ok((
-                    Node::Num(n, Box::new(Node::Units(Box::new(Node::None)))),
-                    index + 1,
-                ))
+                Ok((Node::Num(n, Box::new(units)), index + 1))
             }
         }
         Token::FNum(n) => {
             let (_, scale, is_complex, index) = postfix(env, tok, i);
+            let (units, index) = units(env, tok, index)?;
             if is_complex {
                 Ok((
-                    Node::CNum(
-                        Complex64::new(0.0, n * scale),
-                        Box::new(Node::Units(Box::new(Node::None))),
-                    ),
+                    Node::CNum(Complex64::new(0.0, n * scale), Box::new(units)),
                     index + 1,
                 ))
             } else {
-                Ok((
-                    Node::FNum(n * scale, Box::new(Node::Units(Box::new(Node::None)))),
-                    index + 1,
-                ))
+                Ok((Node::FNum(n * scale, Box::new(units)), index + 1))
             }
         }
         _ => Ok((Node::None, i)),
@@ -481,6 +499,27 @@ mod tests {
             "BinOp(Op(Plus), Num(1, Units(None)), CNum(Complex { re: 0.0, im: 2.0 }, Units(None)))"
         );
         assert_eq!(parse_as_string(&mut env, "i"), "Var(Ident(\"i\"))");
+    }
+
+    #[test]
+    fn test_parser_units() {
+        let mut env = Env::new();
+        env.built_in();
+        // env.debug = true;
+        assert_eq!(parse_as_string(&mut env, "1"), "Num(1, Units(None))");
+        assert_eq!(
+            parse_as_string(&mut env, "1[m]"),
+            "Num(1, Units(Var(Ident(\"m\"))))"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "1[mm]"),
+            "Num(1, Units(Var(Ident(\"mm\"))))"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "1[m/s]"),
+            "Num(1, Units(BinOp(Op(Div), Var(Ident(\"m\")), Var(Ident(\"s\")))))"
+        );
+        assert_eq!(parse_as_string(&mut env, "1[m*m/s]"), "Num(1, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))");
     }
 
     #[test]
