@@ -33,24 +33,30 @@ pub struct Env<'a> {
 // Implement of functions.
 
 fn impl_sin(_env: &mut Env, arg: &[Node]) -> Node {
-    if let Node::Num(n) = arg[0] {
-        Node::FNum((n as f64).sin())
-    } else if let Node::FNum(f) = arg[0] {
-        Node::FNum(f.sin())
-    } else if let Node::CNum(c) = arg[0] {
-        Node::CNum(c.sin())
+    if let Node::Num(n, _) = &arg[0] {
+        Node::FNum(
+            (*n as f64).sin(),
+            Box::new(Node::Units(Box::new(Node::None))),
+        ) // unit of sin() should be None
+    } else if let Node::FNum(f, _) = &arg[0] {
+        Node::FNum(f.sin(), Box::new(Node::Units(Box::new(Node::None))))
+    } else if let Node::CNum(c, _) = &arg[0] {
+        Node::CNum(c.sin(), Box::new(Node::Units(Box::new(Node::None))))
     } else {
         Node::None
     }
 }
 
 fn impl_cos(_env: &mut Env, arg: &[Node]) -> Node {
-    if let Node::Num(n) = arg[0] {
-        Node::FNum((n as f64).cos())
-    } else if let Node::FNum(f) = arg[0] {
-        Node::FNum(f.cos())
-    } else if let Node::CNum(c) = arg[0] {
-        Node::CNum(c.cos())
+    if let Node::Num(n, _) = &arg[0] {
+        Node::FNum(
+            (*n as f64).cos(),
+            Box::new(Node::Units(Box::new(Node::None))),
+        )
+    } else if let Node::FNum(f, _) = &arg[0] {
+        Node::FNum(f.cos(), Box::new(Node::Units(Box::new(Node::None))))
+    } else if let Node::CNum(c, _) = &arg[0] {
+        Node::CNum(c.cos(), Box::new(Node::Units(Box::new(Node::None))))
     } else {
         Node::None
     }
@@ -59,32 +65,34 @@ fn impl_cos(_env: &mut Env, arg: &[Node]) -> Node {
 fn impl_exp(_env: &mut Env, arg: &[Node]) -> Node {
     Node::BinOp(
         Token::Op(TokenOp::Caret),
-        Box::new(Node::FNum(std::f64::consts::E)),
+        Box::new(Node::FNum(
+            std::f64::consts::E,
+            Box::new(Node::Units(Box::new(Node::None))),
+        )),
         Box::new(arg[0].clone()),
     )
 }
 
 fn impl_abs(_env: &mut Env, arg: &[Node]) -> Node {
-    if let Node::Num(n) = arg[0] {
-        Node::FNum((n as f64).abs())
-    } else if let Node::FNum(f) = arg[0] {
-        Node::FNum(f.abs())
-    } else if let Node::CNum(c) = &arg[0] {
-        Node::FNum(c.norm())
+    if let Node::Num(n, units) = &arg[0] {
+        Node::FNum((*n as f64).abs(), units.clone()) // unit of abs() should be same as original
+    } else if let Node::FNum(f, units) = &arg[0] {
+        Node::FNum(f.abs(), units.clone())
+    } else if let Node::CNum(c, units) = &arg[0] {
+        Node::FNum(c.norm(), units.clone())
     } else {
         Node::None
     }
 }
 
-
 #[allow(clippy::if_same_then_else)]
 fn impl_arg(_env: &mut Env, arg: &[Node]) -> Node {
-    if let Node::Num(_) = arg[0] {
-        Node::FNum(0.0)
-    } else if let Node::FNum(_) = arg[0] {
-        Node::FNum(0.0)
-    } else if let Node::CNum(c) = &arg[0] {
-        Node::FNum(c.arg())
+    if let Node::Num(_, _) = &arg[0] {
+        Node::FNum(0.0, Box::new(Node::Units(Box::new(Node::None)))) // unit of arg() shall be None
+    } else if let Node::FNum(_, _) = &arg[0] {
+        Node::FNum(0.0, Box::new(Node::Units(Box::new(Node::None))))
+    } else if let Node::CNum(c, _) = &arg[0] {
+        Node::FNum(c.arg(), Box::new(Node::Units(Box::new(Node::None))))
     } else {
         Node::None
     }
@@ -94,13 +102,13 @@ fn impl_sqrt(_env: &mut Env, arg: &[Node]) -> Node {
     Node::BinOp(
         Token::Op(TokenOp::Caret),
         Box::new(arg[0].clone()),
-        Box::new(Node::FNum(0.5)),
+        Box::new(Node::FNum(0.5, Box::new(Node::Units(Box::new(Node::None))))), // FIXME: units should be sqrt-ed
     )
 }
 
 fn impl_max(env: &mut Env, arg: &[Node]) -> Node {
     if arg.is_empty() {
-        return Node::FNum(0.0);
+        return Node::FNum(0.0, Box::new(Node::Units(Box::new(Node::None))));
     }
     let mut max = std::f64::MIN;
     for i in arg {
@@ -109,15 +117,16 @@ fn impl_max(env: &mut Env, arg: &[Node]) -> Node {
                 max = val;
             }
         } else {
-            return Node::FNum(0.0);
+            return Node::FNum(0.0, Box::new(Node::Units(Box::new(Node::None))));
+            // FIXME: use original units
         }
     }
-    Node::FNum(max)
+    Node::FNum(max, Box::new(Node::Units(Box::new(Node::None))))
 }
 
 fn impl_ave(env: &mut Env, arg: &[Node]) -> Node {
     if arg.is_empty() {
-        return Node::FNum(0.0);
+        return Node::FNum(0.0, Box::new(Node::Units(Box::new(Node::None))));
     }
     let mut sum: f64 = 0.0;
     for i in arg {
@@ -125,22 +134,16 @@ fn impl_ave(env: &mut Env, arg: &[Node]) -> Node {
             sum += val;
         }
     }
-    Node::FNum(sum / arg.len() as f64)
+    Node::FNum(
+        sum / arg.len() as f64,
+        Box::new(Node::Units(Box::new(Node::None))),
+    ) // FIXME: use original units
 }
 
-fn impl_e12(_env: &mut Env, arg: &[Node]) -> Node {
-    let input;
-    if let Node::Num(n) = arg[0] {
-        input = n as f64;
-    } else if let Node::FNum(f) = arg[0] {
-        input = f;
-    } else {
-        return Node::None;
-    }
+fn impl_round_e12(input: f64) -> f64 {
     // 1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2
     let mut mantissa = input;
     let mut exponent = 1.0;
-    let ret: f64;
     while mantissa > 10.0 {
         mantissa /= 10.0;
         exponent *= 10.0;
@@ -150,33 +153,42 @@ fn impl_e12(_env: &mut Env, arg: &[Node]) -> Node {
         exponent /= 10.0;
     }
     if mantissa < (1.0 + 1.2) / 2.0 {
-        ret = 1.0 * exponent;
+        1.0 * exponent
     } else if mantissa < (1.2 + 1.5) / 2.0 {
-        ret = 1.2 * exponent;
+        1.2 * exponent
     } else if mantissa < (1.5 + 1.8) / 2.0 {
-        ret = 1.5 * exponent;
+        1.5 * exponent
     } else if mantissa < (1.8 + 2.2) / 2.0 {
-        ret = 1.8 * exponent;
+        1.8 * exponent
     } else if mantissa < (2.2 + 2.7) / 2.0 {
-        ret = 2.2 * exponent;
+        2.2 * exponent
     } else if mantissa < (2.7 + 3.3) / 2.0 {
-        ret = 2.7 * exponent;
+        2.7 * exponent
     } else if mantissa < (3.3 + 3.9) / 2.0 {
-        ret = 3.3 * exponent;
+        3.3 * exponent
     } else if mantissa < (3.9 + 4.7) / 2.0 {
-        ret = 3.9 * exponent;
+        3.9 * exponent
     } else if mantissa < (4.7 + 5.6) / 2.0 {
-        ret = 4.7 * exponent;
+        4.7 * exponent
     } else if mantissa < (5.6 + 6.8) / 2.0 {
-        ret = 5.6 * exponent;
+        5.6 * exponent
     } else if mantissa < (6.8 + 8.2) / 2.0 {
-        ret = 6.8 * exponent;
+        6.8 * exponent
     } else if mantissa < (8.2 + 10.0) / 2.0 {
-        ret = 8.2 * exponent;
+        8.2 * exponent
     } else {
-        ret = 10.0 * exponent;
+        10.0 * exponent
     }
-    Node::FNum(ret)
+}
+
+fn impl_e12(_env: &mut Env, arg: &[Node]) -> Node {
+    if let Node::Num(n, units) = &arg[0] {
+        Node::FNum(impl_round_e12(*n as f64), units.clone()) // unit of e12() should be same as original
+    } else if let Node::FNum(f, units) = &arg[0] {
+        Node::FNum(impl_round_e12(*f), units.clone())
+    } else {
+        Node::None
+    }
 }
 
 // Implement of commands.
@@ -380,17 +392,18 @@ fn impl_defun(env: &mut Env, arg: &[Token]) -> String {
 fn print_var(env: &mut Env, key: &str, n: &Node) -> String {
     if let Ok(n) = eval(env, n) {
         match n {
-            Node::Num(_) => {
+            Node::Num(_, _) => {
+                // TODO: print units
                 if let Ok(value) = eval_fvalue(env, &n) {
                     return format!("{} = {}\r\n", key, value);
                 }
             }
-            Node::FNum(_) => {
+            Node::FNum(_, _) => {
                 if let Ok(value) = eval_fvalue(env, &n) {
                     return format!("{} = {}\r\n", key, value);
                 }
             }
-            Node::CNum(_) => {
+            Node::CNum(_, _) => {
                 if let Ok(value) = eval_cvalue(env, &n) {
                     return format!("{} = {}\r\n", key, value);
                 }
@@ -518,16 +531,53 @@ impl<'a> Env<'a> {
     }
 
     pub fn built_in(&mut self) {
-        self.constant.insert("pi", Node::FNum(std::f64::consts::PI));
-        self.constant.insert("e", Node::FNum(std::f64::consts::E));
-        self.constant.insert("eps", Node::FNum(std::f64::EPSILON));
-        self.constant
-            .insert("i", Node::CNum(Complex64::new(0.0, 1.0)));
-        self.constant
-            .insert("j", Node::CNum(Complex64::new(0.0, 1.0)));
-        self.constant.insert("inch2mm", Node::FNum(25.4));
-        self.constant.insert("feet2mm", Node::FNum(304.8));
-        self.constant.insert("oz2g", Node::FNum(28.3495));
+        self.constant.insert(
+            "pi",
+            Node::FNum(
+                std::f64::consts::PI,
+                Box::new(Node::Units(Box::new(Node::None))),
+            ),
+        );
+        self.constant.insert(
+            "e",
+            Node::FNum(
+                std::f64::consts::E,
+                Box::new(Node::Units(Box::new(Node::None))),
+            ),
+        );
+        self.constant.insert(
+            "eps",
+            Node::FNum(
+                std::f64::EPSILON,
+                Box::new(Node::Units(Box::new(Node::None))),
+            ),
+        );
+        self.constant.insert(
+            "i",
+            Node::CNum(
+                Complex64::new(0.0, 1.0),
+                Box::new(Node::Units(Box::new(Node::None))),
+            ),
+        );
+        self.constant.insert(
+            "j",
+            Node::CNum(
+                Complex64::new(0.0, 1.0),
+                Box::new(Node::Units(Box::new(Node::None))),
+            ),
+        );
+        self.constant.insert(
+            "inch2mm",
+            Node::FNum(25.4, Box::new(Node::Units(Box::new(Node::None)))),
+        );
+        self.constant.insert(
+            "feet2mm",
+            Node::FNum(304.8, Box::new(Node::Units(Box::new(Node::None)))),
+        );
+        self.constant.insert(
+            "oz2g",
+            Node::FNum(28.3495, Box::new(Node::Units(Box::new(Node::None)))),
+        );
         self.func.insert("sin", (impl_sin as TypeFn, 1));
         self.func.insert("cos", (impl_cos as TypeFn, 1));
         self.func.insert("exp", (impl_exp as TypeFn, 1));

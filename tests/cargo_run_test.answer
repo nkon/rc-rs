@@ -19,48 +19,48 @@ lexer error: invalid digit found in string 0b12
 lexer error: invalid digit found in string 018
 
 parser
-1 -> Num(1)
-0 -> Num(0)
--1 -> Unary(Op(Minus), Num(1))
-9223372036854775807 -> Num(9223372036854775807)
--9223372036854775808 -> Unary(Op(Minus), Num(9223372036854775808))
-1+2 -> BinOp(Op(Plus), Num(1), Num(2))
-1-2 -> BinOp(Op(Minus), Num(1), Num(2))
-1+-2 -> BinOp(Op(Plus), Num(1), Unary(Op(Minus), Num(2)))
-1*2 -> BinOp(Op(Mul), Num(1), Num(2))
-1*2+3 -> BinOp(Op(Plus), BinOp(Op(Mul), Num(1), Num(2)), Num(3))
-1+2*3 -> BinOp(Op(Plus), Num(1), BinOp(Op(Mul), Num(2), Num(3)))
-1*(2+3) -> BinOp(Op(Mul), Num(1), BinOp(Op(Plus), Num(2), Num(3)))
-(1+2)*3 -> BinOp(Op(Mul), BinOp(Op(Plus), Num(1), Num(2)), Num(3))
-1+2+3 -> BinOp(Op(Plus), BinOp(Op(Plus), Num(1), Num(2)), Num(3))
-1*2*3 -> BinOp(Op(Mul), BinOp(Op(Mul), Num(1), Num(2)), Num(3))
--(1+2) -> Unary(Op(Minus), BinOp(Op(Plus), Num(1), Num(2)))
-1.2*3.4e5 -> BinOp(Op(Mul), FNum(1.2), Unary(Op(Minus), FNum(340000.0)))
-1/(2*3.14*270e-12*31.4e3) -> BinOp(Op(Div), Num(1), BinOp(Op(Mul), BinOp(Op(Mul), BinOp(Op(Mul), Num(2), FNum(3.14)), FNum(2.7e-10)), FNum(31400.0)))
+1 -> Num(1, Units(None))
+0 -> Num(0, Units(None))
+-1 -> Unary(Op(Minus), Num(1, Units(None)))
+9223372036854775807 -> Num(9223372036854775807, Units(None))
+-9223372036854775808 -> Unary(Op(Minus), Num(9223372036854775808, Units(None)))
+1+2 -> BinOp(Op(Plus), Num(1, Units(None)), Num(2, Units(None)))
+1-2 -> BinOp(Op(Minus), Num(1, Units(None)), Num(2, Units(None)))
+1+-2 -> BinOp(Op(Plus), Num(1, Units(None)), Unary(Op(Minus), Num(2, Units(None))))
+1*2 -> BinOp(Op(Mul), Num(1, Units(None)), Num(2, Units(None)))
+1*2+3 -> BinOp(Op(Plus), BinOp(Op(Mul), Num(1, Units(None)), Num(2, Units(None))), Num(3, Units(None)))
+1+2*3 -> BinOp(Op(Plus), Num(1, Units(None)), BinOp(Op(Mul), Num(2, Units(None)), Num(3, Units(None))))
+1*(2+3) -> BinOp(Op(Mul), Num(1, Units(None)), BinOp(Op(Plus), Num(2, Units(None)), Num(3, Units(None))))
+(1+2)*3 -> BinOp(Op(Mul), BinOp(Op(Plus), Num(1, Units(None)), Num(2, Units(None))), Num(3, Units(None)))
+1+2+3 -> BinOp(Op(Plus), BinOp(Op(Plus), Num(1, Units(None)), Num(2, Units(None))), Num(3, Units(None)))
+1*2*3 -> BinOp(Op(Mul), BinOp(Op(Mul), Num(1, Units(None)), Num(2, Units(None))), Num(3, Units(None)))
+-(1+2) -> Unary(Op(Minus), BinOp(Op(Plus), Num(1, Units(None)), Num(2, Units(None))))
+1.2*3.4e5 -> BinOp(Op(Mul), FNum(1.2, Units(None)), Unary(Op(Minus), FNum(340000.0, Units(None))))
+1/(2*3.14*270e-12*31.4e3) -> BinOp(Op(Div), Num(1, Units(None)), BinOp(Op(Mul), BinOp(Op(Mul), BinOp(Op(Mul), Num(2, Units(None)), FNum(3.14, Units(None))), FNum(2.7e-10, Units(None))), FNum(31400.0, Units(None))))
 1+2+ -> Err(ParseError("unexpected end of input: [Num(1), Op(Plus), Num(2), Op(Plus)]"))
 
 eval
-1 -> "Num(1)"
-0 -> "Num(0)"
--1 -> "Num(-1)"
-9223372036854775807 -> "Num(9223372036854775807)"
--9223372036854775807 -> "Num(-9223372036854775807)"
-1+2 -> "Num(3)"
-1-2 -> "Num(-1)"
-1+-2 -> "Num(-1)"
-1*2 -> "Num(2)"
-1*2+3 -> "Num(5)"
-1+2*3 -> "Num(7)"
-1*(2+3) -> "Num(5)"
-(1+2)*3 -> "Num(9)"
-1+2+3 -> "Num(6)"
-1*2*3 -> "Num(6)"
-(1+2)*(3+4) -> "Num(21)"
-1.1*2*3 -> "FNum(6.6000000000000005)"
-1/(2*3.14*270e-12*31.4e3) -> "FNum(18782.22089995387)"
--(1+2) -> "Num(-3)"
-1/(2*pi*10k*4.7u) -> "FNum(3.3862753849339433)"
-sin(pi/2) -> "FNum(1.0)"
-abs(-2) -> "FNum(2.0)"
+1 -> "Num(1, Units(None))"
+0 -> "Num(0, Units(None))"
+-1 -> "Num(-1, Units(None))"
+9223372036854775807 -> "Num(9223372036854775807, Units(None))"
+-9223372036854775807 -> "Num(-9223372036854775807, Units(None))"
+1+2 -> "Num(3, Units(None))"
+1-2 -> "Num(-1, Units(None))"
+1+-2 -> "Num(-1, Units(None))"
+1*2 -> "Num(2, Units(None))"
+1*2+3 -> "Num(5, Units(None))"
+1+2*3 -> "Num(7, Units(None))"
+1*(2+3) -> "Num(5, Units(None))"
+(1+2)*3 -> "Num(9, Units(None))"
+1+2+3 -> "Num(6, Units(None))"
+1*2*3 -> "Num(6, Units(None))"
+(1+2)*(3+4) -> "Num(21, Units(None))"
+1.1*2*3 -> "FNum(6.6000000000000005, Units(None))"
+1/(2*3.14*270e-12*31.4e3) -> "FNum(18782.22089995387, Units(None))"
+-(1+2) -> "Num(-3, Units(None))"
+1/(2*pi*10k*4.7u) -> "FNum(3.3862753849339433, Units(None))"
+sin(pi/2) -> "FNum(1.0, Units(None))"
+abs(-2) -> "FNum(2.0, Units(None))"
 1+2+ -> "parser error: unexpected end of input: [Num(1), Op(Plus), Num(2), Op(Plus)]"
 1+2(3+4) -> "parser error: token left: [Num(1), Op(Plus), Num(2), Op(ParenLeft), Num(3), Op(Plus), Num(4), Op(ParenRight)] 3"

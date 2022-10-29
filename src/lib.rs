@@ -37,8 +37,8 @@ pub enum MyError {
 
 pub fn eval_fvalue(_env: &Env, n: &Node) -> Result<f64, MyError> {
     match n {
-        Node::Num(n) => Ok(*n as f64),
-        Node::FNum(f) => Ok(*f),
+        Node::Num(n, _) => Ok(*n as f64),
+        Node::FNum(f, _) => Ok(*f),
         Node::None => Err(MyError::EvalError(
             "Node::None cannot convert to fvalue".to_owned(),
         )),
@@ -50,9 +50,9 @@ pub fn eval_fvalue(_env: &Env, n: &Node) -> Result<f64, MyError> {
 
 pub fn eval_cvalue(_env: &Env, n: &Node) -> Result<Complex64, MyError> {
     match n {
-        Node::Num(n) => Ok(Complex64::new(*n as f64, 0.0)),
-        Node::FNum(f) => Ok(Complex64::new(*f, 0.0)),
-        Node::CNum(c) => Ok(*c),
+        Node::Num(n, _) => Ok(Complex64::new(*n as f64, 0.0)),
+        Node::FNum(f, _) => Ok(Complex64::new(*f, 0.0)),
+        Node::CNum(c, _) => Ok(*c),
         Node::None => Err(MyError::EvalError(
             "Node::None cannot convert to cvalue".to_owned(),
         )),
@@ -81,9 +81,9 @@ fn eval_const(env: &Env, n: &Node) -> Result<Node, MyError> {
 
 fn node_to_token(n: Node) -> Vec<Token> {
     match n {
-        Node::Num(n) => vec![Token::Num(n)],
-        Node::FNum(f) => vec![Token::FNum(f)],
-        Node::CNum(c) => vec![
+        Node::Num(n, _) => vec![Token::Num(n)],
+        Node::FNum(f, _) => vec![Token::FNum(f)],
+        Node::CNum(c, _) => vec![
             Token::Op(TokenOp::ParenLeft),
             Token::FNum(c.re),
             Token::Op(TokenOp::Plus),
@@ -261,142 +261,157 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         let rhs = eval(env, rhs)?;
         match tok {
             Token::Op(TokenOp::Plus) => {
-                if let Node::Num(nl) = lhs {
-                    if let Node::Num(nr) = rhs {
-                        return Ok(Node::Num(nl + nr));
+                if let Node::Num(nl, _) = lhs {
+                    if let Node::Num(nr, units) = rhs {
+                        return Ok(Node::Num(nl + nr, units));
                     }
                 }
-                if let Node::CNum(_) = lhs {
+                if let Node::CNum(_, ref units) = lhs {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?,
+                        units.clone(),
                     ));
                 }
-                if let Node::CNum(_) = rhs {
+                if let Node::CNum(_, ref units) = rhs {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?,
+                        units.clone(),
                     ));
                 }
                 return Ok(Node::FNum(
                     eval_fvalue(env, &lhs)? + eval_fvalue(env, &rhs)?,
+                    Box::new(Node::Units(Box::new(Node::None))),
                 ));
             }
             Token::Op(TokenOp::Minus) => {
-                if let Node::Num(nl) = lhs {
-                    if let Node::Num(nr) = rhs {
-                        return Ok(Node::Num(nl - nr));
+                if let Node::Num(nl, _) = lhs {
+                    if let Node::Num(nr, units) = rhs {
+                        return Ok(Node::Num(nl - nr, units));
                     }
                 }
-                if let Node::CNum(_) = lhs {
+                if let Node::CNum(_, ref units) = lhs {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?,
+                        units.clone(),
                     ));
                 }
-                if let Node::CNum(_) = rhs {
+                if let Node::CNum(_, ref units) = rhs {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?,
+                        units.clone(),
                     ));
                 }
                 return Ok(Node::FNum(
                     eval_fvalue(env, &lhs)? - eval_fvalue(env, &rhs)?,
+                    Box::new(Node::Units(Box::new(Node::None))),
                 ));
             }
             Token::Op(TokenOp::Mul) => {
-                if let Node::Num(nl) = lhs {
-                    if let Node::Num(nr) = rhs {
-                        return Ok(Node::Num(nl * nr));
+                if let Node::Num(nl, _) = lhs {
+                    if let Node::Num(nr, units) = rhs {
+                        return Ok(Node::Num(nl * nr, units));
                     }
                 }
-                if let Node::CNum(_) = lhs {
+                if let Node::CNum(_, ref units) = lhs {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?,
+                        units.clone(),
                     ));
                 }
-                if let Node::CNum(_) = rhs {
+                if let Node::CNum(_, ref units) = rhs {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?,
+                        units.clone(),
                     ));
                 }
                 return Ok(Node::FNum(
                     eval_fvalue(env, &lhs)? * eval_fvalue(env, &rhs)?,
+                    Box::new(Node::Units(Box::new(Node::None))),
                 ));
             }
             Token::Op(TokenOp::Div) => {
-                if let Node::Num(nl) = lhs {
-                    if let Node::Num(nr) = rhs {
+                if let Node::Num(nl, _) = lhs {
+                    if let Node::Num(nr, units) = rhs {
                         if nr == 0 {
-                            return Ok(Node::FNum(std::f64::INFINITY));
+                            return Ok(Node::FNum(std::f64::INFINITY, units));
                         }
-                        return Ok(Node::Num(nl / nr));
+                        return Ok(Node::Num(nl / nr, units));
                     }
                 }
-                if let Node::CNum(_) = lhs {
+                if let Node::CNum(_, ref units) = lhs {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?,
+                        units.clone(),
                     ));
                 }
-                if let Node::CNum(_) = rhs {
+                if let Node::CNum(_, ref units) = rhs {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?,
+                        units.clone(),
                     ));
                 }
                 return Ok(Node::FNum(
                     eval_fvalue(env, &lhs)? / eval_fvalue(env, &rhs)?,
+                    Box::new(Node::Units(Box::new(Node::None))),
                 ));
             }
             Token::Op(TokenOp::Para) => {
-                if let Node::CNum(_) = lhs {
+                if let Node::CNum(_, ref units) = lhs {
                     let lhs = eval_cvalue(env, &lhs)?;
                     let rhs = eval_cvalue(env, &rhs)?;
-                    return Ok(Node::CNum((lhs * rhs) / (lhs + rhs)));
+                    return Ok(Node::CNum((lhs * rhs) / (lhs + rhs), units.clone()));
                 }
-                if let Node::CNum(_) = rhs {
+                if let Node::CNum(_, ref units) = rhs {
                     let lhs = eval_cvalue(env, &lhs)?;
                     let rhs = eval_cvalue(env, &rhs)?;
-                    return Ok(Node::CNum((lhs * rhs) / (lhs + rhs)));
+                    return Ok(Node::CNum((lhs * rhs) / (lhs + rhs), units.clone()));
                 }
                 let lhs = eval_fvalue(env, &lhs)?;
                 let rhs = eval_fvalue(env, &rhs)?;
-                return Ok(Node::FNum((lhs * rhs) / (lhs + rhs)));
+                return Ok(Node::FNum(
+                    (lhs * rhs) / (lhs + rhs),
+                    Box::new(Node::Units(Box::new(Node::None))),
+                ));
             }
             Token::Op(TokenOp::Mod) => {
-                if let Node::Num(nl) = lhs {
-                    if let Node::Num(nr) = rhs {
-                        return Ok(Node::Num(nl % nr));
+                if let Node::Num(nl, _) = lhs {
+                    if let Node::Num(nr, units) = rhs {
+                        return Ok(Node::Num(nl % nr, units));
                     }
                 }
-                return Ok(Node::Num(0));
+                return Ok(Node::Num(0, Box::new(Node::Units(Box::new(Node::None)))));
             }
             Token::Op(TokenOp::Caret) => {
-                if let Node::Num(nr) = rhs {
-                    if let Node::Num(nl) = lhs {
+                if let Node::Num(nr, _) = rhs {
+                    if let Node::Num(nl, units) = lhs {
                         if nr > 0 {
-                            return Ok(Node::Num(nl.pow(nr as u32)));
+                            return Ok(Node::Num(nl.pow(nr as u32), units));
                         } else {
-                            return Ok(Node::FNum((nl as f64).powi(nr as i32)));
+                            return Ok(Node::FNum((nl as f64).powi(nr as i32), units));
                         }
-                    } else if let Node::FNum(nl) = lhs {
-                        return Ok(Node::FNum(nl.powi(nr as i32)));
-                    } else if let Node::CNum(nl) = lhs {
-                        return Ok(Node::CNum(nl.powi(nr as i32)));
+                    } else if let Node::FNum(nl, units) = lhs {
+                        return Ok(Node::FNum(nl.powi(nr as i32), units));
+                    } else if let Node::CNum(nl, units) = lhs {
+                        return Ok(Node::CNum(nl.powi(nr as i32), units));
                     }
-                } else if let Node::FNum(nr) = rhs {
-                    if let Node::Num(nl) = lhs {
-                        return Ok(Node::FNum((nl as f64).powf(nr)));
-                    } else if let Node::FNum(nl) = lhs {
-                        return Ok(Node::FNum(nl.powf(nr)));
-                    } else if let Node::CNum(nl) = lhs {
-                        return Ok(Node::CNum(nl.powf(nr)));
+                } else if let Node::FNum(nr, _) = rhs {
+                    if let Node::Num(nl, units) = lhs {
+                        return Ok(Node::FNum((nl as f64).powf(nr), units));
+                    } else if let Node::FNum(nl, units) = lhs {
+                        return Ok(Node::FNum(nl.powf(nr), units));
+                    } else if let Node::CNum(nl, units) = lhs {
+                        return Ok(Node::CNum(nl.powf(nr), units));
                     }
-                } else if let Node::CNum(nr) = rhs {
-                    if let Node::Num(nl) = lhs {
-                        return Ok(Node::CNum(Complex64::new(nl as f64, 0.0).powc(nr)));
-                    } else if let Node::FNum(nl) = lhs {
-                        return Ok(Node::CNum(Complex64::new(nl, 0.0).powc(nr)));
-                    } else if let Node::CNum(nl) = lhs {
-                        return Ok(Node::CNum(nl.powc(nr)));
+                } else if let Node::CNum(nr, _) = rhs {
+                    if let Node::Num(nl, units) = lhs {
+                        return Ok(Node::CNum(Complex64::new(nl as f64, 0.0).powc(nr), units));
+                    } else if let Node::FNum(nl, units) = lhs {
+                        return Ok(Node::CNum(Complex64::new(nl, 0.0).powc(nr), units));
+                    } else if let Node::CNum(nl, units) = lhs {
+                        return Ok(Node::CNum(nl.powc(nr), units));
                     }
                 }
-                return Ok(Node::Num(0));
+                return Ok(Node::Num(0, Box::new(Node::Units(Box::new(Node::None)))));
             }
             _ => {
                 return Err(MyError::EvalError(format!(
@@ -419,12 +434,12 @@ fn eval_unary(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         }
         if *tok == Token::Op(TokenOp::Minus) {
             let para: Node = *(*param).clone();
-            if let Node::Num(n) = para {
-                return Ok(Node::Num(-n));
-            } else if let Node::FNum(f) = para {
-                return Ok(Node::FNum(-f));
-            } else if let Node::CNum(c) = para {
-                return Ok(Node::CNum(-c));
+            if let Node::Num(n, units) = para {
+                return Ok(Node::Num(-n, units));
+            } else if let Node::FNum(f, units) = para {
+                return Ok(Node::FNum(-f, units));
+            } else if let Node::CNum(c, units) = para {
+                return Ok(Node::CNum(-c, units));
             } else {
                 let result = eval(env, &para)?;
                 let new_node = Node::Unary(Token::Op(TokenOp::Minus), Box::new(result));
@@ -440,15 +455,16 @@ fn do_eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         eprintln!("do_eval {:?}\r", n);
     }
     match n {
-        Node::Num(n) => Ok(Node::Num(*n)),
-        Node::FNum(f) => Ok(Node::FNum(*f)),
-        Node::CNum(c) => Ok(Node::CNum(*c)),
+        Node::Num(n, units) => Ok(Node::Num(*n, units.clone())),
+        Node::FNum(f, units) => Ok(Node::FNum(*f, units.clone())),
+        Node::CNum(c, units) => Ok(Node::CNum(*c, units.clone())),
         Node::Unary(_tok, _param) => eval_unary(env, n),
         Node::BinOp(_tok, _lhs, _rhs) => eval_binop(env, n),
         Node::Var(_tok) => eval_const(env, n),
         Node::Func(_tok, _params) => eval_func(env, n),
         Node::Command(_tok, _params, _result) => eval_command(env, n),
         Node::None => Err(MyError::EvalError(format!("invalid node {:?}", n))),
+        Node::Units(_) => todo!(),
     }
 }
 
@@ -458,7 +474,7 @@ fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     }
     let result = do_eval(env, n)?;
     match result {
-        Node::Num(_) | Node::FNum(_) | Node::CNum(_) => Ok(result),
+        Node::Num(_, _) | Node::FNum(_, _) | Node::CNum(_, _) => Ok(result),
         Node::Command(_, _, _) => Ok(result),
         Node::None => Ok(result),
         _ => eval(env, &result),
@@ -471,7 +487,7 @@ pub fn eval_top(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     }
     let result = eval(env, n)?;
     match result {
-        Node::Num(_) | Node::FNum(_) | Node::CNum(_) => {
+        Node::Num(_, _) | Node::FNum(_, _) | Node::CNum(_, _) => {
             env.set_variable("ans".to_owned(), result.clone())?;
             Ok(result)
         }
@@ -495,7 +511,7 @@ mod tests {
 
     fn eval_as_f64(env: &mut Env, input: &str) -> f64 {
         let n = parse(env, &(lexer(input.to_owned())).unwrap()).unwrap();
-        if let Node::FNum(f) = eval(env, &n).unwrap() {
+        if let Node::FNum(f, _) = eval(env, &n).unwrap() {
             return f;
         }
         assert!(false);
@@ -504,7 +520,7 @@ mod tests {
 
     fn eval_as_complex64(env: &mut Env, input: &str) -> Complex64 {
         let n = parse(env, &(lexer(input.to_owned())).unwrap()).unwrap();
-        if let Node::CNum(c) = eval(env, &n).unwrap() {
+        if let Node::CNum(c, _) = eval(env, &n).unwrap() {
             return c;
         }
         assert!(false);
@@ -516,98 +532,167 @@ mod tests {
         let mut env = Env::new();
         env.built_in();
 
-        assert_eq!(eval_as_string(&mut env, "1+2"), "Num(3)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "1+2*3"), "Num(7)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "1*2+3"), "Num(5)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "1+2+3"), "Num(6)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "(1+2)*3"), "Num(9)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "-2"), "Num(-2)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "1+2"),
+            "Num(3, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1+2*3"),
+            "Num(7, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1*2+3"),
+            "Num(5, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1+2+3"),
+            "Num(6, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "(1+2)*3"),
+            "Num(9, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "-2"),
+            "Num(-2, Units(None))".to_owned()
+        );
         assert_eq!(
             eval_as_string(&mut env, "-9223372036854775807"),
-            "Num(-9223372036854775807)".to_owned()
+            "Num(-9223372036854775807, Units(None))".to_owned()
         );
         assert!(((eval_as_f64(&mut env, "1.1+2.2") - 3.3).abs()) < 1e-10);
-        assert_eq!(eval_as_string(&mut env, "-(2+3)"), "Num(-5)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "+(2+3)"), "Num(5)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "1.0+2"), "FNum(3.0)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "1+2.0"), "FNum(3.0)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "-(2+3)"),
+            "Num(-5, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "+(2+3)"),
+            "Num(5, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1.0+2"),
+            "FNum(3.0, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1+2.0"),
+            "FNum(3.0, Units(None))".to_owned()
+        );
         assert_eq!(
             eval_as_string(&mut env, "(1+2.0)*3"),
-            "FNum(9.0)".to_owned()
+            "FNum(9.0, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "pi"),
-            "FNum(3.141592653589793)".to_owned()
+            "FNum(3.141592653589793, Units(None))".to_owned()
         );
-        assert_eq!(eval_as_string(&mut env, "2k*3u"), "FNum(0.006)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "2k*3u"),
+            "FNum(0.006, Units(None))".to_owned()
+        );
 
-        assert_eq!(eval_as_string(&mut env, "5//5"), "FNum(2.5)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "5//5"),
+            "FNum(2.5, Units(None))".to_owned()
+        );
 
         assert_eq!(
             eval_as_string(&mut env, "5*inch2mm"),
-            "FNum(127.0)".to_owned()
+            "FNum(127.0, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "5*feet2mm"),
-            "FNum(1524.0)".to_owned()
+            "FNum(1524.0, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "5*oz2g"),
-            "FNum(141.7475)".to_owned()
+            "FNum(141.7475, Units(None))".to_owned()
         );
 
         assert!((eval_as_f64(&mut env, "sin(0.0)")).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "cos(pi/2)")).abs() < 1e-10);
-        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "sin(0)"),
+            "FNum(0.0, Units(None))".to_owned()
+        );
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
-        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "1%3"), "Num(1)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "2%3"), "Num(2)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "3%3"), "Num(0)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "3.0%3"), "Num(0)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "1/3"), "Num(0)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "3/3"), "Num(1)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "3.0/2"), "FNum(1.5)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "sin(0)"),
+            "FNum(0.0, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1%3"),
+            "Num(1, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "2%3"),
+            "Num(2, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "3%3"),
+            "Num(0, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "3.0%3"),
+            "Num(0, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1/3"),
+            "Num(0, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "3/3"),
+            "Num(1, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "3.0/2"),
+            "FNum(1.5, Units(None))".to_owned()
+        );
         assert_eq!(
             eval_as_string(&mut env, "ave(1,2,3)"),
-            "FNum(2.0)".to_owned()
+            "FNum(2.0, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "max(1,2,3)"),
-            "FNum(3.0)".to_owned()
+            "FNum(3.0, Units(None))".to_owned()
         );
         eval_as_string(&mut env, "a=1");
-        assert_eq!(eval_as_string(&mut env, "a"), "Num(1)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "2^3"), "Num(8)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "a"),
+            "Num(1, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "2^3"),
+            "Num(8, Units(None))".to_owned()
+        );
         assert_eq!(
             eval_as_string(&mut env, "2^3^4"),
-            "Num(2417851639229258349412352)".to_owned()
+            "Num(2417851639229258349412352, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "2^-0.5"),
-            "FNum(0.7071067811865476)".to_owned()
+            "FNum(0.7071067811865476, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "1+2i"),
-            "CNum(Complex { re: 1.0, im: 2.0 })".to_owned()
+            "CNum(Complex { re: 1.0, im: 2.0 }, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2i) - (3-5i)"),
-            "CNum(Complex { re: -2.0, im: 7.0 })".to_owned()
+            "CNum(Complex { re: -2.0, im: 7.0 }, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2i) * (3-5i)"),
-            "CNum(Complex { re: 13.0, im: 1.0 })".to_owned()
+            "CNum(Complex { re: 13.0, im: 1.0 }, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2i) / (1-1.0i)"),
-            "CNum(Complex { re: -0.5, im: 1.5 })".to_owned()
+            "CNum(Complex { re: -0.5, im: 1.5 }, Units(None))".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "2 // 2i"),
-            "CNum(Complex { re: 1.0, im: 1.0 })".to_owned()
+            "CNum(Complex { re: 1.0, im: 1.0 }, Units(None))".to_owned()
         );
         assert!((eval_as_complex64(&mut env, "exp(i*pi)").re + 1.0).abs() < 1e-10);
         assert!((eval_as_complex64(&mut env, "exp(i*pi)").im).abs() < 1e-10);
@@ -615,21 +700,36 @@ mod tests {
         assert!((eval_as_complex64(&mut env, "i^i").im).abs() < 1e-10);
         assert_eq!(
             eval_as_string(&mut env, "-pi"),
-            "FNum(-3.141592653589793)".to_owned()
+            "FNum(-3.141592653589793, Units(None))".to_owned()
         );
         eval_as_string(&mut env, "defun double 2*_1");
-        assert_eq!(eval_as_string(&mut env, "double(2)"), "Num(4)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "double(2)"),
+            "Num(4, Units(None))".to_owned()
+        );
         assert_eq!(
             eval_as_string(&mut env, "double(double(2))"),
-            "Num(8)".to_owned()
+            "Num(8, Units(None))".to_owned()
         );
         eval_as_string(&mut env, "defun add _1+_2");
-        assert_eq!(eval_as_string(&mut env, "add(2,3)"), "Num(5)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "add(2,a)"), "Num(3)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "add(2,3)"),
+            "Num(5, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "add(2,a)"),
+            "Num(3, Units(None))".to_owned()
+        );
         eval_as_string(&mut env, "defun plus_a a+_1");
         eval_as_string(&mut env, "a=5");
-        assert_eq!(eval_as_string(&mut env, "plus_a(8)"), "Num(13)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "abs(-2)"), "FNum(2.0)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "plus_a(8)"),
+            "Num(13, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "abs(-2)"),
+            "FNum(2.0, Units(None))".to_owned()
+        );
         assert!((eval_as_f64(&mut env, "abs(-2.5)") - 2.5).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "abs(1+i)") - 1.4142135623730951).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "sqrt(2)") - 1.4142135623730951).abs() < 1e-10);
@@ -638,24 +738,39 @@ mod tests {
         assert!((eval_as_f64(&mut env, "arg(1+i)") - 0.7853981633974483).abs() < 1e-10);
         eval_as_string(&mut env, "b=a");
         eval_as_string(&mut env, "c=b");
-        assert_eq!(eval_as_string(&mut env, "c"), "Num(5)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "c"),
+            "Num(5, Units(None))".to_owned()
+        );
         eval_as_string(&mut env, "d=c");
         eval_as_string(&mut env, "ee=d+c");
-        assert_eq!(eval_as_string(&mut env, "ee"), "Num(10)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "ee"),
+            "Num(10, Units(None))".to_owned()
+        );
 
         // assignment
         eval_as_string(&mut env, "aa=1");
         eval_as_string(&mut env, "bb=aa");
         eval_as_string(&mut env, "aa=2");
         // assert_eq!(eval_as_string(&mut env, "bb"), "Num(2)".to_owned());    // assign to bb is binded to AST of aa
-        assert_eq!(eval_as_string(&mut env, "bb"), "Num(1)".to_owned()); // assign to bb is ?binded to value of aa at the assigned time
+        assert_eq!(
+            eval_as_string(&mut env, "bb"),
+            "Num(1, Units(None))".to_owned()
+        ); // assign to bb is ?binded to value of aa at the assigned time
 
         // divided by zero
-        assert_eq!(eval_as_string(&mut env, "1/0"), "FNum(inf)".to_owned());
-        assert_eq!(eval_as_string(&mut env, "1.0/0.0"), "FNum(inf)".to_owned());
+        assert_eq!(
+            eval_as_string(&mut env, "1/0"),
+            "FNum(inf, Units(None))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1.0/0.0"),
+            "FNum(inf, Units(None))".to_owned()
+        );
         assert_eq!(
             eval_as_string(&mut env, "1/(0.0+0.0i)"),
-            "CNum(Complex { re: NaN, im: NaN })".to_owned()
+            "CNum(Complex { re: NaN, im: NaN }, Units(None))".to_owned()
         );
     }
 

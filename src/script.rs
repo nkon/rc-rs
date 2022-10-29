@@ -15,9 +15,9 @@ pub fn do_script(env: &mut Env, line: &str) -> Result<String, MyError> {
     }
     let node = parse(env, &tokens)?;
     match eval_top(env, &node)? {
-        Node::Num(n) => Ok(output_format_num(env, n)),
-        Node::FNum(f) => Ok(format!("{}", f)),
-        Node::CNum(c) => Ok(format!("{}", c)),
+        Node::Num(n, _) => Ok(output_format_num(env, n)),
+        Node::FNum(f, _) => Ok(format!("{}", f)),
+        Node::CNum(c, _) => Ok(format!("{}", c)),
         // Node::Command(_cmd, _params, result) => Ok(format!("{}\r\n", result)),
         Node::Command(_cmd, _params, _result) => Ok("".to_owned()),
         Node::None => Ok("".to_owned()),

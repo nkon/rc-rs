@@ -191,19 +191,19 @@ where
     W: Write,
 {
     match node {
-        Node::Num(n) => {
+        Node::Num(n, _) => {
             result_print(
                 output,
                 format!("{}\r\n", output_format_num(env, n)).as_str(),
             );
         }
-        Node::FNum(f) => {
+        Node::FNum(f, _) => {
             result_print(
                 output,
                 format!("{}\r\n", output_format_float(env, f)).as_str(),
             );
         }
-        Node::CNum(c) => {
+        Node::CNum(c, _) => {
             result_print(output, format!("{}\r\n", c).as_str());
         }
         Node::Command(cmd, params, result) => {

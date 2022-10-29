@@ -6,14 +6,16 @@ use super::*;
 // <exp>     ::= <unary> '^' <exp> | <unary>
 // <unary>   ::= <primary> | '-' <primary> | '+' <primary>
 // <primary> ::= <num> | '(' <expr> ')' | <var> | <func> '(' <expr>* ',' ')'
-// <num>     ::= <num> | <num> <postfix>
+// <num>     ::= <num> | <num> <postfix> | <num> <units>
+// <units>   ::= '[' <expr> ']'
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Node {
     None,
-    Num(i128),
-    FNum(f64),
-    CNum(Complex64),
+    Units(Box<Node>),
+    Num(i128, Box<Node>), // Num, Units
+    FNum(f64, Box<Node>),
+    CNum(Complex64, Box<Node>),
     Unary(Token, Box<Node>),            // TokenOp, Operand
     BinOp(Token, Box<Node>, Box<Node>), // TokenOp, LHS, RHS
     Var(Token),                         // Token::Ident
@@ -38,6 +40,7 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
     }
     tok_check_index(tok, i)?;
 
+    let mut incr_i = 1; // how many token is consumed. 1=<num>
     let mut f_postfix = 1.0;
     let mut is_complex = false;
     let mut has_postfix = false;
@@ -47,37 +50,46 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
                 "k" => {
                     f_postfix = 1000.0;
                     has_postfix = true;
+                    incr_i += 1;
                 }
                 "M" => {
                     f_postfix = 1_000_000.0;
                     has_postfix = true;
+                    incr_i += 1;
                 }
                 "G" => {
                     f_postfix = 1_000_000_000.0;
                     has_postfix = true;
+                    incr_i += 1;
                 }
                 "T" => {
                     f_postfix = 1_000_000_000_000.0;
                     has_postfix = true;
+                    incr_i += 1;
                 }
                 "m" => {
                     f_postfix = 0.001;
                     has_postfix = true;
+                    incr_i += 1;
                 }
                 "u" => {
                     f_postfix = 0.000_001;
                     has_postfix = true;
+                    incr_i += 1;
                 }
                 "n" => {
                     f_postfix = 0.000_000_001;
                     has_postfix = true;
+                    incr_i += 1;
                 }
                 "p" => {
                     f_postfix = 0.000_000_000_001;
                     has_postfix = true;
+                    incr_i += 1;
                 }
                 "i" | "j" => {
                     is_complex = true;
+                    incr_i += 1;
                 }
                 _ => {}
             }
@@ -87,27 +99,66 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
         Token::Num(n) => {
             if has_postfix {
                 if is_complex {
-                    Ok((Node::CNum(Complex64::new(0.0, n as f64 * f_postfix)), i + 3))
+                    Ok((
+                        Node::CNum(
+                            Complex64::new(0.0, n as f64 * f_postfix),
+                            Box::new(Node::Units(Box::new(Node::None))),
+                        ),
+                        i + incr_i,
+                    ))
                 } else {
-                    Ok((Node::FNum(n as f64 * f_postfix), i + 2))
+                    Ok((
+                        Node::FNum(
+                            n as f64 * f_postfix,
+                            Box::new(Node::Units(Box::new(Node::None))),
+                        ),
+                        i + incr_i,
+                    ))
                 }
             } else if is_complex {
-                Ok((Node::CNum(Complex64::new(0.0, n as f64)), i + 2))
+                Ok((
+                    Node::CNum(
+                        Complex64::new(0.0, n as f64),
+                        Box::new(Node::Units(Box::new(Node::None))),
+                    ),
+                    i + incr_i,
+                ))
             } else {
-                Ok((Node::Num(n), i + 1))
+                Ok((
+                    Node::Num(n, Box::new(Node::Units(Box::new(Node::None)))),
+                    i + incr_i,
+                ))
             }
         }
         Token::FNum(n) => {
             if has_postfix {
                 if is_complex {
-                    Ok((Node::CNum(Complex64::new(0.0, n * f_postfix)), i + 3))
+                    Ok((
+                        Node::CNum(
+                            Complex64::new(0.0, n * f_postfix),
+                            Box::new(Node::Units(Box::new(Node::None))),
+                        ),
+                        i + incr_i,
+                    ))
                 } else {
-                    Ok((Node::FNum(n * f_postfix), i + 2))
+                    Ok((
+                        Node::FNum(n * f_postfix, Box::new(Node::Units(Box::new(Node::None)))),
+                        i + incr_i,
+                    ))
                 }
             } else if is_complex {
-                Ok((Node::CNum(Complex64::new(0.0, n)), i + 2))
+                Ok((
+                    Node::CNum(
+                        Complex64::new(0.0, n),
+                        Box::new(Node::Units(Box::new(Node::None))),
+                    ),
+                    i + incr_i,
+                ))
             } else {
-                Ok((Node::FNum(n), i + 1))
+                Ok((
+                    Node::FNum(n, Box::new(Node::Units(Box::new(Node::None)))),
+                    i + incr_i,
+                ))
             }
         }
         _ => Ok((Node::None, i)),
@@ -342,7 +393,7 @@ fn assign(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyErr
 /// use rc::Env;
 /// let mut env = Env::new();
 /// env.built_in();
-/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_owned()).unwrap())).unwrap()),"BinOp(Op(Plus), Num(1), Num(2))");
+/// assert_eq!(format!("{:?}", parse(&mut env, &(lexer("1+2".to_owned()).unwrap())).unwrap()),"BinOp(Op(Plus), Num(1, Units(None)), Num(2, Units(None)))");
 /// ```
 // TODO: multiple expression
 pub fn parse(env: &mut Env, tok: &[Token]) -> Result<Node, MyError> {
@@ -376,77 +427,77 @@ mod tests {
 
         assert_eq!(
             parse_as_string(&mut env, "1+2"),
-            "BinOp(Op(Plus), Num(1), Num(2))"
+            "BinOp(Op(Plus), Num(1, Units(None)), Num(2, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "1-2"),
-            "BinOp(Op(Minus), Num(1), Num(2))"
+            "BinOp(Op(Minus), Num(1, Units(None)), Num(2, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "1+-2"),
-            "BinOp(Op(Plus), Num(1), Unary(Op(Minus), Num(2)))"
+            "BinOp(Op(Plus), Num(1, Units(None)), Unary(Op(Minus), Num(2, Units(None))))"
         );
         assert_eq!(
             parse_as_string(&mut env, "1*2"),
-            "BinOp(Op(Mul), Num(1), Num(2))"
+            "BinOp(Op(Mul), Num(1, Units(None)), Num(2, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "1*2+3"),
-            "BinOp(Op(Plus), BinOp(Op(Mul), Num(1), Num(2)), Num(3))"
+            "BinOp(Op(Plus), BinOp(Op(Mul), Num(1, Units(None)), Num(2, Units(None))), Num(3, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "1*(2+3)"),
-            "BinOp(Op(Mul), Num(1), BinOp(Op(Plus), Num(2), Num(3)))"
+            "BinOp(Op(Mul), Num(1, Units(None)), BinOp(Op(Plus), Num(2, Units(None)), Num(3, Units(None))))"
         );
         assert_eq!(
             parse_as_string(&mut env, "1+2+3"),
-            "BinOp(Op(Plus), BinOp(Op(Plus), Num(1), Num(2)), Num(3))"
+            "BinOp(Op(Plus), BinOp(Op(Plus), Num(1, Units(None)), Num(2, Units(None))), Num(3, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "(1+2)+3"),
-            "BinOp(Op(Plus), BinOp(Op(Plus), Num(1), Num(2)), Num(3))"
+            "BinOp(Op(Plus), BinOp(Op(Plus), Num(1, Units(None)), Num(2, Units(None))), Num(3, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "1*2*3"),
-            "BinOp(Op(Mul), BinOp(Op(Mul), Num(1), Num(2)), Num(3))"
+            "BinOp(Op(Mul), BinOp(Op(Mul), Num(1, Units(None)), Num(2, Units(None))), Num(3, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "(1*2)*3"),
-            "BinOp(Op(Mul), BinOp(Op(Mul), Num(1), Num(2)), Num(3))"
+            "BinOp(Op(Mul), BinOp(Op(Mul), Num(1, Units(None)), Num(2, Units(None))), Num(3, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "-(2+3)"),
-            "Unary(Op(Minus), BinOp(Op(Plus), Num(2), Num(3)))"
+            "Unary(Op(Minus), BinOp(Op(Plus), Num(2, Units(None)), Num(3, Units(None))))"
         );
         assert_eq!(parse_as_string(&mut env, "pi"), "Var(Ident(\"pi\"))");
         assert_eq!(
             parse_as_string(&mut env, "2.0*pi"),
-            "BinOp(Op(Mul), FNum(2.0), Var(Ident(\"pi\")))"
+            "BinOp(Op(Mul), FNum(2.0, Units(None)), Var(Ident(\"pi\")))"
         );
-        assert_eq!(parse_as_string(&mut env, "2k"), "FNum(2000.0)");
+        assert_eq!(parse_as_string(&mut env, "2k"), "FNum(2000.0, Units(None))");
         assert_eq!(
             parse_as_string(&mut env, "2u*pi"),
-            "BinOp(Op(Mul), FNum(2e-6), Var(Ident(\"pi\")))"
+            "BinOp(Op(Mul), FNum(2e-6, Units(None)), Var(Ident(\"pi\")))"
         );
         assert_eq!(
             parse_as_string(&mut env, "2*sin(0.5*pi)"),
-            "BinOp(Op(Mul), Num(2), Func(Ident(\"sin\"), [BinOp(Op(Mul), FNum(0.5), Var(Ident(\"pi\")))]))"
+            "BinOp(Op(Mul), Num(2, Units(None)), Func(Ident(\"sin\"), [BinOp(Op(Mul), FNum(0.5, Units(None)), Var(Ident(\"pi\")))]))"
         );
         assert_eq!(
             parse_as_string(&mut env, "a=1"),
-            "BinOp(Op(Equal), Var(Ident(\"a\")), Num(1))"
+            "BinOp(Op(Equal), Var(Ident(\"a\")), Num(1, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "2^3"),
-            "BinOp(Op(Caret), Num(2), Num(3))"
+            "BinOp(Op(Caret), Num(2, Units(None)), Num(3, Units(None)))"
         );
         assert_eq!(
             parse_as_string(&mut env, "2^3^4"),
-            "BinOp(Op(Caret), Num(2), BinOp(Op(Caret), Num(3), Num(4)))"
+            "BinOp(Op(Caret), Num(2, Units(None)), BinOp(Op(Caret), Num(3, Units(None)), Num(4, Units(None))))"
         );
         assert_eq!(
             parse_as_string(&mut env, "1+2i"),
-            "BinOp(Op(Plus), Num(1), CNum(Complex { re: 0.0, im: 2.0 }))"
+            "BinOp(Op(Plus), Num(1, Units(None)), CNum(Complex { re: 0.0, im: 2.0 }, Units(None)))"
         );
         assert_eq!(parse_as_string(&mut env, "i"), "Var(Ident(\"i\"))");
     }
