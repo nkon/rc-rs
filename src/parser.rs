@@ -51,10 +51,6 @@ fn units(env: &mut Env, tok: &[Token], index: usize) -> Result<(Node, usize), My
                         Token::Op(TokenOp::SqBracketRight) => {
                             return Ok((Node::Units(Box::new(node)), i));
                         }
-                        // Token::Ident(id) => {
-                        //     node = Node::Var(Token::Ident(id.clone()));
-                        //     i += 1;
-                        // }
                         _ => {
                             let (new_node, new_index) = expr(env, tok, i)?;
                             i = new_index;
@@ -520,6 +516,7 @@ mod tests {
             "Num(1, Units(BinOp(Op(Div), Var(Ident(\"m\")), Var(Ident(\"s\")))))"
         );
         assert_eq!(parse_as_string(&mut env, "1[m*m/s]"), "Num(1, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))");
+        assert_eq!(parse_as_string(&mut env, "1k[m*m/s]"), "FNum(1000.0, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))");
     }
 
     #[test]
