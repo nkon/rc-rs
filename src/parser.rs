@@ -6,7 +6,7 @@ use super::*;
 // <exp>     ::= <unary> '^' <exp> | <unary>
 // <unary>   ::= <primary> | '-' <primary> | '+' <primary>
 // <primary> ::= <num> | '(' <expr> ')' | <var> | <func> '(' <expr>* ',' ')'
-// <num>     ::= <num> | <num> <postfix> | <num> <units>
+// <num>     ::= <num> | <num> <postfix> | <num> <units> | <num> <postfix> <units>
 // <units>   ::= '[' <expr> ']'
 
 #[derive(Debug, Clone, PartialEq)]
@@ -34,85 +34,80 @@ fn tok_check_index(tok: &[Token], i: usize) -> Result<(), MyError> {
     }
 }
 
+fn postfix(env: &mut Env, tok: &[Token], index: usize) -> (bool, f64, bool, usize) {
+    // has_postfix, scale, is_complex, new_index
+    if env.is_debug() {
+        eprintln!("postfix {:?} {}\r", tok, index);
+    }
+
+    if (index + 1) < tok.len() {
+        // check token over run
+        if let Token::Ident(id) = &tok[index + 1] {
+            // check suffix
+            match id.as_ref() {
+                "k" => {
+                    return (true, 1000.0, false, index + 1);
+                }
+                "M" => {
+                    return (true, 1_000_000.0, false, index + 1);
+                }
+                "G" => {
+                    return (true, 1_000_000_000.0, false, index + 1);
+                }
+                "T" => {
+                    return (true, 1_000_000_000_000.0, false, index + 1);
+                }
+                "m" => {
+                    return (true, 0.001, false, index + 1);
+                }
+                "u" => {
+                    return (true, 0.000_001, false, index + 1);
+                }
+                "n" => {
+                    return (true, 0.000_000_001, false, index + 1);
+                }
+                "p" => {
+                    return (true, 0.000_000_000_001, false, index + 1);
+                }
+                "i" | "j" => {
+                    return (true, 1.0, true, index + 1);
+                }
+                _ => {
+                    return (false, 1.0, false, index);
+                }
+            }
+        } else {
+            return (false, 1.0, false, index);
+        }
+    }
+    (false, 1.0, false, index)
+}
+
 fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError> {
     if env.is_debug() {
         eprintln!("num {:?} {}\r", tok, i);
     }
     tok_check_index(tok, i)?;
 
-    let mut incr_i = 1; // how many token is consumed. 1=<num>
-    let mut f_postfix = 1.0;
-    let mut is_complex = false;
-    let mut has_postfix = false;
-    if (i + 1) < tok.len() {
-        if let Token::Ident(id) = &tok[i + 1] {
-            match id.as_ref() {
-                "k" => {
-                    f_postfix = 1000.0;
-                    has_postfix = true;
-                    incr_i += 1;
-                }
-                "M" => {
-                    f_postfix = 1_000_000.0;
-                    has_postfix = true;
-                    incr_i += 1;
-                }
-                "G" => {
-                    f_postfix = 1_000_000_000.0;
-                    has_postfix = true;
-                    incr_i += 1;
-                }
-                "T" => {
-                    f_postfix = 1_000_000_000_000.0;
-                    has_postfix = true;
-                    incr_i += 1;
-                }
-                "m" => {
-                    f_postfix = 0.001;
-                    has_postfix = true;
-                    incr_i += 1;
-                }
-                "u" => {
-                    f_postfix = 0.000_001;
-                    has_postfix = true;
-                    incr_i += 1;
-                }
-                "n" => {
-                    f_postfix = 0.000_000_001;
-                    has_postfix = true;
-                    incr_i += 1;
-                }
-                "p" => {
-                    f_postfix = 0.000_000_000_001;
-                    has_postfix = true;
-                    incr_i += 1;
-                }
-                "i" | "j" => {
-                    is_complex = true;
-                    incr_i += 1;
-                }
-                _ => {}
-            }
-        }
-    }
     match tok[i] {
         Token::Num(n) => {
+            let (has_postfix, scale, is_complex, index) = postfix(env, tok, i);
             if has_postfix {
                 if is_complex {
                     Ok((
                         Node::CNum(
-                            Complex64::new(0.0, n as f64 * f_postfix),
+                            Complex64::new(0.0, n as f64 * scale),
                             Box::new(Node::Units(Box::new(Node::None))),
                         ),
-                        i + incr_i,
+                        index + 1,
                     ))
                 } else {
                     Ok((
                         Node::FNum(
-                            n as f64 * f_postfix,
+                            n as f64 * scale,
                             Box::new(Node::Units(Box::new(Node::None))),
                         ),
-                        i + incr_i,
+                        index + 1,
                     ))
                 }
             } else if is_complex {
@@ -121,43 +116,29 @@ fn num(env: &mut Env, tok: &[Token], i: usize) -> Result<(Node, usize), MyError>
                         Complex64::new(0.0, n as f64),
                         Box::new(Node::Units(Box::new(Node::None))),
                     ),
-                    i + incr_i,
+                    index + 1,
                 ))
             } else {
                 Ok((
                     Node::Num(n, Box::new(Node::Units(Box::new(Node::None)))),
-                    i + incr_i,
+                    index + 1,
                 ))
             }
         }
         Token::FNum(n) => {
-            if has_postfix {
-                if is_complex {
-                    Ok((
-                        Node::CNum(
-                            Complex64::new(0.0, n * f_postfix),
-                            Box::new(Node::Units(Box::new(Node::None))),
-                        ),
-                        i + incr_i,
-                    ))
-                } else {
-                    Ok((
-                        Node::FNum(n * f_postfix, Box::new(Node::Units(Box::new(Node::None)))),
-                        i + incr_i,
-                    ))
-                }
-            } else if is_complex {
+            let (_, scale, is_complex, index) = postfix(env, tok, i);
+            if is_complex {
                 Ok((
                     Node::CNum(
-                        Complex64::new(0.0, n),
+                        Complex64::new(0.0, n * scale),
                         Box::new(Node::Units(Box::new(Node::None))),
                     ),
-                    i + incr_i,
+                    index + 1,
                 ))
             } else {
                 Ok((
-                    Node::FNum(n, Box::new(Node::Units(Box::new(Node::None)))),
-                    i + incr_i,
+                    Node::FNum(n * scale, Box::new(Node::Units(Box::new(Node::None)))),
+                    index + 1,
                 ))
             }
         }
