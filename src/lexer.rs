@@ -2,17 +2,19 @@ use super::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenOp {
-    Plus,       // +
-    Minus,      // -
-    Mul,        // *
-    Div,        // /
-    Mod,        // %
-    Para,       // //
-    ParenLeft,  // (
-    ParenRight, // )
-    Caret,      // ^
-    Comma,      // ,
-    Equal,      // =
+    Plus,           // +
+    Minus,          // -
+    Mul,            // *
+    Div,            // /
+    Mod,            // %
+    Para,           // //
+    ParenLeft,      // (
+    ParenRight,     // )
+    SqBracketLeft,  // [
+    SqBracketRight, // ]
+    Caret,          // ^
+    Comma,          // ,
+    Equal,          // =
     None,
 }
 
@@ -276,6 +278,14 @@ pub fn lexer(s: String) -> Result<Vec<Token>, MyError> {
                 ret.push(Token::Op(TokenOp::ParenRight));
                 i += 1;
             }
+            '[' => {
+                ret.push(Token::Op(TokenOp::SqBracketLeft));
+                i += 1;
+            }
+            ']' => {
+                ret.push(Token::Op(TokenOp::SqBracketRight));
+                i += 1;
+            }
             '^' => {
                 ret.push(Token::Op(TokenOp::Caret));
                 i += 1;
@@ -393,6 +403,7 @@ mod tests {
         assert_eq!(tok, Token::Ident("sin".to_owned()));
         assert_eq!(idx, 3);
     }
+
     #[test]
     fn test_lexer() {
         assert_eq!(
@@ -482,6 +493,17 @@ mod tests {
                 Token::Ident("a".to_owned()),
                 Token::Op(TokenOp::Equal),
                 Token::Num(1),
+            ]
+        );
+        assert_eq!(
+            lexer("10[mm/s]".to_owned()).unwrap(),
+            [
+                Token::Num(10),
+                Token::Op(TokenOp::SqBracketLeft),
+                Token::Ident("mm".to_owned()),
+                Token::Op(TokenOp::Div),
+                Token::Ident("s".to_owned()),
+                Token::Op(TokenOp::SqBracketRight),
             ]
         );
     }
