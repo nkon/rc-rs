@@ -337,6 +337,13 @@ pub fn output_format_float(env: &mut Env, f: f64) -> String {
     }
 }
 
+pub fn output_format_units(_env: &mut Env, units: Node) -> String {
+    if units == Node::Units(Box::new(Node::None)) {
+        return "".to_string();
+    }
+    format!("[{:?}]", units)
+}
+
 fn impl_debug(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
         eprintln!("impl_debug {:?}\r", arg);

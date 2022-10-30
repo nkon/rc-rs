@@ -249,6 +249,46 @@ fn eval_assign(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     Err(MyError::EvalError(format!("'=' operator: {:?}", n)))
 }
 
+fn eval_unit_mul(_env: &mut Env, lhs_u: &Node, rhs_u: &Node) -> Node {
+    if *lhs_u == Node::Units(Box::new(Node::None)) {
+        rhs_u.clone()
+    } else if *rhs_u == Node::Units(Box::new(Node::None)) {
+        lhs_u.clone()
+    } else if let Node::Units(lhs_i_p) = lhs_u {
+        if let Node::Units(rhs_i_p) = rhs_u {
+            Node::Units(Box::new(Node::BinOp(
+                Token::Op(TokenOp::Mul),
+                Box::new(*lhs_i_p.clone()),
+                Box::new(*rhs_i_p.clone()),
+            )))
+        } else {
+            Node::Units(Box::new(Node::None))
+        }
+    } else {
+        Node::Units(Box::new(Node::None))
+    }
+}
+
+fn eval_unit_div(_env: &mut Env, lhs_u: &Node, rhs_u: &Node) -> Node {
+    if *lhs_u == Node::Units(Box::new(Node::None)) {
+        rhs_u.clone()
+    } else if *rhs_u == Node::Units(Box::new(Node::None)) {
+        lhs_u.clone()
+    } else if let Node::Units(lhs_i_p) = lhs_u {
+        if let Node::Units(rhs_i_p) = rhs_u {
+            Node::Units(Box::new(Node::BinOp(
+                Token::Op(TokenOp::Div),
+                Box::new(*lhs_i_p.clone()),
+                Box::new(*rhs_i_p.clone()),
+            )))
+        } else {
+            Node::Units(Box::new(Node::None))
+        }
+    } else {
+        Node::Units(Box::new(Node::None))
+    }
+}
+
 fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_binop {:?}\r", n);
@@ -307,9 +347,10 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                 ));
             }
             Token::Op(TokenOp::Mul) => {
-                if let Node::Num(nl, _) = lhs {
-                    if let Node::Num(nr, units) = rhs {
-                        return Ok(Node::Num(nl * nr, units));
+                if let Node::Num(nl, ref lhs_u) = lhs {
+                    if let Node::Num(nr, ref rhs_u) = rhs {
+                        let units = eval_unit_mul(env, lhs_u, rhs_u);
+                        return Ok(Node::Num(nl * nr, Box::new(units)));
                     }
                 }
                 if let Node::CNum(_, ref units) = lhs {
@@ -330,12 +371,13 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                 ));
             }
             Token::Op(TokenOp::Div) => {
-                if let Node::Num(nl, _) = lhs {
-                    if let Node::Num(nr, units) = rhs {
+                if let Node::Num(nl, ref lhs_u) = lhs {
+                    if let Node::Num(nr, ref rhs_u) = rhs {
                         if nr == 0 {
-                            return Ok(Node::FNum(std::f64::INFINITY, units));
+                            return Ok(Node::FNum(std::f64::INFINITY, lhs_u.clone()));
                         }
-                        return Ok(Node::Num(nl / nr, units));
+                        let units = eval_unit_div(env, lhs_u, rhs_u);
+                        return Ok(Node::Num(nl / nr, Box::new(units)));
                     }
                 }
                 if let Node::CNum(_, ref units) = lhs {
@@ -771,6 +813,33 @@ mod tests {
         assert_eq!(
             eval_as_string(&mut env, "1/(0.0+0.0i)"),
             "CNum(Complex { re: NaN, im: NaN }, Units(None))".to_owned()
+        );
+    }
+
+    #[test]
+    fn test_eval_units() {
+        let mut env = Env::new();
+        env.built_in();
+
+        assert_eq!(
+            eval_as_string(&mut env, "1[m]"),
+            "Num(1, Units(Var(Ident(\"m\"))))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "2[m*s]"),
+            "Num(2, Units(BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"s\")))))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1[m]*2[s]"),
+            "Num(2, Units(BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"s\")))))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "3[m/s]"),
+            "Num(3, Units(BinOp(Op(Div), Var(Ident(\"m\")), Var(Ident(\"s\")))))".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "6[m]/2[s]"),
+            "Num(3, Units(BinOp(Op(Div), Var(Ident(\"m\")), Var(Ident(\"s\")))))".to_owned()
         );
     }
 

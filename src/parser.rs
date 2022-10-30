@@ -515,8 +515,14 @@ mod tests {
             parse_as_string(&mut env, "1[m/s]"),
             "Num(1, Units(BinOp(Op(Div), Var(Ident(\"m\")), Var(Ident(\"s\")))))"
         );
-        assert_eq!(parse_as_string(&mut env, "1[m*m/s]"), "Num(1, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))");
-        assert_eq!(parse_as_string(&mut env, "1k[m*m/s]"), "FNum(1000.0, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))");
+        assert_eq!(
+            parse_as_string(&mut env, "1[m*m/s]"),
+            "Num(1, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "1k[m*m/s]"), 
+            "FNum(1000.0, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))"
+        );
     }
 
     #[test]

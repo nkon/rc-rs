@@ -191,20 +191,33 @@ where
     W: Write,
 {
     match node {
-        Node::Num(n, _) => {
+        Node::Num(n, units) => {
             result_print(
                 output,
-                format!("{}\r\n", output_format_num(env, n)).as_str(),
+                format!(
+                    "{} {}\r\n",
+                    output_format_num(env, n),
+                    output_format_units(env, *units)
+                )
+                .as_str(),
             );
         }
-        Node::FNum(f, _) => {
+        Node::FNum(f, units) => {
             result_print(
                 output,
-                format!("{}\r\n", output_format_float(env, f)).as_str(),
+                format!(
+                    "{} {}\r\n",
+                    output_format_float(env, f),
+                    output_format_units(env, *units)
+                )
+                .as_str(),
             );
         }
-        Node::CNum(c, _) => {
-            result_print(output, format!("{}\r\n", c).as_str());
+        Node::CNum(c, units) => {
+            result_print(
+                output,
+                format!("{} {}\r\n", c, output_format_units(env, *units)).as_str(),
+            );
         }
         Node::Command(cmd, params, result) => {
             error_print(output, format!("{}\r\n", result).as_str());
