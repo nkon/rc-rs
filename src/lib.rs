@@ -293,9 +293,7 @@ fn eval_units_reduce_impl(env: &mut Env, units: Node) -> Node {
     if env.is_debug() {
         eprintln!("eval_units_reduce_impl {:?}\r", units);
     }
-    match units {
-        Node::Var(units) => Node::Var(units),
-        Node::Num(n, u) => Node::Num(n, u),
+    match units.clone() {
         Node::BinOp(op, lhs, rhs) => match op {
             Token::Op(TokenOp::Mul) => match (*lhs.clone(), *rhs.clone()) {
                 // (g/m)*s => (g*s)/m
@@ -379,9 +377,9 @@ fn eval_units_reduce_impl(env: &mut Env, units: Node) -> Node {
                     Node::None
                 }
             }
-            _ => Node::None,
+            _ => units,
         },
-        _ => Node::None,
+        _ => units,
     }
 }
 
@@ -981,9 +979,10 @@ mod tests {
             eval_as_string(&mut env, "6[m*m]/2[s]"),
             "Num(3, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))".to_owned()
         );
+        // unit reduction
         assert_eq!(
             eval_as_string(&mut env, "6[m^2]/3[s]"),
-            "Num(2, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))".to_owned()
+            eval_as_string(&mut env, "6[m*m]/3[s]")
         );
         assert_eq!(
             eval_as_string(&mut env, "18[m^3]/2[s]"),
@@ -1005,6 +1004,11 @@ mod tests {
             eval_as_string(&mut env, "6[g/m]/2[s]"),
             eval_as_string(&mut env, "3[g/m/s]")
         );
+        // TODO: should pass
+        // assert_eq!(
+        //     eval_as_string(&mut env, "6[km]"),
+        //     eval_as_string(&mut env, "6000[m]")
+        // );
     }
 
     #[test]
