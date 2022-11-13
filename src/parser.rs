@@ -212,7 +212,6 @@ fn func(
     )))
 }
 
-#[allow(clippy::unnecessary_wraps)]
 fn cmd(_env: &Env, id: &str, tok: &[Token], index: usize) -> Result<(Node, usize), MyError> {
     let mut i = index;
     let mut params = Vec::new();

@@ -342,8 +342,7 @@ pub fn readline(env: &mut Env) {
                     redraw(&mut stdout, "rc> ", &line, prev_cur_x, cur_x);
                 }
                 KeyCode::Enter => {
-                    if !line.is_empty() && line.find("history") == None && line.find("exit") == None
-                    {
+                    if !line.is_empty() && !line.contains("history") && !line.contains("exit") {
                         env.history.push(line.clone());
                         env.history_index = env.history.len();
                     }

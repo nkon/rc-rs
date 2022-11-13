@@ -12,7 +12,7 @@ pub enum TokenOp {
     ParenRight,     // )
     SqBracketLeft,  // [
     SqBracketRight, // ]
-    Caret,          // ^
+    Caret,          // ^ : power operator
     Comma,          // ,
     Equal,          // =
     None,

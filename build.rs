@@ -4,7 +4,7 @@ use std::process::Command;
 
 fn main() {
     let commit_hash = Command::new("git")
-        .args(&["rev-parse", "HEAD"])
+        .args(["rev-parse", "HEAD"])
         .output()
         .expect("failed to execute command \"git rev-parse HEAD\"");
     let dest_path = format!("{}/src/git_commit_hash.txt", env!("CARGO_MANIFEST_DIR"));
