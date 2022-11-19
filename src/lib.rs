@@ -249,23 +249,28 @@ fn eval_assign(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     Err(MyError::EvalError(format!("'=' operator: {:?}", n)))
 }
 
-fn eval_units_mul(_env: &mut Env, lhs_u: &Node, rhs_u: &Node) -> Node {
-    if *lhs_u == Node::Units(Box::new(Node::None)) {
-        rhs_u.clone()
-    } else if *rhs_u == Node::Units(Box::new(Node::None)) {
-        lhs_u.clone()
-    } else if let Node::Units(lhs_i_p) = lhs_u {
-        if let Node::Units(rhs_i_p) = rhs_u {
-            Node::Units(Box::new(Node::BinOp(
-                Token::Op(TokenOp::Mul),
-                Box::new(*lhs_i_p.clone()),
-                Box::new(*rhs_i_p.clone()),
-            )))
+fn eval_units_mul(env: &mut Env, lhs_u: &Node, rhs_u: &Node) -> Node {
+    if env.is_debug() {
+        eprintln!("eval_units_mul {:?} {:?}\r", lhs_u, rhs_u);
+    }
+    if let Node::Units(lhs_i_p) = lhs_u {
+        if **lhs_i_p == Node::None {
+            rhs_u.clone() // lhs_u == Units(None) ==> return rhs_u
+        } else if let Node::Units(rhs_i_p) = rhs_u {
+            if **rhs_i_p == Node::None {
+                lhs_u.clone() // (rhs_u == Units(None)) ==> return lhs_u
+            } else {
+                Node::Units(Box::new(Node::BinOp(
+                    Token::Op(TokenOp::Mul),
+                    Box::new(*lhs_i_p.clone()),
+                    Box::new(*rhs_i_p.clone()),
+                )))
+            }
         } else {
-            Node::Units(Box::new(Node::None))
+            lhs_u.clone() // (rhs_u == None) ==> return lhs_u
         }
     } else {
-        Node::Units(Box::new(Node::None))
+        rhs_u.clone() // (lhs_u == None) ==> return rhs_u
     }
 }
 
@@ -422,6 +427,85 @@ fn eval_units_reduce(env: &mut Env, original: Node) -> Node {
     }
 }
 
+fn eval_unit_prefix(env: &mut Env, units: &Node) -> (Node, bool) {
+    if env.is_debug() {
+        eprintln!("eval_unit_prefix {:?}\r", units);
+    }
+    match units {
+        Node::Var(Token::Ident(unit_str)) => match unit_str.as_str() {
+            // TODO: add more unit conversion
+            "km" => (
+                Node::Num(
+                    1000,
+                    Box::new(Node::Units(Box::new(Node::Var(Token::Ident(
+                        "m".to_owned(),
+                    ))))),
+                ),
+                false,
+            ),
+            "mm" => (
+                Node::FNum(
+                    0.001,
+                    Box::new(Node::Units(Box::new(Node::Var(Token::Ident(
+                        "m".to_owned(),
+                    ))))),
+                ),
+                false,
+            ),
+            _ => (Node::Num(1, Box::new(units.clone())), true),
+        },
+        _ => (Node::Num(1, Box::new(units.clone())), true),
+    }
+}
+
+fn eval_num(env: &mut Env, node: &Node) -> Result<Node, MyError> {
+    if env.is_debug() {
+        eprintln!("eval_num {:?}\r", node);
+    }
+    match node {
+        Node::Num(n, u) => {
+            if let Node::Units(units) = &**u {
+                let (new_node, is_final) = eval_unit_prefix(env, units);
+                if is_final {
+                    Ok(Node::Num(*n, u.clone()))
+                } else {
+                    do_eval(
+                        env,
+                        &Node::BinOp(
+                            Token::Op(TokenOp::Mul),
+                            Box::new(Node::Num(*n, Box::new(Node::None))),
+                            Box::new(new_node),
+                        ),
+                    )
+                }
+            } else {
+                Ok(Node::Num(*n, u.clone()))
+            }
+        }
+        Node::FNum(f, u) => {
+            if let Node::Units(units) = &**u {
+                let (new_node, is_final) = eval_unit_prefix(env, units);
+                if is_final {
+                    Ok(Node::FNum(*f, u.clone()))
+                } else {
+                    do_eval(
+                        env,
+                        &Node::BinOp(
+                            Token::Op(TokenOp::Mul),
+                            Box::new(Node::FNum(*f, Box::new(Node::None))),
+                            Box::new(new_node),
+                        ),
+                    )
+                }
+            } else {
+                Ok(Node::FNum(*f, u.clone()))
+            }
+        }
+        Node::CNum(c, u) => Ok(Node::CNum(*c, u.clone())),
+        _ => Ok(node.clone()),
+    }
+}
+
 fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval_binop {:?}\r", n);
@@ -484,6 +568,17 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                     if let Node::Num(nr, ref rhs_u) = rhs {
                         let units = eval_units_mul(env, lhs_u, rhs_u);
                         return Ok(Node::Num(nl * nr, Box::new(units)));
+                    } else if let Node::FNum(fr, ref rhs_u) = rhs {
+                        let units = eval_units_mul(env, lhs_u, rhs_u);
+                        return Ok(Node::FNum(nl as f64 * fr, Box::new(units)));
+                    }
+                } else if let Node::FNum(fl, ref lhs_u) = lhs {
+                    if let Node::Num(nr, ref rhs_u) = rhs {
+                        let units = eval_units_mul(env, lhs_u, rhs_u);
+                        return Ok(Node::FNum(fl * nr as f64, Box::new(units)));
+                    } else if let Node::FNum(fr, ref rhs_u) = rhs {
+                        let units = eval_units_mul(env, lhs_u, rhs_u);
+                        return Ok(Node::FNum(fl * fr, Box::new(units)));
                     }
                 }
                 if let Node::CNum(_, ref units) = lhs {
@@ -498,10 +593,6 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                         units.clone(),
                     ));
                 }
-                return Ok(Node::FNum(
-                    eval_fvalue(env, &lhs)? * eval_fvalue(env, &rhs)?,
-                    Box::new(Node::Units(Box::new(Node::None))),
-                ));
             }
             Token::Op(TokenOp::Div) => {
                 if let Node::Num(nl, ref lhs_u) = lhs {
@@ -630,9 +721,9 @@ fn do_eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         eprintln!("do_eval {:?}\r", n);
     }
     match n {
-        Node::Num(n, units) => Ok(Node::Num(*n, units.clone())),
-        Node::FNum(f, units) => Ok(Node::FNum(*f, units.clone())),
-        Node::CNum(c, units) => Ok(Node::CNum(*c, units.clone())),
+        Node::Num(_n, _units) => eval_num(env, n),
+        Node::FNum(_f, _units) => eval_num(env, n),
+        Node::CNum(_c, _units) => eval_num(env, n),
         Node::Unary(_tok, _param) => eval_unary(env, n),
         Node::BinOp(_tok, _lhs, _rhs) => eval_binop(env, n),
         Node::Var(_tok) => eval_const(env, n),
@@ -669,9 +760,7 @@ pub fn eval_top(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         }
         Node::Command(_, _, _) => Ok(result),
         Node::None => Ok(result),
-        _ => Err(MyError::EvalError(
-            "unexpected return of do_eval()".to_owned(),
-        )),
+        _ => Err(MyError::EvalError("unexpected return of eval()".to_owned())),
     }
 }
 
@@ -979,6 +1068,14 @@ mod tests {
             eval_as_string(&mut env, "6[m*m]/2[s]"),
             "Num(3, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))".to_owned()
         );
+        assert_eq!(
+            eval_as_string(&mut env, "3*2[m]"),
+            eval_as_string(&mut env, "6[m]")
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "2[m]*3"),
+            eval_as_string(&mut env, "6[m]")
+        );
         // unit reduction
         assert_eq!(
             eval_as_string(&mut env, "6[m^2]/3[s]"),
@@ -1004,11 +1101,16 @@ mod tests {
             eval_as_string(&mut env, "6[g/m]/2[s]"),
             eval_as_string(&mut env, "3[g/m/s]")
         );
-        // TODO: should pass
-        // assert_eq!(
-        //     eval_as_string(&mut env, "6[km]"),
-        //     eval_as_string(&mut env, "6000[m]")
-        // );
+        // unit expand
+        // TODO: to be added more conversion
+        assert_eq!(
+            eval_as_string(&mut env, "6[km]"),
+            eval_as_string(&mut env, "6000[m]")
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "6000[mm]"),
+            eval_as_string(&mut env, "6.0[m]")
+        );
     }
 
     #[test]
