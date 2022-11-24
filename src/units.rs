@@ -2,36 +2,35 @@ use super::*;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
+fn units_unpack(units: Node) -> Node {
+    if let Node::Units(u) = units {
+        *u
+    } else {
+        units
+    }
+}
+
 pub fn eval_units_mul(env: &mut Env, lhs_u: &Node, rhs_u: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval_units_mul {:?} {:?}\r", lhs_u, rhs_u);
     }
-    match (lhs_u, rhs_u) {
-        (Node::Units(lhs_i_p), _) => {
-            // unpack Units() and call recursive
-            if let Node::Units(rhs_i_p) = rhs_u {
-                eval_units_mul(env, lhs_i_p, rhs_i_p)
-            } else {
-                eval_units_mul(env, lhs_i_p, rhs_u)
-            }
-        }
-        (_, Node::Units(rhs_i_p)) => {
-            // unpack Units() and call recursive
-            eval_units_mul(env, lhs_u, rhs_i_p)
-        }
+    let lhs_uu = units_unpack(lhs_u.clone());
+    let rhs_uu = units_unpack(rhs_u.clone());
+
+    match (lhs_uu.clone(), rhs_uu.clone()) {
         (Node::None, Node::None) => Node::Units(Box::new(Node::None)),
         (Node::None, _) => {
             // (lhs_u == None) ==> return rhs_u
-            rhs_u.clone()
+            rhs_uu
         }
         (_, Node::None) => {
             // (rhs_u == None) ==> return lhs_u
-            lhs_u.clone()
+            lhs_uu
         }
         (_, _) => Node::Units(Box::new(Node::BinOp(
             Token::Op(TokenOp::Mul),
-            Box::new(lhs_u.clone()),
-            Box::new(rhs_u.clone()),
+            Box::new(lhs_uu),
+            Box::new(rhs_uu),
         ))),
     }
 }
@@ -40,32 +39,23 @@ pub fn eval_units_div(env: &mut Env, lhs_u: &Node, rhs_u: &Node) -> Node {
     if env.is_debug() {
         eprintln!("eval_units_div {:?} {:?}\r", lhs_u, rhs_u);
     }
+    let lhs_uu = units_unpack(lhs_u.clone());
+    let rhs_uu = units_unpack(rhs_u.clone());
+
     match (lhs_u, rhs_u) {
-        (Node::Units(lhs_i_p), _) => {
-            // unpack Units() and call recursive
-            if let Node::Units(rhs_i_p) = rhs_u {
-                eval_units_div(env, lhs_i_p, rhs_i_p)
-            } else {
-                eval_units_div(env, lhs_i_p, rhs_u)
-            }
-        }
-        (_, Node::Units(rhs_i_p)) => {
-            // unpack Units() and call recursive
-            eval_units_div(env, lhs_u, rhs_i_p)
-        }
         (Node::None, Node::None) => Node::Units(Box::new(Node::None)),
         (Node::None, _) => {
             // (lhs_u == None) ==> return (1/rhs_u)
             Node::Units(Box::new(Node::BinOp(
                 Token::Op(TokenOp::Div),
                 Box::new(Node::Num(1, Box::new(Node::Units(Box::new(Node::None))))),
-                Box::new(rhs_u.clone()),
+                Box::new(rhs_uu),
             )))
         }
         (_, _) => Node::Units(Box::new(Node::BinOp(
             Token::Op(TokenOp::Div),
-            Box::new(lhs_u.clone()),
-            Box::new(rhs_u.clone()),
+            Box::new(lhs_uu),
+            Box::new(rhs_uu),
         ))),
     }
 }
@@ -270,6 +260,9 @@ fn units_mul_to_hash<'a>(
         Node::BinOp(Token::Op(TokenOp::Mul), lhs, rhs) => {
             units_mul_to_hash(env, *lhs, hash);
             units_mul_to_hash(env, *rhs, hash);
+        }
+        Node::None => {
+            hash.insert("_".to_string(), 1);
         }
         _ => {}
     }
