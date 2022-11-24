@@ -334,6 +334,36 @@ pub fn eval_unit_prefix(env: &mut Env, units: &Node) -> (Node, bool) {
                 ),
                 false,
             ),
+            "mi" => (
+                // 1 mile = 1.6 km = 1600 m
+                Node::FNum(
+                    1600.0,
+                    Box::new(Node::Units(Box::new(Node::Var(Token::Ident(
+                        "m".to_owned(),
+                    ))))),
+                ),
+                false,
+            ),
+            "in" => (
+                // 1 inch = 25.4 mm = 0.0254 m
+                Node::FNum(
+                    0.0254,
+                    Box::new(Node::Units(Box::new(Node::Var(Token::Ident(
+                        "m".to_owned(),
+                    ))))),
+                ),
+                false,
+            ),
+            "feet" => (
+                // 1 feet = 12 inch = 30.48 cm
+                Node::FNum(
+                    12.0,
+                    Box::new(Node::Units(Box::new(Node::Var(Token::Ident(
+                        "in".to_owned(),
+                    ))))),
+                ),
+                false,
+            ),
             _ => (Node::Num(1, Box::new(units.clone())), true),
         },
         Node::BinOp(op, lhs, rhs) => {
@@ -469,6 +499,18 @@ mod tests {
         assert_eq!(
             eval_as_string(&mut env, "3"),
             eval_as_string(&mut env, "3[m/m]"),
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1[mi]"),
+            eval_as_string(&mut env, "1600.0[m]"),
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1[in]"),
+            eval_as_string(&mut env, "25.4[mm]"),
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "1[feet]"),
+            eval_as_string(&mut env, "12.0[in]"),
         );
     }
 }
