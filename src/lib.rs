@@ -307,8 +307,8 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         if *tok == Token::Op(TokenOp::Equal) {
             return eval_assign(env, n);
         }
-        let lhs = eval(env, lhs)?;
-        let rhs = eval(env, rhs)?;
+        let lhs = do_eval(env, lhs)?;
+        let rhs = do_eval(env, rhs)?;
         match tok {
             Token::Op(TokenOp::Plus) => {
                 if let Node::Num(nl, _) = lhs {
@@ -575,6 +575,7 @@ fn do_eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         Node::Command(_tok, _params, _result) => eval_command(env, n),
         Node::None => Err(MyError::EvalError(format!("invalid node {:?}", n))),
         Node::Units(_) => todo!(),
+        Node::UnitsFraction(_, _) => todo!(),
     }
 }
 
@@ -582,13 +583,40 @@ fn eval(env: &mut Env, n: &Node) -> Result<Node, MyError> {
     if env.is_debug() {
         eprintln!("eval {:?}\r", n);
     }
-    let result = do_eval(env, n)?;
-    let result = eval_units_reduce(env, result);
-    match result {
-        Node::Num(_, _) | Node::FNum(_, _) | Node::CNum(_, _) => Ok(result),
-        Node::Command(_, _, _) => Ok(result),
-        Node::None => Ok(result),
-        _ => eval(env, &result),
+    let ret = do_eval(env, n)?;
+    let ret = eval_units_reduce(env, ret);
+    let ret = match ret {
+        Node::Num(n, ref u) => {
+            if let Node::Units(units_content) = &**u {
+                let u = eval_units_fraction(env, (**units_content).clone());
+                Node::Num(n, Box::new(Node::Units(Box::new(u))))
+            } else {
+                ret
+            }
+        }
+        Node::FNum(f, ref u) => {
+            if let Node::Units(units_content) = &**u {
+                let u = eval_units_fraction(env, (**units_content).clone());
+                Node::FNum(f, Box::new(Node::Units(Box::new(u))))
+            } else {
+                ret
+            }
+        }
+        Node::CNum(c, ref u) => {
+            if let Node::Units(units_content) = &**u {
+                let u = eval_units_fraction(env, (**units_content).clone());
+                Node::CNum(c, Box::new(Node::Units(Box::new(u))))
+            } else {
+                ret
+            }
+        }
+        _ => ret,
+    };
+    match ret {
+        Node::Num(_, _) | Node::FNum(_, _) | Node::CNum(_, _) => Ok(ret),
+        Node::Command(_, _, _) => Ok(ret),
+        Node::None => Ok(ret),
+        _ => eval(env, &ret),
     }
 }
 
@@ -611,11 +639,57 @@ pub fn eval_top(env: &mut Env, n: &Node) -> Result<Node, MyError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+
+    fn units_fraction_to_string(
+        numerator: &HashMap<String, i32>,
+        denominator: &HashMap<String, i32>,
+    ) -> String {
+        let mut nume_vec: Vec<(&String, &i32)> = numerator.iter().collect();
+        nume_vec.sort_by(|a, b| a.0.cmp(&b.0));
+
+        let mut denom_vec: Vec<(&String, &i32)> = denominator.iter().collect();
+        denom_vec.sort_by(|a, b| a.0.cmp(&b.0));
+
+        format!("{:?}/{:?}", nume_vec, denom_vec)
+    }
 
     fn eval_as_string(env: &mut Env, input: &str) -> String {
-        let n = parse(env, &(lexer(input.to_owned())).unwrap()).unwrap();
-        let n = eval(env, &n).unwrap();
-        format!("{:?}", n)
+        let node = parse(env, &(lexer(input.to_owned())).unwrap()).unwrap();
+        let node = eval(env, &node).unwrap();
+        match node {
+            Node::Num(num, ref u) => match &**u {
+                Node::Units(un) => match &**un {
+                    Node::UnitsFraction(a, b) => {
+                        let units_str = units_fraction_to_string(a, b);
+                        format!("Num({}, {})", num, units_str)
+                    }
+                    _ => format!("{:?}", node),
+                },
+                _ => format!("{:?}", node),
+            },
+            Node::FNum(fnum, ref u) => match &**u {
+                Node::Units(un) => match &**un {
+                    Node::UnitsFraction(a, b) => {
+                        let units_str = units_fraction_to_string(a, b);
+                        format!("FNum({:?}, {})", fnum, units_str)
+                    }
+                    _ => format!("{:?}", node),
+                },
+                _ => format!("{:?}", node),
+            },
+            Node::CNum(cnum, ref u) => match &**u {
+                Node::Units(un) => match &**un {
+                    Node::UnitsFraction(a, b) => {
+                        let units_str = units_fraction_to_string(a, b);
+                        format!("CNum({:?}, {})", cnum, units_str)
+                    }
+                    _ => format!("{:?}", node),
+                },
+                _ => format!("{:?}", node),
+            },
+            _ => format!("{:?}", node),
+        }
     }
 
     fn eval_as_f64(env: &mut Env, input: &str) -> f64 {
@@ -641,167 +715,140 @@ mod tests {
         let mut env = Env::new();
         env.built_in();
 
-        assert_eq!(
-            eval_as_string(&mut env, "1+2"),
-            "Num(3, Units(None))".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "1+2"), "Num(3, []/[])".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "1+2*3"),
-            "Num(7, Units(None))".to_owned()
+            "Num(7, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "1*2+3"),
-            "Num(5, Units(None))".to_owned()
+            "Num(5, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "1+2+3"),
-            "Num(6, Units(None))".to_owned()
+            "Num(6, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2)*3"),
-            "Num(9, Units(None))".to_owned()
+            "Num(9, []/[])".to_owned()
         );
-        assert_eq!(
-            eval_as_string(&mut env, "-2"),
-            "Num(-2, Units(None))".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "-2"), "Num(-2, []/[])".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "-9223372036854775807"),
-            "Num(-9223372036854775807, Units(None))".to_owned()
+            "Num(-9223372036854775807, []/[])".to_owned()
         );
         assert!(((eval_as_f64(&mut env, "1.1+2.2") - 3.3).abs()) < 1e-10);
         assert_eq!(
             eval_as_string(&mut env, "-(2+3)"),
-            "Num(-5, Units(None))".to_owned()
+            "Num(-5, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "+(2+3)"),
-            "Num(5, Units(None))".to_owned()
+            "Num(5, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "1.0+2"),
-            "FNum(3.0, Units(None))".to_owned()
+            "FNum(3.0, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "1+2.0"),
-            "FNum(3.0, Units(None))".to_owned()
+            "FNum(3.0, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2.0)*3"),
-            "FNum(9.0, Units(None))".to_owned()
+            "FNum(9.0, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "pi"),
-            "FNum(3.141592653589793, Units(None))".to_owned()
+            "FNum(3.141592653589793, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "2k*3u"),
-            "FNum(0.006, Units(None))".to_owned()
+            "FNum(0.006, []/[])".to_owned()
         );
 
         assert_eq!(
             eval_as_string(&mut env, "5//5"),
-            "FNum(2.5, Units(None))".to_owned()
+            "FNum(2.5, []/[])".to_owned()
         );
 
         assert_eq!(
             eval_as_string(&mut env, "5*inch2mm"),
-            "FNum(127.0, Units(None))".to_owned()
+            "FNum(127.0, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "5*feet2mm"),
-            "FNum(1524.0, Units(None))".to_owned()
+            "FNum(1524.0, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "5*oz2g"),
-            "FNum(141.7475, Units(None))".to_owned()
+            "FNum(141.7475, []/[])".to_owned()
         );
 
         assert!((eval_as_f64(&mut env, "sin(0.0)")).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "cos(pi/2)")).abs() < 1e-10);
         assert_eq!(
             eval_as_string(&mut env, "sin(0)"),
-            "FNum(0.0, Units(None))".to_owned()
+            "FNum(0.0, []/[])".to_owned()
         );
         assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
         assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
         assert_eq!(
             eval_as_string(&mut env, "sin(0)"),
-            "FNum(0.0, Units(None))".to_owned()
+            "FNum(0.0, []/[])".to_owned()
         );
-        assert_eq!(
-            eval_as_string(&mut env, "1%3"),
-            "Num(1, Units(None))".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "2%3"),
-            "Num(2, Units(None))".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "3%3"),
-            "Num(0, Units(None))".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "1%3"), "Num(1, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "2%3"), "Num(2, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "3%3"), "Num(0, []/[])".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "3.0%3"),
-            "Num(0, Units(None))".to_owned()
+            "Num(0, []/[])".to_owned()
         );
-        assert_eq!(
-            eval_as_string(&mut env, "1/3"),
-            "Num(0, Units(None))".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "3/3"),
-            "Num(1, Units(None))".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "1/3"), "Num(0, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "3/3"), "Num(1, []/[])".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "3.0/2"),
-            "FNum(1.5, Units(None))".to_owned()
+            "FNum(1.5, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "ave(1,2,3)"),
-            "FNum(2.0, Units(None))".to_owned()
+            "FNum(2.0, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "max(1,2,3)"),
-            "FNum(3.0, Units(None))".to_owned()
+            "FNum(3.0, []/[])".to_owned()
         );
         eval_as_string(&mut env, "a=1");
-        assert_eq!(
-            eval_as_string(&mut env, "a"),
-            "Num(1, Units(None))".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "2^3"),
-            "Num(8, Units(None))".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "a"), "Num(1, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "2^3"), "Num(8, []/[])".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "2^3^4"),
-            "Num(2417851639229258349412352, Units(None))".to_owned()
+            "Num(2417851639229258349412352, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "2^-0.5"),
-            "FNum(0.7071067811865476, Units(None))".to_owned()
+            "FNum(0.7071067811865476, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "1+2i"),
-            "CNum(Complex { re: 1.0, im: 2.0 }, Units(None))".to_owned()
+            "CNum(Complex { re: 1.0, im: 2.0 }, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2i) - (3-5i)"),
-            "CNum(Complex { re: -2.0, im: 7.0 }, Units(None))".to_owned()
+            "CNum(Complex { re: -2.0, im: 7.0 }, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2i) * (3-5i)"),
-            "CNum(Complex { re: 13.0, im: 1.0 }, Units(None))".to_owned()
+            "CNum(Complex { re: 13.0, im: 1.0 }, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "(1+2i) / (1-1.0i)"),
-            "CNum(Complex { re: -0.5, im: 1.5 }, Units(None))".to_owned()
+            "CNum(Complex { re: -0.5, im: 1.5 }, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "2 // 2i"),
-            "CNum(Complex { re: 1.0, im: 1.0 }, Units(None))".to_owned()
+            "CNum(Complex { re: 1.0, im: 1.0 }, []/[])".to_owned()
         );
         assert!((eval_as_complex64(&mut env, "exp(i*pi)").re + 1.0).abs() < 1e-10);
         assert!((eval_as_complex64(&mut env, "exp(i*pi)").im).abs() < 1e-10);
@@ -809,35 +856,35 @@ mod tests {
         assert!((eval_as_complex64(&mut env, "i^i").im).abs() < 1e-10);
         assert_eq!(
             eval_as_string(&mut env, "-pi"),
-            "FNum(-3.141592653589793, Units(None))".to_owned()
+            "FNum(-3.141592653589793, []/[])".to_owned()
         );
         eval_as_string(&mut env, "defun double 2*_1");
         assert_eq!(
             eval_as_string(&mut env, "double(2)"),
-            "Num(4, Units(None))".to_owned()
+            "Num(4, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "double(double(2))"),
-            "Num(8, Units(None))".to_owned()
+            "Num(8, []/[])".to_owned()
         );
         eval_as_string(&mut env, "defun add _1+_2");
         assert_eq!(
             eval_as_string(&mut env, "add(2,3)"),
-            "Num(5, Units(None))".to_owned()
+            "Num(5, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "add(2,a)"),
-            "Num(3, Units(None))".to_owned()
+            "Num(3, []/[])".to_owned()
         );
         eval_as_string(&mut env, "defun plus_a a+_1");
         eval_as_string(&mut env, "a=5");
         assert_eq!(
             eval_as_string(&mut env, "plus_a(8)"),
-            "Num(13, Units(None))".to_owned()
+            "Num(13, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "abs(-2)"),
-            "FNum(2.0, Units(None))".to_owned()
+            "FNum(2.0, []/[])".to_owned()
         );
         assert!((eval_as_f64(&mut env, "abs(-2.5)") - 2.5).abs() < 1e-10);
         assert!((eval_as_f64(&mut env, "abs(1+i)") - 1.4142135623730951).abs() < 1e-10);
@@ -847,39 +894,30 @@ mod tests {
         assert!((eval_as_f64(&mut env, "arg(1+i)") - 0.7853981633974483).abs() < 1e-10);
         eval_as_string(&mut env, "b=a");
         eval_as_string(&mut env, "c=b");
-        assert_eq!(
-            eval_as_string(&mut env, "c"),
-            "Num(5, Units(None))".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "c"), "Num(5, []/[])".to_owned());
         eval_as_string(&mut env, "d=c");
         eval_as_string(&mut env, "ee=d+c");
-        assert_eq!(
-            eval_as_string(&mut env, "ee"),
-            "Num(10, Units(None))".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "ee"), "Num(10, []/[])".to_owned());
 
         // assignment
         eval_as_string(&mut env, "aa=1");
         eval_as_string(&mut env, "bb=aa");
         eval_as_string(&mut env, "aa=2");
         // assert_eq!(eval_as_string(&mut env, "bb"), "Num(2)".to_owned());    // assign to bb is binded to AST of aa
-        assert_eq!(
-            eval_as_string(&mut env, "bb"),
-            "Num(1, Units(None))".to_owned()
-        ); // assign to bb is ?binded to value of aa at the assigned time
+        assert_eq!(eval_as_string(&mut env, "bb"), "Num(1, []/[])".to_owned()); // assign to bb is ?binded to value of aa at the assigned time
 
         // divided by zero
         assert_eq!(
             eval_as_string(&mut env, "1/0"),
-            "FNum(inf, Units(None))".to_owned()
+            "FNum(inf, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "1.0/0.0"),
-            "FNum(inf, Units(None))".to_owned()
+            "FNum(inf, []/[])".to_owned()
         );
         assert_eq!(
             eval_as_string(&mut env, "1/(0.0+0.0i)"),
-            "CNum(Complex { re: NaN, im: NaN }, Units(None))".to_owned()
+            "CNum(Complex { re: NaN, im: NaN }, []/[])".to_owned()
         );
     }
 

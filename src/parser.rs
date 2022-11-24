@@ -1,4 +1,5 @@
 use super::*;
+use std::collections::HashMap;
 
 // <assign>  ::= <var> '=' <expr>
 // <expr>    ::= <mul> ( '+' <mul> | '-' <mul> )*
@@ -13,7 +14,8 @@ use super::*;
 pub enum Node {
     None,
     Units(Box<Node>),
-    Num(i128, Box<Node>), // Num, Units
+    UnitsFraction(HashMap<String, i32>, HashMap<String, i32>), // Numerator, Denominator ("m" => 2), ("g" => 1)
+    Num(i128, Box<Node>),                                      // Num, Units
     FNum(f64, Box<Node>),
     CNum(Complex64, Box<Node>),
     Unary(Token, Box<Node>),            // TokenOp, Operand
