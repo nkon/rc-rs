@@ -258,7 +258,7 @@ fn eval_num(env: &mut Env, node: &Node) -> Result<Node, MyError> {
     match node {
         Node::Num(n, u) => {
             if let Node::Units(units) = &**u {
-                let (new_node, is_final) = eval_unit_prefix(env, units);
+                let (new_node, is_final) = eval_unit(env, units);
                 if is_final {
                     Ok(Node::Num(*n, u.clone()))
                 } else {
@@ -277,7 +277,7 @@ fn eval_num(env: &mut Env, node: &Node) -> Result<Node, MyError> {
         }
         Node::FNum(f, u) => {
             if let Node::Units(units) = &**u {
-                let (new_node, is_final) = eval_unit_prefix(env, units);
+                let (new_node, is_final) = eval_unit(env, units);
                 if is_final {
                     Ok(Node::FNum(*f, u.clone()))
                 } else {

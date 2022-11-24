@@ -19,14 +19,8 @@ pub fn eval_units_mul(env: &mut Env, lhs_u: &Node, rhs_u: &Node) -> Node {
 
     match (lhs_uu.clone(), rhs_uu.clone()) {
         (Node::None, Node::None) => Node::Units(Box::new(Node::None)),
-        (Node::None, _) => {
-            // (lhs_u == None) ==> return rhs_u
-            rhs_uu
-        }
-        (_, Node::None) => {
-            // (rhs_u == None) ==> return lhs_u
-            lhs_uu
-        }
+        (Node::None, _) => rhs_uu, // (lhs_u == None) ==> return rhs_u
+        (_, Node::None) => lhs_uu, // (rhs_u == None) ==> return lhs_u
         (_, _) => Node::Units(Box::new(Node::BinOp(
             Token::Op(TokenOp::Mul),
             Box::new(lhs_uu),
@@ -44,14 +38,11 @@ pub fn eval_units_div(env: &mut Env, lhs_u: &Node, rhs_u: &Node) -> Node {
 
     match (lhs_u, rhs_u) {
         (Node::None, Node::None) => Node::Units(Box::new(Node::None)),
-        (Node::None, _) => {
-            // (lhs_u == None) ==> return (1/rhs_u)
-            Node::Units(Box::new(Node::BinOp(
-                Token::Op(TokenOp::Div),
-                Box::new(Node::Num(1, Box::new(Node::Units(Box::new(Node::None))))),
-                Box::new(rhs_uu),
-            )))
-        }
+        (Node::None, _) => Node::Units(Box::new(Node::BinOp(
+            Token::Op(TokenOp::Div),
+            Box::new(Node::Num(1, Box::new(Node::Units(Box::new(Node::None))))),
+            Box::new(rhs_uu),
+        ))), // (lhs_u == None) ==> return (1/rhs_u)
         (_, _) => Node::Units(Box::new(Node::BinOp(
             Token::Op(TokenOp::Div),
             Box::new(lhs_uu),
@@ -307,7 +298,7 @@ pub fn eval_units_fraction(env: &mut Env, units: Node) -> Node {
     }
 }
 
-pub fn eval_unit_prefix(env: &mut Env, units: &Node) -> (Node, bool) {
+pub fn eval_unit(env: &mut Env, units: &Node) -> (Node, bool) {
     if env.is_debug() {
         eprintln!("eval_unit_prefix {:?}\r", units);
     }
@@ -365,8 +356,8 @@ pub fn eval_unit_prefix(env: &mut Env, units: &Node) -> (Node, bool) {
             _ => (Node::Num(1, Box::new(units.clone())), true),
         },
         Node::BinOp(op, lhs, rhs) => {
-            let (left_node, final_left) = eval_unit_prefix(env, lhs);
-            let (right_node, final_right) = eval_unit_prefix(env, rhs);
+            let (left_node, final_left) = eval_unit(env, lhs);
+            let (right_node, final_right) = eval_unit(env, rhs);
             let new_node = eval_binop(
                 env,
                 &Node::BinOp(op.clone(), Box::new(left_node), Box::new(right_node)),
