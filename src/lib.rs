@@ -639,20 +639,6 @@ pub fn eval_top(env: &mut Env, n: &Node) -> Result<Node, MyError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
-
-    fn units_fraction_to_string(
-        numerator: &HashMap<String, i32>,
-        denominator: &HashMap<String, i32>,
-    ) -> String {
-        let mut nume_vec: Vec<(&String, &i32)> = numerator.iter().collect();
-        nume_vec.sort_by(|a, b| a.0.cmp(&b.0));
-
-        let mut denom_vec: Vec<(&String, &i32)> = denominator.iter().collect();
-        denom_vec.sort_by(|a, b| a.0.cmp(&b.0));
-
-        format!("{:?}/{:?}", nume_vec, denom_vec)
-    }
 
     fn eval_as_string(env: &mut Env, input: &str) -> String {
         let node = parse(env, &(lexer(input.to_owned())).unwrap()).unwrap();

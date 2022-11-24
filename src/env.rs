@@ -341,6 +341,21 @@ pub fn output_format_units(_env: &mut Env, units: Node) -> String {
     if units == Node::Units(Box::new(Node::None)) {
         return "".to_string();
     }
+    if let Node::Units(ref uuu) = units {
+        if let Node::UnitsFraction(numerator, denominator) = &**uuu {
+            if denominator.is_empty() {
+                if numerator.is_empty() {
+                    return "".to_string();
+                } else {
+                    let mut nume_vec: Vec<(&String, &i32)> = numerator.iter().collect();
+                    nume_vec.sort_by(|a, b| a.0.cmp(b.0));
+                    return format!("[{:?}]", nume_vec);
+                }
+            } else {
+                return units_fraction_to_string(numerator, denominator);
+            }
+        }
+    }
     format!("[{:?}]", units)
 }
 
