@@ -132,7 +132,10 @@ fn units_reduce_impl(env: &mut Env, units: Node) -> Node {
             },
             Token::Op(TokenOp::Caret) => {
                 if let Node::Num(rhs_n, _) = *rhs {
-                    if rhs_n == 2 {
+                    if rhs_n == 1 {
+                        // m^1 => m
+                        units_reduce_impl(env, *lhs)
+                    } else if rhs_n == 2 {
                         // m^2 => m*m
                         Node::BinOp(
                             Token::Op(TokenOp::Mul),
@@ -461,6 +464,10 @@ mod tests {
         assert_eq!(
             eval_as_string(&mut env, "6[m^2]/3[s]"),
             eval_as_string(&mut env, "6[m*m]/3[s]")
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "6[m^1]"),
+            eval_as_string(&mut env, "6[m]")
         );
         assert_eq!(
             eval_as_string(&mut env, "18[m^3]/2[s]"),
