@@ -310,161 +310,102 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
         let lhs = do_eval(env, lhs)?;
         let rhs = do_eval(env, rhs)?;
         match tok {
-            Token::Op(TokenOp::Plus) => {
-                if let Node::Num(nl, _) = lhs {
-                    if let Node::Num(nr, units) = rhs {
-                        return Ok(Node::Num(nl + nr, units));
-                    }
+            Token::Op(TokenOp::Plus) => match (lhs.clone(), rhs.clone()) {
+                (Node::Num(nl, _ul), Node::Num(nr, ur)) => {
+                    return Ok(Node::Num(nl + nr, ur));
                 }
-                if let Node::CNum(_, ref units) = lhs {
+                (Node::Num(nl, _ul), Node::FNum(fr, ur)) => {
+                    return Ok(Node::FNum(nl as f64 + fr, ur));
+                }
+                (Node::FNum(fl, _ul), Node::Num(nr, ur)) => {
+                    return Ok(Node::FNum(fl + nr as f64, ur));
+                }
+                (Node::FNum(fl, _ul), Node::FNum(fr, ur)) => {
+                    return Ok(Node::FNum(fl + fr, ur));
+                }
+                (_, _) => {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?,
-                        units.clone(),
+                        Box::new(Node::Units(Box::new(Node::None))),
                     ));
                 }
-                if let Node::CNum(_, ref units) = rhs {
-                    return Ok(Node::CNum(
-                        eval_cvalue(env, &lhs)? + eval_cvalue(env, &rhs)?,
-                        units.clone(),
-                    ));
+            },
+            Token::Op(TokenOp::Minus) => match (lhs.clone(), rhs.clone()) {
+                (Node::Num(nl, _ul), Node::Num(nr, ur)) => {
+                    return Ok(Node::Num(nl - nr, ur));
                 }
-                return Ok(Node::FNum(
-                    eval_fvalue(env, &lhs)? + eval_fvalue(env, &rhs)?,
-                    Box::new(Node::Units(Box::new(Node::None))),
-                ));
-            }
-            Token::Op(TokenOp::Minus) => {
-                if let Node::Num(nl, _) = lhs {
-                    if let Node::Num(nr, units) = rhs {
-                        return Ok(Node::Num(nl - nr, units));
-                    }
+                (Node::Num(nl, _ul), Node::FNum(fr, ur)) => {
+                    return Ok(Node::FNum(nl as f64 - fr, ur));
                 }
-                if let Node::CNum(_, ref units) = lhs {
+                (Node::FNum(fl, _ul), Node::Num(nr, ur)) => {
+                    return Ok(Node::FNum(fl - nr as f64, ur));
+                }
+                (Node::FNum(fl, _ul), Node::FNum(fr, ur)) => {
+                    return Ok(Node::FNum(fl - fr, ur));
+                }
+                (_, _) => {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?,
-                        units.clone(),
+                        Box::new(Node::Units(Box::new(Node::None))),
                     ));
                 }
-                if let Node::CNum(_, ref units) = rhs {
-                    return Ok(Node::CNum(
-                        eval_cvalue(env, &lhs)? - eval_cvalue(env, &rhs)?,
-                        units.clone(),
+            },
+            Token::Op(TokenOp::Mul) => match (lhs.clone(), rhs.clone()) {
+                (Node::Num(nl, ul), Node::Num(nr, ur)) => {
+                    return Ok(Node::Num(nl * nr, Box::new(eval_units_mul(env, &ul, &ur))));
+                }
+                (Node::Num(nl, ul), Node::FNum(fr, ur)) => {
+                    return Ok(Node::FNum(
+                        nl as f64 * fr,
+                        Box::new(eval_units_mul(env, &ul, &ur)),
                     ));
                 }
-                return Ok(Node::FNum(
-                    eval_fvalue(env, &lhs)? - eval_fvalue(env, &rhs)?,
-                    Box::new(Node::Units(Box::new(Node::None))),
-                ));
-            }
-            Token::Op(TokenOp::Mul) => {
-                if let Node::Num(nl, ref lhs_u) = lhs {
-                    if let Node::Num(nr, ref rhs_u) = rhs {
-                        let units = eval_units_mul(env, lhs_u, rhs_u);
-                        if let Node::Units(_) = units {
-                            return Ok(Node::Num(nl * nr, Box::new(units)));
-                        } else {
-                            return Ok(Node::Num(nl * nr, Box::new(Node::Units(Box::new(units)))));
-                        }
-                    } else if let Node::FNum(fr, ref rhs_u) = rhs {
-                        let units = eval_units_mul(env, lhs_u, rhs_u);
-                        if let Node::Units(_) = units {
-                            return Ok(Node::FNum(nl as f64 * fr, Box::new(units)));
-                        } else {
-                            return Ok(Node::FNum(
-                                nl as f64 * fr,
-                                Box::new(Node::Units(Box::new(units))),
-                            ));
-                        }
-                    }
-                } else if let Node::FNum(fl, ref lhs_u) = lhs {
-                    if let Node::Num(nr, ref rhs_u) = rhs {
-                        let units = eval_units_mul(env, lhs_u, rhs_u);
-                        if let Node::Units(_) = units {
-                            return Ok(Node::FNum(fl * nr as f64, Box::new(units)));
-                        } else {
-                            return Ok(Node::FNum(
-                                fl * nr as f64,
-                                Box::new(Node::Units(Box::new(units))),
-                            ));
-                        }
-                    } else if let Node::FNum(fr, ref rhs_u) = rhs {
-                        let units = eval_units_mul(env, lhs_u, rhs_u);
-                        if let Node::Units(_) = units {
-                            return Ok(Node::FNum(fl * fr, Box::new(units)));
-                        } else {
-                            return Ok(Node::FNum(fl * fr, Box::new(Node::Units(Box::new(units)))));
-                        }
-                    }
+                (Node::FNum(fl, ul), Node::Num(nr, ur)) => {
+                    return Ok(Node::FNum(
+                        fl * nr as f64,
+                        Box::new(eval_units_mul(env, &ul, &ur)),
+                    ));
                 }
-                if let Node::CNum(_, ref units) = lhs {
+                (Node::FNum(fl, ul), Node::FNum(fr, ur)) => {
+                    return Ok(Node::FNum(fl * fr, Box::new(eval_units_mul(env, &ul, &ur))));
+                }
+                (_, _) => {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?,
-                        units.clone(),
+                        Box::new(Node::Units(Box::new(Node::None))),
                     ));
                 }
-                if let Node::CNum(_, ref units) = rhs {
-                    return Ok(Node::CNum(
-                        eval_cvalue(env, &lhs)? * eval_cvalue(env, &rhs)?,
-                        units.clone(),
+            },
+            Token::Op(TokenOp::Div) => match (lhs.clone(), rhs.clone()) {
+                (Node::Num(nl, ul), Node::Num(nr, ur)) => {
+                    let units = eval_units_div(env, &ul, &ur);
+                    if nr == 0 {
+                        return Ok(Node::FNum(std::f64::INFINITY, Box::new(units)));
+                    }
+                    return Ok(Node::Num(nl / nr, Box::new(units)));
+                }
+                (Node::Num(nl, ul), Node::FNum(fr, ur)) => {
+                    return Ok(Node::FNum(
+                        nl as f64 / fr,
+                        Box::new(eval_units_div(env, &ul, &ur)),
                     ));
                 }
-            }
-            Token::Op(TokenOp::Div) => {
-                if let Node::Num(nl, ref lhs_u) = lhs {
-                    if let Node::Num(nr, ref rhs_u) = rhs {
-                        let units = eval_units_div(env, lhs_u, rhs_u);
-                        if nr == 0 {
-                            return Ok(Node::FNum(std::f64::INFINITY, Box::new(units)));
-                        }
-                        if let Node::Units(_) = units {
-                            return Ok(Node::Num(nl / nr, Box::new(units)));
-                        } else {
-                            return Ok(Node::Num(nl / nr, Box::new(Node::Units(Box::new(units)))));
-                        }
-                    } else if let Node::FNum(fr, ref rhs_u) = rhs {
-                        let units = eval_units_div(env, lhs_u, rhs_u);
-                        if let Node::Units(_) = units {
-                            return Ok(Node::FNum(nl as f64 / fr, Box::new(units)));
-                        } else {
-                            return Ok(Node::FNum(
-                                nl as f64 / fr,
-                                Box::new(Node::Units(Box::new(units))),
-                            ));
-                        }
-                    }
-                } else if let Node::FNum(fl, ref lhs_u) = lhs {
-                    if let Node::Num(nr, ref rhs_u) = rhs {
-                        let units = eval_units_div(env, lhs_u, rhs_u);
-                        if let Node::Units(_) = units {
-                            return Ok(Node::FNum(fl / nr as f64, Box::new(units)));
-                        } else {
-                            return Ok(Node::FNum(
-                                fl / nr as f64,
-                                Box::new(Node::Units(Box::new(units))),
-                            ));
-                        }
-                    } else if let Node::FNum(fr, ref rhs_u) = rhs {
-                        let units = eval_units_div(env, lhs_u, rhs_u);
-                        if let Node::Units(_) = units {
-                            return Ok(Node::FNum(fl / fr, Box::new(units)));
-                        } else {
-                            return Ok(Node::FNum(fl / fr, Box::new(Node::Units(Box::new(units)))));
-                        }
-                    }
+                (Node::FNum(fl, ul), Node::Num(nr, ur)) => {
+                    return Ok(Node::FNum(
+                        fl / nr as f64,
+                        Box::new(eval_units_div(env, &ul, &ur)),
+                    ));
                 }
-                if let Node::CNum(_, ref units) = lhs {
+                (Node::FNum(fl, ul), Node::FNum(fr, ur)) => {
+                    return Ok(Node::FNum(fl / fr, Box::new(eval_units_div(env, &ul, &ur))));
+                }
+                (_, _) => {
                     return Ok(Node::CNum(
                         eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?,
-                        units.clone(),
+                        Box::new(Node::Units(Box::new(Node::None))),
                     ));
                 }
-                if let Node::CNum(_, ref units) = rhs {
-                    return Ok(Node::CNum(
-                        eval_cvalue(env, &lhs)? / eval_cvalue(env, &rhs)?,
-                        units.clone(),
-                    ));
-                }
-            }
+            },
             Token::Op(TokenOp::Para) => {
                 if let Node::CNum(_, ref units) = lhs {
                     let lhs = eval_cvalue(env, &lhs)?;

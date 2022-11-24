@@ -4,10 +4,9 @@ use std::collections::HashMap;
 
 fn units_unpack(units: Node) -> Node {
     if let Node::Units(u) = units {
-        *u
-    } else {
-        units
+        return *u;
     }
+    units
 }
 
 pub fn eval_units_mul(env: &mut Env, lhs_u: &Node, rhs_u: &Node) -> Node {
@@ -160,7 +159,10 @@ pub fn eval_units_reduce(env: &mut Env, original: Node) -> Node {
                     Box::new(Node::Units(Box::new(units_reduce_impl(env, *u)))),
                 )
             } else {
-                original
+                Node::Num(
+                    n,
+                    Box::new(Node::Units(Box::new(units_reduce_impl(env, *units)))),
+                )
             }
         }
         Node::FNum(f, units) => {
@@ -170,7 +172,10 @@ pub fn eval_units_reduce(env: &mut Env, original: Node) -> Node {
                     Box::new(Node::Units(Box::new(units_reduce_impl(env, *u)))),
                 )
             } else {
-                original
+                Node::FNum(
+                    f,
+                    Box::new(Node::Units(Box::new(units_reduce_impl(env, *units)))),
+                )
             }
         }
         Node::CNum(n, units) => {
@@ -180,7 +185,10 @@ pub fn eval_units_reduce(env: &mut Env, original: Node) -> Node {
                     Box::new(Node::Units(Box::new(units_reduce_impl(env, *u)))),
                 )
             } else {
-                original
+                Node::CNum(
+                    n,
+                    Box::new(Node::Units(Box::new(units_reduce_impl(env, *units)))),
+                )
             }
         }
         _ => original,
@@ -438,6 +446,7 @@ mod tests {
             eval_as_string(&mut env, "6[m*m]/2[s]"),
             "Num(3, [(\"m\", 2)]/[(\"s\", 1)])".to_owned()
         );
+        env.debug = true;
         assert_eq!(
             eval_as_string(&mut env, "3*2[m]"),
             eval_as_string(&mut env, "6[m]")
