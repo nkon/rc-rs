@@ -276,6 +276,7 @@ fn units_mul_to_hash<'a>(
     hash
 }
 
+// convert Node::Units -> Node::UnitsFraction
 pub fn eval_units_fraction(env: &mut Env, units: Node) -> Node {
     if env.is_debug() {
         eprintln!("eval_units_fraction {:?}\r", units);
@@ -285,31 +286,32 @@ pub fn eval_units_fraction(env: &mut Env, units: Node) -> Node {
         let mut hash_denom = HashMap::<String, i32>::new();
         let numerator = units_mul_to_hash(env, *nume, &mut hash_nume);
         let denominator = units_mul_to_hash(env, *denom, &mut hash_denom);
-        return units_fraction_reduce(
+        units_fraction_reduce(
             env,
             Node::UnitsFraction(numerator.clone(), denominator.clone()),
-        );
+        )
     } else if let Node::BinOp(Token::Op(TokenOp::Mul), _lhs, _rhs) = units.clone() {
         let mut hash_nume = HashMap::<String, i32>::new();
         let numerator = units_mul_to_hash(env, units, &mut hash_nume);
-        return units_fraction_reduce(
+        units_fraction_reduce(
             env,
             Node::UnitsFraction(numerator.clone(), HashMap::<String, i32>::new()),
-        );
+        )
     } else if let Node::Var(Token::Ident(_)) = units {
         let mut hash_nume = HashMap::<String, i32>::new();
         let numerator = units_mul_to_hash(env, units, &mut hash_nume);
-        return units_fraction_reduce(
+        units_fraction_reduce(
             env,
             Node::UnitsFraction(numerator.clone(), HashMap::<String, i32>::new()),
-        );
+        )
     } else if let Node::None = units {
-        return units_fraction_reduce(
+        units_fraction_reduce(
             env,
             Node::UnitsFraction(HashMap::<String, i32>::new(), HashMap::<String, i32>::new()),
-        );
+        )
+    } else {
+        units_fraction_reduce(env, units)
     }
-    units_fraction_reduce(env, units)
 }
 
 pub fn eval_unit_prefix(env: &mut Env, units: &Node) -> (Node, bool) {
@@ -489,8 +491,7 @@ mod tests {
             eval_as_string(&mut env, "6[g/m]/2[s]"),
             eval_as_string(&mut env, "3[g/m/s]")
         );
-        // unit expand
-        // TODO: to be added more conversion
+        // unit expand / reduction
         assert_eq!(
             eval_as_string(&mut env, "6[km]"),
             eval_as_string(&mut env, "6000.0[m]")
@@ -507,6 +508,7 @@ mod tests {
             eval_as_string(&mut env, "3"),
             eval_as_string(&mut env, "3[m/m]"),
         );
+        // unit conversion
         assert_eq!(
             eval_as_string(&mut env, "1[mi]"),
             eval_as_string(&mut env, "1600.0[m]"),

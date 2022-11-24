@@ -350,6 +350,7 @@ fn output_format_units_sub(_env: &mut Env, units: &HashMap<String, i32>) -> Stri
         .join(" ")
 }
 
+// [m], [m^2] [m^2 s] [1/s] [m g/s]..., etc.
 pub fn output_format_units(env: &mut Env, units: Node) -> String {
     if units == Node::Units(Box::new(Node::None)) {
         return "".to_string();
