@@ -337,7 +337,20 @@ pub fn output_format_float(env: &mut Env, f: f64) -> String {
     }
 }
 
-pub fn output_format_units(_env: &mut Env, units: Node) -> String {
+fn output_format_units_sub(_env: &mut Env, units: &HashMap<String, i32>) -> String {
+    let mut vec: Vec<(&String, &i32)> = units.iter().collect();
+    vec.sort_by(|a, b| a.0.cmp(b.0));
+    vec.iter()
+        .map(|x| match x.1 {
+            0 => String::new(),
+            1 => x.0.to_string(),
+            _ => format!("{}^{}", x.0, x.1),
+        })
+        .collect::<Vec<String>>()
+        .join(" ")
+}
+
+pub fn output_format_units(env: &mut Env, units: Node) -> String {
     if units == Node::Units(Box::new(Node::None)) {
         return "".to_string();
     }
@@ -347,12 +360,19 @@ pub fn output_format_units(_env: &mut Env, units: Node) -> String {
                 if numerator.is_empty() {
                     return "".to_string();
                 } else {
-                    let mut nume_vec: Vec<(&String, &i32)> = numerator.iter().collect();
-                    nume_vec.sort_by(|a, b| a.0.cmp(b.0));
-                    return format!("[{:?}]", nume_vec);
+                    return format!("[{}]", output_format_units_sub(env, numerator));
                 }
             } else {
-                return units_fraction_to_string(numerator, denominator);
+                let nume_str = output_format_units_sub(env, numerator);
+                if nume_str == "_" {
+                    return format!("[1/{}]", output_format_units_sub(env, denominator));
+                } else {
+                    return format!(
+                        "[{}/{}]",
+                        nume_str,
+                        output_format_units_sub(env, denominator)
+                    );
+                }
             }
         }
     }
@@ -699,6 +719,7 @@ impl Default for Env<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_format_num() {
@@ -718,5 +739,79 @@ mod tests {
         assert_eq!(output_format_float(&mut env, 1e10), "1e10".to_owned());
         env.float_format = FloatFormat::Eng;
         assert_eq!(output_format_float(&mut env, 1e10), "10G".to_owned());
+    }
+
+    #[test]
+    fn test_format_unit() {
+        let mut env = Env::new();
+        let mut numerator = HashMap::<String, i32>::new();
+        let mut denominator = HashMap::<String, i32>::new();
+
+        assert_eq!(
+            output_format_units(
+                &mut env,
+                Node::Units(Box::new(Node::UnitsFraction(
+                    numerator.clone(),
+                    denominator.clone()
+                )))
+            ),
+            "".to_owned()
+        );
+        numerator.insert("m".to_owned(), 1);
+        assert_eq!(
+            output_format_units(
+                &mut env,
+                Node::Units(Box::new(Node::UnitsFraction(
+                    numerator.clone(),
+                    denominator.clone()
+                )))
+            ),
+            "[m]".to_owned()
+        );
+        numerator.insert("m".to_owned(), 2);
+        assert_eq!(
+            output_format_units(
+                &mut env,
+                Node::Units(Box::new(Node::UnitsFraction(
+                    numerator.clone(),
+                    denominator.clone()
+                )))
+            ),
+            "[m^2]".to_owned()
+        );
+        numerator.insert("g".to_owned(), 1);
+        assert_eq!(
+            output_format_units(
+                &mut env,
+                Node::Units(Box::new(Node::UnitsFraction(
+                    numerator.clone(),
+                    denominator.clone()
+                )))
+            ),
+            "[g m^2]".to_owned()
+        );
+        denominator.insert("s".to_owned(), 1);
+        assert_eq!(
+            output_format_units(
+                &mut env,
+                Node::Units(Box::new(Node::UnitsFraction(
+                    numerator.clone(),
+                    denominator.clone()
+                )))
+            ),
+            "[g m^2/s]".to_owned()
+        );
+        let mut numerator = HashMap::<String, i32>::new();
+        numerator.insert("_".to_owned(), 1);
+        assert_eq!(
+            output_format_units(
+                &mut env,
+                Node::Units(Box::new(Node::UnitsFraction(
+                    numerator.clone(),
+                    denominator.clone()
+                )))
+            ),
+            "[1/s]".to_owned()
+        );
     }
 }
