@@ -95,6 +95,7 @@ rc>
     + Arithmetic operations including multiple parentheses
     + support integer and float
     + k/M/G/T/m/u/n/p ... suffix
+    + unit handling [m], etc.
     + binary(0b....), decimal, hexadecimal(0x....) format
         - '_' ... separator, i.e., `123_000_000`
     + built-in functions
