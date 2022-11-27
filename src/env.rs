@@ -609,18 +609,6 @@ impl<'a> Env<'a> {
                 Box::new(Node::Units(Box::new(Node::None))),
             ),
         );
-        self.constant.insert(
-            "inch2mm",
-            Node::FNum(25.4, Box::new(Node::Units(Box::new(Node::None)))),
-        );
-        self.constant.insert(
-            "feet2mm",
-            Node::FNum(304.8, Box::new(Node::Units(Box::new(Node::None)))),
-        );
-        self.constant.insert(
-            "oz2g",
-            Node::FNum(28.3495, Box::new(Node::Units(Box::new(Node::None)))),
-        );
         self.func.insert("sin", (impl_sin as TypeFn, 1));
         self.func.insert("cos", (impl_cos as TypeFn, 1));
         self.func.insert("exp", (impl_exp as TypeFn, 1));

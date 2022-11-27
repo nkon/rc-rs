@@ -49,9 +49,6 @@ pi = 3.141592653589793
 eps = 0.0000000000000002220446049250313
 i = 0+1i
 j = 0+1i
-inch2mm = 25.4
-feet2mm = 304.8
-oz2g = 28.3495
 rc> 2+3
 5
 rc> ans*7                       # ans is the variable of last answer
@@ -101,7 +98,6 @@ rc>
     + built-in functions
         - Arithmetic: sin/cos/abs/...
         - Engineering: E12/parallel(`//`)/...
-        - unit conversion: inch2mm/feet2mm/oz2g/...
     + user defined variable/function
 * REPL
     + Line Edit/History
