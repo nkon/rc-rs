@@ -208,7 +208,10 @@ fn units_fraction_reduce(env: &mut Env, units: Node) -> Node {
                         new_nume.insert(nume_key.to_string(), *nume_value - denom_value);
                         denominator.remove(nume_key);
                     }
-                    Ordering::Less => {}
+                    Ordering::Less => {
+                        new_nume.insert("_".to_string(), 1);
+                        denominator.insert(nume_key.to_string(), denom_value - *nume_value);
+                    }
                     Ordering::Equal => {
                         denominator.remove(nume_key);
                     }
@@ -224,10 +227,15 @@ fn units_fraction_reduce(env: &mut Env, units: Node) -> Node {
                     Ordering::Greater => {
                         new_denom.insert(denom_key.to_string(), *denom_value - nume_value);
                         new_nume.remove(denom_key);
+                        new_nume.insert("_".to_string(), 1);
                     }
-                    Ordering::Less => {}
+                    Ordering::Less => {
+                        new_denom.insert("_".to_string(), 1);
+                        new_nume.insert(denom_key.to_string(), nume_value - *denom_value);
+                    }
                     Ordering::Equal => {
                         new_nume.remove(denom_key);
+                        new_nume.insert("_".to_string(), 1);
                     }
                 }
             } else {
@@ -446,7 +454,6 @@ mod tests {
             eval_as_string(&mut env, "6[m*m]/2[s]"),
             "Num(3, [(\"m\", 2)]/[(\"s\", 1)])".to_owned()
         );
-        env.debug = true;
         assert_eq!(
             eval_as_string(&mut env, "3*2[m]"),
             eval_as_string(&mut env, "6[m]")
@@ -500,6 +507,14 @@ mod tests {
         assert_eq!(
             eval_as_string(&mut env, "3"),
             eval_as_string(&mut env, "3[m/m]"),
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "3[m^2/m]"),
+            eval_as_string(&mut env, "3[m]"),
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "3[m/m^2]"),
+            eval_as_string(&mut env, "3[1/m]"),
         );
         // unit conversion
         assert_eq!(
