@@ -157,7 +157,7 @@ fn find_match_paren(line: &str, index: usize) -> Option<usize> {
                 count += 1;
             } else if chars[pos] == '(' {
                 if count == 0 {
-                    return Some(pos as usize);
+                    return Some(pos);
                 } else {
                     count -= 1;
                 }
@@ -175,7 +175,7 @@ fn find_match_paren(line: &str, index: usize) -> Option<usize> {
                 count += 1;
             } else if chars[pos] == ')' {
                 if count == 0 {
-                    return Some(pos as usize);
+                    return Some(pos);
                 } else {
                     count -= 1;
                 }

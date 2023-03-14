@@ -8,7 +8,7 @@ fn main() {
         .output()
         .expect("failed to execute command \"git rev-parse HEAD\"");
     let dest_path = format!("{}/src/git_commit_hash.txt", env!("CARGO_MANIFEST_DIR"));
-    let mut f = File::create(&dest_path).unwrap();
+    let mut f = File::create(dest_path).unwrap();
     f.write_all(
         format!(
             "\"{}\"",
