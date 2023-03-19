@@ -13,6 +13,7 @@ pub enum FloatFormat {
     Eng,
 }
 
+// TODO: unit format changer
 #[derive(Clone)]
 pub struct Env<'a> {
     pub constant: HashMap<&'a str, Node>,
@@ -192,6 +193,7 @@ fn impl_e12(_env: &mut Env, arg: &[Node]) -> Node {
 }
 
 // Implement of commands.
+// TODO: add unit format
 fn impl_output_format(env: &mut Env, arg: &[Token]) -> String {
     if env.is_debug() {
         eprintln!("impl_output_format {:?}\r", arg);

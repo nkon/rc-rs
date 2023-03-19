@@ -339,6 +339,15 @@ pub fn eval_unit(env: &mut Env, units: &Node) -> (Node, bool) {
                 ),
                 false,
             ),
+            "cm" => (
+                Node::FNum(
+                    0.01,
+                    Box::new(Node::Units(Box::new(Node::Var(Token::Ident(
+                        "m".to_owned(),
+                    ))))),
+                ),
+                false,
+            ),
             "mi" => (
                 // 1 mile = 1.6 km = 1600 m
                 Node::FNum(
@@ -349,7 +358,27 @@ pub fn eval_unit(env: &mut Env, units: &Node) -> (Node, bool) {
                 ),
                 false,
             ),
+            "mile" => (
+                // 1 mile = 1.6 km = 1600 m
+                Node::FNum(
+                    1600.0,
+                    Box::new(Node::Units(Box::new(Node::Var(Token::Ident(
+                        "m".to_owned(),
+                    ))))),
+                ),
+                false,
+            ),
             "in" => (
+                // 1 inch = 25.4 mm = 0.0254 m
+                Node::FNum(
+                    0.0254,
+                    Box::new(Node::Units(Box::new(Node::Var(Token::Ident(
+                        "m".to_owned(),
+                    ))))),
+                ),
+                false,
+            ),
+            "inch" => (
                 // 1 inch = 25.4 mm = 0.0254 m
                 Node::FNum(
                     0.0254,
@@ -528,6 +557,10 @@ mod tests {
         assert_eq!(
             eval_as_string(&mut env, "1[feet]"),
             eval_as_string(&mut env, "12.0[in]"),
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "100[cm]"),
+            eval_as_string(&mut env, "1.0[m]"),
         );
     }
 }
