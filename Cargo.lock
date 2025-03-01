@@ -280,7 +280,7 @@ dependencies = [
 
 [[package]]
 name = "rc"
-version = "0.2.1"
+version = "0.2.15"
 dependencies = [
  "assert_cmd",
  "crossterm",
