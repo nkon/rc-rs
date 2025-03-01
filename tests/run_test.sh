@@ -1,5 +1,8 @@
 #!/bin/sh
 
+### This script is obsoleted.
+### cargo test runs tests/cli.rc, that execute same tests below.
+
 cargo test
 
 cargo run -- --init tests/_rc_rc_none -s tests/test.case > tests/test.result

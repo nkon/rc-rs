@@ -1,4 +1,5 @@
 use assert_cmd::Command;
+use std::fs;
 
 #[test]
 fn runs() {
@@ -41,3 +42,30 @@ fn runs7() {
     let mut cmd = Command::cargo_bin("rc").unwrap();
     cmd.args(["1", "+", "2*3"]).assert().success().stdout("7\n");
 }
+
+#[test]
+fn runs_test_case() {
+    let infile = "tests/test.case";
+    let outfile = "tests/test.answer";
+    let expected = fs::read_to_string(outfile).unwrap();
+    let mut cmd = Command::cargo_bin("rc").unwrap();
+    cmd.args(["-s", infile]).assert().success().stdout(expected);
+}
+
+#[test]
+fn runs_demo_case() {
+    let infile = "tests/demo.case";
+    let outfile = "tests/demo.answer";
+    let expected = fs::read_to_string(outfile).unwrap();
+    let mut cmd = Command::cargo_bin("rc").unwrap();
+    cmd.args(["-s", infile]).assert().success().stdout(expected);
+}
+
+#[test]
+fn runs_option_test() {
+    let outfile = "tests/cargo_run_test.answer";
+    let expected = fs::read_to_string(outfile).unwrap();
+    let mut cmd = Command::cargo_bin("rc").unwrap();
+    cmd.args(["--test"]).assert().success().stdout(expected);
+}
+
