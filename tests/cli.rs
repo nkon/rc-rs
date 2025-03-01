@@ -35,3 +35,9 @@ fn runs6() {
     let mut cmd = Command::cargo_bin("rc").unwrap();
     cmd.arg("1.0/4.0").assert().success().stdout("0.25\n");
 }
+
+#[test]
+fn runs7() {
+    let mut cmd = Command::cargo_bin("rc").unwrap();
+    cmd.args(["1", "+", "2*3"]).assert().success().stdout("7\n");
+}
