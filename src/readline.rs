@@ -1,6 +1,7 @@
 pub use crossterm::{
     cursor,
-    event::{read, Event, KeyCode, KeyModifiers}, queue, style,
+    event::{read, Event, KeyCode, KeyModifiers},
+    queue, style,
     terminal::{self, disable_raw_mode, enable_raw_mode, ClearType},
 };
 use std::io::{stdout, Write};

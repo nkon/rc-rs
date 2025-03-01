@@ -228,7 +228,7 @@ fn impl_output_format(env: &mut Env, arg: &[Token]) -> String {
                     env.float_format = FloatFormat::Eng;
                 } else if id == "fix" {
                     env.float_format = FloatFormat::Fix;
-                } 
+                }
             }
             _ => {}
         }
@@ -591,10 +591,7 @@ impl<'a> Env<'a> {
         );
         self.constant.insert(
             "eps",
-            Node::FNum(
-                f64::EPSILON,
-                Box::new(Node::Units(Box::new(Node::None))),
-            ),
+            Node::FNum(f64::EPSILON, Box::new(Node::Units(Box::new(Node::None)))),
         );
         self.constant.insert(
             "i",
