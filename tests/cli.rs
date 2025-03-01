@@ -44,11 +44,19 @@ fn runs7() {
     cmd.args(["1", "+", "2*3"]).assert().success().stdout("7\n");
 }
 
+fn normalize_newlines(input: String) -> String {
+    if cfg!(target_os = "windows") {
+        input.replace('\n', "\r\n")
+    } else {
+        input.to_string()
+    }
+}
+
 #[test]
 fn runs_test_case() {
     let infile: PathBuf = ["tests", "test.case"].iter().collect();
     let outfile: PathBuf = ["tests", "test.answer"].iter().collect();
-    let expected = fs::read_to_string(outfile).unwrap();
+    let expected = normalize_newlines(fs::read_to_string(outfile).unwrap());
     let mut cmd = Command::cargo_bin("rc").unwrap();
     cmd.args(["-s", infile.display().to_string().as_str()])
         .assert()
@@ -60,7 +68,7 @@ fn runs_test_case() {
 fn runs_demo_case() {
     let infile: PathBuf = ["tests", "demo.case"].iter().collect();
     let outfile: PathBuf = ["tests", "demo.answer"].iter().collect();
-    let expected = fs::read_to_string(outfile).unwrap();
+    let expected = normalize_newlines(fs::read_to_string(outfile).unwrap());
     let mut cmd = Command::cargo_bin("rc").unwrap();
     cmd.args(["-s", infile.display().to_string().as_str()])
         .assert()
@@ -71,7 +79,7 @@ fn runs_demo_case() {
 #[test]
 fn runs_option_test() {
     let outfile: PathBuf = ["tests", "cargo_run_test.answer"].iter().collect();
-    let expected = fs::read_to_string(outfile).unwrap();
+    let expected = normalize_newlines(fs::read_to_string(outfile).unwrap());
     let mut cmd = Command::cargo_bin("rc").unwrap();
     cmd.args(["--test"]).assert().success().stdout(expected);
 }
