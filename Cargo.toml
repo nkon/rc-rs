@@ -13,3 +13,6 @@ dirs = "4.0"
 thiserror = "1.0"
 # anyhow = "1.0.36"
 num-complex = "0.4"
+
+[dev-dependencies]
+assert_cmd = "1"
