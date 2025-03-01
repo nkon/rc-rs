@@ -1,6 +1,6 @@
 use assert_cmd::Command;
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 
 #[test]
 fn runs() {
@@ -46,8 +46,8 @@ fn runs7() {
 
 #[test]
 fn runs_test_case() {
-    let infile = Path::new("tests/test.case");
-    let outfile = Path::new("tests/test.answer");
+    let infile: PathBuf = ["tests", "test.case"].iter().collect();
+    let outfile: PathBuf = ["tests", "test.answer"].iter().collect();
     let expected = fs::read_to_string(outfile).unwrap();
     let mut cmd = Command::cargo_bin("rc").unwrap();
     cmd.args(["-s", infile.display().to_string().as_str()])
@@ -58,8 +58,8 @@ fn runs_test_case() {
 
 #[test]
 fn runs_demo_case() {
-    let infile = Path::new("tests/demo.case");
-    let outfile = Path::new("tests/demo.answer");
+    let infile: PathBuf = ["tests", "demo.case"].iter().collect();
+    let outfile: PathBuf = ["tests", "demo.answer"].iter().collect();
     let expected = fs::read_to_string(outfile).unwrap();
     let mut cmd = Command::cargo_bin("rc").unwrap();
     cmd.args(["-s", infile.display().to_string().as_str()])
@@ -70,7 +70,7 @@ fn runs_demo_case() {
 
 #[test]
 fn runs_option_test() {
-    let outfile = Path::new("tests/cargo_run_test.answer");
+    let outfile: PathBuf = ["tests", "cargo_run_test.answer"].iter().collect();
     let expected = fs::read_to_string(outfile).unwrap();
     let mut cmd = Command::cargo_bin("rc").unwrap();
     cmd.args(["--test"]).assert().success().stdout(expected);
