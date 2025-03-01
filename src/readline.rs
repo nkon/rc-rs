@@ -1,9 +1,7 @@
 pub use crossterm::{
     cursor,
-    event::{self, read, Event, KeyCode, KeyEvent, KeyModifiers},
-    execute, queue, style,
+    event::{read, Event, KeyCode, KeyModifiers}, queue, style,
     terminal::{self, disable_raw_mode, enable_raw_mode, ClearType},
-    Command, Result,
 };
 use std::io::{stdout, Write};
 use std::iter::FromIterator;
@@ -120,7 +118,7 @@ fn do_backspace(line: &mut String, prev: u16) -> u16 {
     }
 }
 
-fn do_left(line: &mut String, prev: u16) -> u16 {
+fn do_left(line: &mut str, prev: u16) -> u16 {
     if prev == 0 {
         0
     } else if prev <= line.len() as u16 {
@@ -130,7 +128,7 @@ fn do_left(line: &mut String, prev: u16) -> u16 {
     }
 }
 
-fn do_right(line: &mut String, prev: u16) -> u16 {
+fn do_right(line: &mut str, prev: u16) -> u16 {
     if prev < line.len() as u16 {
         prev + 1
     } else {

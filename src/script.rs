@@ -84,7 +84,7 @@ pub fn run_history(env: &mut Env, stream: &mut dyn BufRead) {
                 }
                 env.history.push(line.clone());
                 env.history_index += 1;
-                if do_script(env, &line).is_ok() {}
+                let _ = do_script(env, &line).is_ok();
                 line.clear();
             }
             Err(_e) => {

@@ -380,7 +380,7 @@ fn eval_binop(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                 (Node::Num(nl, ul), Node::Num(nr, ur)) => {
                     let units = eval_units_div(env, &ul, &ur);
                     if nr == 0 {
-                        return Ok(Node::FNum(std::f64::INFINITY, Box::new(units)));
+                        return Ok(Node::FNum(f64::INFINITY, Box::new(units)));
                     }
                     return Ok(Node::Num(nl / nr, Box::new(units)));
                 }
