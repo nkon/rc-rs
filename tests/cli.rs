@@ -46,7 +46,7 @@ fn runs7() {
 
 fn normalize_newlines(input: String) -> String {
     if cfg!(target_os = "windows") {
-        input.replace('\n', "\r\n")
+        input.replace('\r\n', "\n")
     } else {
         input.to_string()
     }
