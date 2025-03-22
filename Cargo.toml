@@ -1,6 +1,6 @@
 [package]
 name = "rc"
-version = "0.2.15"
+version = "0.2.16"
 authors = ["kondou nobuhiro <kondou.nobuhiro@gmail.com>"]
 edition = "2018"
 
