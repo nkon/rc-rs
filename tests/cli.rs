@@ -45,7 +45,7 @@ fn runs4() -> TestResult {
 }
 
 #[test]
-fn runs5() -> TestResult{
+fn runs5() -> TestResult {
     Command::cargo_bin("rc")?
         .arg("max(1,2,3)")
         .assert()
