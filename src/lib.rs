@@ -625,8 +625,7 @@ mod tests {
         if let Node::FNum(f, _) = eval(env, &n).unwrap() {
             return f;
         }
-        assert!(false);
-        0.0
+        panic!("eval_as_f64 failed");
     }
 
     fn eval_as_complex64(env: &mut Env, input: &str) -> Complex64 {
@@ -634,8 +633,7 @@ mod tests {
         if let Node::CNum(c, _) = eval(env, &n).unwrap() {
             return c;
         }
-        assert!(false);
-        Complex64::new(0.0, 0.0)
+        panic!("eval_as_complex64 failed");
     }
 
     #[test]
@@ -802,11 +800,11 @@ mod tests {
             "FNum(2.0, []/[])".to_owned()
         );
         assert!((eval_as_f64(&mut env, "abs(-2.5)") - 2.5).abs() < 1e-10);
-        assert!((eval_as_f64(&mut env, "abs(1+i)") - 1.4142135623730951).abs() < 1e-10);
-        assert!((eval_as_f64(&mut env, "sqrt(2)") - 1.4142135623730951).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "abs(1+i)") - std::f64::consts::SQRT_2).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "sqrt(2)") - std::f64::consts::SQRT_2).abs() < 1e-10);
         assert!((eval_as_complex64(&mut env, "sqrt(2i)").re - 1.0).abs() < 1e-10);
         assert!((eval_as_complex64(&mut env, "sqrt(2i)").im - 1.0).abs() < 1e-10);
-        assert!((eval_as_f64(&mut env, "arg(1+i)") - 0.7853981633974483).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "arg(1+i)") - std::f64::consts::FRAC_PI_4).abs() < 1e-10);
         eval_as_string(&mut env, "b=a");
         eval_as_string(&mut env, "c=b");
         assert_eq!(eval_as_string(&mut env, "c"), "Num(5, []/[])".to_owned());
@@ -847,12 +845,12 @@ mod tests {
         env.built_in();
 
         let n = parse(&mut env, &(lexer("pi=3".to_owned())).unwrap()).unwrap();
-        if let Ok(_) = eval(&mut env, &n) {
-            assert!(false);
+        if eval(&mut env, &n).is_ok() {
+            panic!("eval error");
         }
         let n = parse(&mut env, &(lexer("abs(1-i+)".to_owned())).unwrap()).unwrap();
-        if let Ok(_) = eval(&mut env, &n) {
-            assert!(false);
+        if eval(&mut env, &n).is_ok() {
+            panic!("eval error");
         }
     }
 }

@@ -571,23 +571,23 @@ mod tests {
         let mut env = Env::new();
         env.built_in();
 
-        if let Ok(_) = parse(&mut env, &(lexer("2*sin(1, 2)".to_owned())).unwrap()) {
-            assert!(false);
+        if parse(&mut env, &(lexer("2*sin(1, 2)".to_owned())).unwrap()).is_ok() {
+            panic!("error");
         }
-        if let Ok(_) = parse(&mut env, &(lexer("sin(".to_owned())).unwrap()) {
-            assert!(false);
+        if parse(&mut env, &(lexer("sin(".to_owned())).unwrap()).is_ok() {
+            panic!("error");
         }
-        if let Ok(_) = parse(&mut env, &(lexer("sin()".to_owned())).unwrap()) {
-            assert!(false);
+        if parse(&mut env, &(lexer("sin()".to_owned())).unwrap()).is_ok() {
+            panic!("error");
         }
-        if let Ok(_) = parse(&mut env, &(lexer("1+2+".to_owned())).unwrap()) {
-            assert!(false);
+        if parse(&mut env, &(lexer("1+2+".to_owned())).unwrap()).is_ok() {
+            panic!("error");
         }
-        if let Ok(_) = parse(&mut env, &(lexer("sin".to_owned())).unwrap()) {
-            assert!(false);
+        if parse(&mut env, &(lexer("sin".to_owned())).unwrap()).is_ok() {
+            panic!("error");
         }
-        if let Ok(_) = parse(&mut env, &(lexer("((())".to_owned())).unwrap()) {
-            assert!(false);
+        if parse(&mut env, &(lexer("((())".to_owned())).unwrap()).is_ok() {
+            panic!("error");
         }
     }
 }

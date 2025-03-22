@@ -591,7 +591,7 @@ mod tests {
             assert_eq!(nume.get("m"), Some(&1));
             assert!(denom.is_empty());
         } else {
-            assert!(false);
+            panic!("unexpected result: {:?}", reduced);
         }
     }
 }

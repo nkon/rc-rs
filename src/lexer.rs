@@ -386,11 +386,11 @@ mod tests {
 
     #[test]
     fn test_tok_num_error() {
-        if let Ok(_) = lexer("018".to_owned()) {
-            assert!(false);
+        if lexer("018".to_owned()).is_ok() {
+            panic!("lexer(\"018\") should return error.");
         }
-        if let Ok(_) = lexer("0b12".to_owned()) {
-            assert!(false);
+        if lexer("0b12".to_owned()).is_ok() {
+            panic!("lexer(\"0b12\") should return error.");
         }
     }
 
