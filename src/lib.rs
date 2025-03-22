@@ -816,8 +816,8 @@ mod tests {
         eval_as_string(&mut env, "aa=1");
         eval_as_string(&mut env, "bb=aa");
         eval_as_string(&mut env, "aa=2");
-        // assert_eq!(eval_as_string(&mut env, "bb"), "Num(2)".to_owned());    // assign to bb is binded to AST of aa
-        assert_eq!(eval_as_string(&mut env, "bb"), "Num(1, []/[])".to_owned()); // assign to bb is ?binded to value of aa at the assigned time
+        // assert_eq!(eval_as_string(&mut env, "bb"), "Num(2)".to_owned());    // assign to bb is bonded to AST of aa
+        assert_eq!(eval_as_string(&mut env, "bb"), "Num(1, []/[])".to_owned()); // assign to bb is ?bonded to value of aa at the assigned time
 
         // divided by zero
         assert_eq!(
