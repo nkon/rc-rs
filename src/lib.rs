@@ -59,7 +59,7 @@ pub fn eval_cvalue(_env: &Env, n: &Node) -> Result<Complex64, MyError> {
             "Node::None cannot convert to cvalue".to_owned(),
         )),
         _ => Err(MyError::EvalError(
-            "Unexpected input: eval_fvalue".to_owned(),
+            "Unexpected input: eval_cvalue".to_owned(),
         )),
     }
 }
@@ -109,7 +109,8 @@ fn eval_func(env: &mut Env, n: &Node) -> Result<Node, MyError> {
                 let param_value = eval(env, i)?;
                 params.push(param_value);
             }
-            return Ok(func_tuple.0(env, &params));
+            let new_node = func_tuple.0(env, &params);
+            return do_eval(env, &new_node);
         }
         if let Some(tokens) = env.is_user_func((*ident).clone()) {
             let mut params: Vec<Node> = Vec::new();
@@ -832,6 +833,11 @@ mod tests {
         assert_eq!(
             eval_as_string(&mut env, "1/(0.0+0.0i)"),
             "CNum(Complex { re: NaN, im: NaN }, []/[])".to_owned()
+        );
+
+        assert_eq!(
+            eval_as_string(&mut env, "1/sqrt(2)"),
+            "FNum(0.7071067811865475, [(\"_\", 1)]/[])".to_owned()
         );
     }
 
