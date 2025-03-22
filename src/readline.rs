@@ -432,4 +432,24 @@ mod tests {
         let ret = find_match_paren(&line, 10);
         assert_eq!(ret, Some(0));
     }
+
+    // 新しいテストケース
+    #[test]
+    fn test_left_right() {
+        let mut line = String::from("01234");
+        let next = do_left(&mut line, 0);
+        assert_eq!(next, 0);
+
+        let mut line = String::from("01234");
+        let next = do_left(&mut line, 3);
+        assert_eq!(next, 2);
+
+        let mut line = String::from("01234");
+        let next = do_right(&mut line, 4);
+        assert_eq!(next, 5);
+
+        let mut line = String::from("01234");
+        let next = do_right(&mut line, 5);
+        assert_eq!(next, 5);
+    }
 }

@@ -496,6 +496,11 @@ mod tests {
             "BinOp(Op(Plus), Num(1, Units(None)), CNum(Complex { re: 0.0, im: 2.0 }, Units(None)))"
         );
         assert_eq!(parse_as_string(&mut env, "i"), "Var(Ident(\"i\"))");
+        // 新しいテストケース
+        assert_eq!(
+            parse_as_string(&mut env, "3+4*2/(1-5)^2^3"),
+            "BinOp(Op(Plus), Num(3, Units(None)), BinOp(Op(Div), BinOp(Op(Mul), Num(4, Units(None)), Num(2, Units(None))), BinOp(Op(Caret), BinOp(Op(Minus), Num(1, Units(None)), Num(5, Units(None))), BinOp(Op(Caret), Num(2, Units(None)), Num(3, Units(None))))))"
+        );
     }
 
     #[test]
@@ -523,6 +528,15 @@ mod tests {
         assert_eq!(
             parse_as_string(&mut env, "1k[m*m/s]"), 
             "FNum(1000.0, Units(BinOp(Op(Div), BinOp(Op(Mul), Var(Ident(\"m\")), Var(Ident(\"m\"))), Var(Ident(\"s\")))))"
+        );
+        // 新しいテストケース
+        assert_eq!(
+            parse_as_string(&mut env, "1[m^2]"),
+            "Num(1, Units(BinOp(Op(Caret), Var(Ident(\"m\")), Num(2, Units(None)))))"
+        );
+        assert_eq!(
+            parse_as_string(&mut env, "1[m^2/s^2]"),
+            "Num(1, Units(BinOp(Op(Div), BinOp(Op(Caret), Var(Ident(\"m\")), Num(2, Units(None))), BinOp(Op(Caret), Var(Ident(\"s\")), Num(2, Units(None))))))"
         );
     }
 

@@ -563,4 +563,35 @@ mod tests {
             eval_as_string(&mut env, "1.0[m]"),
         );
     }
+
+    // 新しいテストケース
+    #[test]
+    fn test_units_unpack() {
+        let node = Node::Units(Box::new(Node::Var(Token::Ident("m".to_string()))));
+        let unpacked = units_unpack(node);
+        assert_eq!(unpacked, Node::Var(Token::Ident("m".to_string())));
+
+        let node = Node::Var(Token::Ident("m".to_string()));
+        let unpacked = units_unpack(node.clone());
+        assert_eq!(unpacked, node);
+    }
+
+    #[test]
+    fn test_units_fraction_reduce() {
+        let mut env = Env::new();
+        env.built_in();
+
+        let mut numerator = HashMap::new();
+        numerator.insert("m".to_string(), 2);
+        let mut denominator = HashMap::new();
+        denominator.insert("m".to_string(), 1);
+        let units = Node::UnitsFraction(numerator, denominator);
+        let reduced = units_fraction_reduce(&mut env, units);
+        if let Node::UnitsFraction(nume, denom) = reduced {
+            assert_eq!(nume.get("m"), Some(&1));
+            assert!(denom.is_empty());
+        } else {
+            assert!(false);
+        }
+    }
 }
