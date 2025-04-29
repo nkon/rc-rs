@@ -3,13 +3,14 @@
 Table of Contents
 -----------------
 
-* [Features](#features)
-* [Screen capture](#screen-capture)
-* [Install](#install)
-    * [Build from source](#build-from-source)
-* [Download](#download)
-* [Future](#future)
-* [Design Notes](#design-notes)
+- [rc - simple terminal calculator](#rc---simple-terminal-calculator)
+  - [Features](#features)
+  - [Screen capture](#screen-capture)
+  - [Install](#install)
+    - [Build from source](#build-from-source)
+  - [Download](#download)
+  - [Future](#future)
+  - [Design Notes](#design-notes)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
@@ -136,3 +137,5 @@ Windows, Linux, macOS binaries are available from [Release](https://github.com/n
 ## Design Notes
 
 [NOTE.md](NOTE.md)
+
+[https://deepwiki.com/nkon/rc-rs](https://deepwiki.com/nkon/rc-rs)
