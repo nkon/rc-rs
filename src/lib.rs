@@ -637,103 +637,67 @@ mod tests {
     }
 
     #[test]
-    fn test_eval() {
+    fn test_basic_arithmetic() {
         let mut env = Env::new();
         env.built_in();
 
+        // Basic integer arithmetic
         assert_eq!(eval_as_string(&mut env, "1+2"), "Num(3, []/[])".to_owned());
-        assert_eq!(
-            eval_as_string(&mut env, "1+2*3"),
-            "Num(7, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "1*2+3"),
-            "Num(5, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "1+2+3"),
-            "Num(6, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "(1+2)*3"),
-            "Num(9, []/[])".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "1+2*3"), "Num(7, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1*2+3"), "Num(5, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1+2+3"), "Num(6, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "(1+2)*3"), "Num(9, []/[])".to_owned());
+        
+        // Unary operators
         assert_eq!(eval_as_string(&mut env, "-2"), "Num(-2, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "-(2+3)"), "Num(-5, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "+(2+3)"), "Num(5, []/[])".to_owned());
+        
+        // Large numbers
         assert_eq!(
             eval_as_string(&mut env, "-9223372036854775807"),
             "Num(-9223372036854775807, []/[])".to_owned()
         );
+    }
+
+    #[test]
+    fn test_float_arithmetic() {
+        let mut env = Env::new();
+        env.built_in();
+
+        // Float arithmetic
         assert!(((eval_as_f64(&mut env, "1.1+2.2") - 3.3).abs()) < 1e-10);
-        assert_eq!(
-            eval_as_string(&mut env, "-(2+3)"),
-            "Num(-5, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "+(2+3)"),
-            "Num(5, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "1.0+2"),
-            "FNum(3.0, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "1+2.0"),
-            "FNum(3.0, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "(1+2.0)*3"),
-            "FNum(9.0, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "pi"),
-            "FNum(3.141592653589793, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "2k*3u"),
-            "FNum(0.006, []/[])".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "1.0+2"), "FNum(3.0, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1+2.0"), "FNum(3.0, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "(1+2.0)*3"), "FNum(9.0, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "3.0/2"), "FNum(1.5, []/[])".to_owned());
+    }
 
-        assert_eq!(
-            eval_as_string(&mut env, "5//5"),
-            "FNum(2.5, []/[])".to_owned()
-        );
+    #[test]
+    fn test_modulo_and_division() {
+        let mut env = Env::new();
+        env.built_in();
 
-        assert!((eval_as_f64(&mut env, "sin(0.0)")).abs() < 1e-10);
-        assert!((eval_as_f64(&mut env, "cos(pi/2)")).abs() < 1e-10);
-        assert_eq!(
-            eval_as_string(&mut env, "sin(0)"),
-            "FNum(0.0, []/[])".to_owned()
-        );
-        assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
-        assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
-        assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
-        assert_eq!(
-            eval_as_string(&mut env, "sin(0)"),
-            "FNum(0.0, []/[])".to_owned()
-        );
+        // Modulo operations
         assert_eq!(eval_as_string(&mut env, "1%3"), "Num(1, []/[])".to_owned());
         assert_eq!(eval_as_string(&mut env, "2%3"), "Num(2, []/[])".to_owned());
         assert_eq!(eval_as_string(&mut env, "3%3"), "Num(0, []/[])".to_owned());
-        assert_eq!(
-            eval_as_string(&mut env, "3.0%3"),
-            "Num(0, []/[])".to_owned()
-        );
+        assert_eq!(eval_as_string(&mut env, "3.0%3"), "Num(0, []/[])".to_owned());
+        
+        // Integer division
         assert_eq!(eval_as_string(&mut env, "1/3"), "Num(0, []/[])".to_owned());
         assert_eq!(eval_as_string(&mut env, "3/3"), "Num(1, []/[])".to_owned());
-        assert_eq!(
-            eval_as_string(&mut env, "3.0/2"),
-            "FNum(1.5, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "ave(1,2,3)"),
-            "FNum(2.0, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "max(1,2,3)"),
-            "FNum(3.0, []/[])".to_owned()
-        );
-        eval_as_string(&mut env, "a=1");
-        assert_eq!(eval_as_string(&mut env, "a"), "Num(1, []/[])".to_owned());
+        
+        // Division by zero
+        assert_eq!(eval_as_string(&mut env, "1/0"), "FNum(inf, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "1.0/0.0"), "FNum(inf, []/[])".to_owned());
+    }
+
+    #[test]
+    fn test_power_operations() {
+        let mut env = Env::new();
+        env.built_in();
+
         assert_eq!(eval_as_string(&mut env, "2^3"), "Num(8, []/[])".to_owned());
         assert_eq!(
             eval_as_string(&mut env, "2^3^4"),
@@ -743,6 +707,68 @@ mod tests {
             eval_as_string(&mut env, "2^-0.5"),
             "FNum(0.7071067811865476, []/[])".to_owned()
         );
+    }
+
+    #[test]
+    fn test_parallel_operation() {
+        let mut env = Env::new();
+        env.built_in();
+
+        // Parallel operation (//) - commonly used in electronics
+        assert_eq!(eval_as_string(&mut env, "5//5"), "FNum(2.5, []/[])".to_owned());
+    }
+
+    #[test]
+    fn test_constants_and_variables() {
+        let mut env = Env::new();
+        env.built_in();
+
+        // Constants
+        assert_eq!(
+            eval_as_string(&mut env, "pi"),
+            "FNum(3.141592653589793, []/[])".to_owned()
+        );
+        assert_eq!(
+            eval_as_string(&mut env, "-pi"),
+            "FNum(-3.141592653589793, []/[])".to_owned()
+        );
+        
+        // SI prefixes
+        assert_eq!(eval_as_string(&mut env, "2k*3u"), "FNum(0.006, []/[])".to_owned());
+        
+        // Variable assignment and retrieval
+        eval_as_string(&mut env, "a=1");
+        assert_eq!(eval_as_string(&mut env, "a"), "Num(1, []/[])".to_owned());
+    }
+
+    #[test]
+    fn test_variable_assignment_semantics() {
+        let mut env = Env::new();
+        env.built_in();
+
+        // Test variable assignment semantics (value binding vs AST binding)
+        eval_as_string(&mut env, "aa=1");
+        eval_as_string(&mut env, "bb=aa");
+        eval_as_string(&mut env, "aa=2");
+        // Assignment binds to value at assignment time, not AST
+        assert_eq!(eval_as_string(&mut env, "bb"), "Num(1, []/[])".to_owned());
+        
+        // Chain assignment
+        eval_as_string(&mut env, "a=5");
+        eval_as_string(&mut env, "b=a");
+        eval_as_string(&mut env, "c=b");
+        assert_eq!(eval_as_string(&mut env, "c"), "Num(5, []/[])".to_owned());
+        eval_as_string(&mut env, "d=c");
+        eval_as_string(&mut env, "ee=d+c");
+        assert_eq!(eval_as_string(&mut env, "ee"), "Num(10, []/[])".to_owned());
+    }
+
+    #[test]
+    fn test_complex_numbers() {
+        let mut env = Env::new();
+        env.built_in();
+
+        // Basic complex number operations
         assert_eq!(
             eval_as_string(&mut env, "1+2i"),
             "CNum(Complex { re: 1.0, im: 2.0 }, []/[])".to_owned()
@@ -759,80 +785,65 @@ mod tests {
             eval_as_string(&mut env, "(1+2i) / (1-1.0i)"),
             "CNum(Complex { re: -0.5, im: 1.5 }, []/[])".to_owned()
         );
+        
+        // Parallel operation with complex numbers
         assert_eq!(
             eval_as_string(&mut env, "2 // 2i"),
             "CNum(Complex { re: 1.0, im: 1.0 }, []/[])".to_owned()
         );
-        assert!((eval_as_complex64(&mut env, "exp(i*pi)").re + 1.0).abs() < 1e-10);
-        assert!((eval_as_complex64(&mut env, "exp(i*pi)").im).abs() < 1e-10);
-        assert!((eval_as_complex64(&mut env, "i^i").re - 0.20787957635076193).abs() < 1e-10);
-        assert!((eval_as_complex64(&mut env, "i^i").im).abs() < 1e-10);
-        assert_eq!(
-            eval_as_string(&mut env, "-pi"),
-            "FNum(-3.141592653589793, []/[])".to_owned()
-        );
-        eval_as_string(&mut env, "defun double 2*_1");
-        assert_eq!(
-            eval_as_string(&mut env, "double(2)"),
-            "Num(4, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "double(double(2))"),
-            "Num(8, []/[])".to_owned()
-        );
-        eval_as_string(&mut env, "defun add _1+_2");
-        assert_eq!(
-            eval_as_string(&mut env, "add(2,3)"),
-            "Num(5, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "add(2,a)"),
-            "Num(3, []/[])".to_owned()
-        );
-        eval_as_string(&mut env, "defun plus_a a+_1");
-        eval_as_string(&mut env, "a=5");
-        assert_eq!(
-            eval_as_string(&mut env, "plus_a(8)"),
-            "Num(13, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "abs(-2)"),
-            "FNum(2.0, []/[])".to_owned()
-        );
-        assert!((eval_as_f64(&mut env, "abs(-2.5)") - 2.5).abs() < 1e-10);
-        assert!((eval_as_f64(&mut env, "abs(1+i)") - std::f64::consts::SQRT_2).abs() < 1e-10);
-        assert!((eval_as_f64(&mut env, "sqrt(2)") - std::f64::consts::SQRT_2).abs() < 1e-10);
-        assert!((eval_as_complex64(&mut env, "sqrt(2i)").re - 1.0).abs() < 1e-10);
-        assert!((eval_as_complex64(&mut env, "sqrt(2i)").im - 1.0).abs() < 1e-10);
-        assert!((eval_as_f64(&mut env, "arg(1+i)") - std::f64::consts::FRAC_PI_4).abs() < 1e-10);
-        eval_as_string(&mut env, "b=a");
-        eval_as_string(&mut env, "c=b");
-        assert_eq!(eval_as_string(&mut env, "c"), "Num(5, []/[])".to_owned());
-        eval_as_string(&mut env, "d=c");
-        eval_as_string(&mut env, "ee=d+c");
-        assert_eq!(eval_as_string(&mut env, "ee"), "Num(10, []/[])".to_owned());
-
-        // assignment
-        eval_as_string(&mut env, "aa=1");
-        eval_as_string(&mut env, "bb=aa");
-        eval_as_string(&mut env, "aa=2");
-        // assert_eq!(eval_as_string(&mut env, "bb"), "Num(2)".to_owned());    // assign to bb is bonded to AST of aa
-        assert_eq!(eval_as_string(&mut env, "bb"), "Num(1, []/[])".to_owned()); // assign to bb is ?bonded to value of aa at the assigned time
-
-        // divided by zero
-        assert_eq!(
-            eval_as_string(&mut env, "1/0"),
-            "FNum(inf, []/[])".to_owned()
-        );
-        assert_eq!(
-            eval_as_string(&mut env, "1.0/0.0"),
-            "FNum(inf, []/[])".to_owned()
-        );
+        
+        // Division by zero with complex numbers
         assert_eq!(
             eval_as_string(&mut env, "1/(0.0+0.0i)"),
             "CNum(Complex { re: NaN, im: NaN }, []/[])".to_owned()
         );
+    }
 
+    #[test]
+    fn test_famous_complex_identities() {
+        let mut env = Env::new();
+        env.built_in();
+
+        // Euler's identity: e^(i*π) = -1
+        assert!((eval_as_complex64(&mut env, "exp(i*pi)").re + 1.0).abs() < 1e-10);
+        assert!((eval_as_complex64(&mut env, "exp(i*pi)").im).abs() < 1e-10);
+        
+        // i^i is real
+        assert!((eval_as_complex64(&mut env, "i^i").re - 0.20787957635076193).abs() < 1e-10);
+        assert!((eval_as_complex64(&mut env, "i^i").im).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_built_in_functions() {
+        let mut env = Env::new();
+        env.built_in();
+
+        // Trigonometric functions
+        assert!((eval_as_f64(&mut env, "sin(0.0)")).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "cos(pi/2)")).abs() < 1e-10);
+        assert_eq!(eval_as_string(&mut env, "sin(0)"), "FNum(0.0, []/[])".to_owned());
+        assert!((eval_as_f64(&mut env, "sin(pi)").abs()) < 1e-10);
+        assert!(((eval_as_f64(&mut env, "sin(pi/2)") - 1.0).abs()) < 1e-10);
+        
+        // Absolute value and square root
+        assert!(((eval_as_f64(&mut env, "abs(-2)") - 2.0).abs()) < 1e-10);
+        assert_eq!(eval_as_string(&mut env, "abs(-2)"), "FNum(2.0, []/[])".to_owned());
+        assert!((eval_as_f64(&mut env, "abs(-2.5)") - 2.5).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "abs(1+i)") - std::f64::consts::SQRT_2).abs() < 1e-10);
+        assert!((eval_as_f64(&mut env, "sqrt(2)") - std::f64::consts::SQRT_2).abs() < 1e-10);
+        
+        // Complex square root
+        assert!((eval_as_complex64(&mut env, "sqrt(2i)").re - 1.0).abs() < 1e-10);
+        assert!((eval_as_complex64(&mut env, "sqrt(2i)").im - 1.0).abs() < 1e-10);
+        
+        // Argument function
+        assert!((eval_as_f64(&mut env, "arg(1+i)") - std::f64::consts::FRAC_PI_4).abs() < 1e-10);
+        
+        // Statistical functions
+        assert_eq!(eval_as_string(&mut env, "ave(1,2,3)"), "FNum(2.0, []/[])".to_owned());
+        assert_eq!(eval_as_string(&mut env, "max(1,2,3)"), "FNum(3.0, []/[])".to_owned());
+        
+        // Function with units
         assert_eq!(
             eval_as_string(&mut env, "1/sqrt(2)"),
             "FNum(0.7071067811865475, [(\"_\", 1)]/[])".to_owned()
@@ -840,17 +851,48 @@ mod tests {
     }
 
     #[test]
-    fn test_eval_error() {
+    fn test_user_defined_functions() {
         let mut env = Env::new();
         env.built_in();
 
+        // Simple user-defined function
+        eval_as_string(&mut env, "defun double 2*_1");
+        assert_eq!(eval_as_string(&mut env, "double(2)"), "Num(4, []/[])".to_owned());
+        
+        // Recursive user-defined function call
+        assert_eq!(eval_as_string(&mut env, "double(double(2))"), "Num(8, []/[])".to_owned());
+        
+        // Multi-parameter user-defined function
+        eval_as_string(&mut env, "defun add _1+_2");
+        assert_eq!(eval_as_string(&mut env, "add(2,3)"), "Num(5, []/[])".to_owned());
+        
+        // User-defined function with variable
+        eval_as_string(&mut env, "a=1");
+        assert_eq!(eval_as_string(&mut env, "add(2,a)"), "Num(3, []/[])".to_owned());
+        
+        // User-defined function that captures variables
+        eval_as_string(&mut env, "defun plus_a a+_1");
+        eval_as_string(&mut env, "a=5");
+        assert_eq!(eval_as_string(&mut env, "plus_a(8)"), "Num(13, []/[])".to_owned());
+    }
+
+    #[test]
+    fn test_assignment_errors() {
+        let mut env = Env::new();
+        env.built_in();
+
+        // Cannot assign to constants
         let n = parse(&mut env, &(lexer("pi=3".to_owned())).unwrap()).unwrap();
-        if eval(&mut env, &n).is_ok() {
-            panic!("eval error");
-        }
+        assert!(eval(&mut env, &n).is_err(), "Should not be able to assign to constant 'pi'");
+    }
+
+    #[test]
+    fn test_syntax_errors() {
+        let mut env = Env::new();
+        env.built_in();
+
+        // Incomplete expression with dangling operator
         let n = parse(&mut env, &(lexer("abs(1-i+)".to_owned())).unwrap()).unwrap();
-        if eval(&mut env, &n).is_ok() {
-            panic!("eval error");
-        }
+        assert!(eval(&mut env, &n).is_err(), "Should fail on incomplete expression");
     }
 }
